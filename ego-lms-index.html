@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EGO LMS · Quản trị</title>
+<style>
+:root{
+  --primary:#1677ff;
+  --primary-hover:#4096ff;
+  --text:#1f2329;
+  --text-2:#5a6472;
+  --text-3:#8b95a3;
+  --border:#e6e8eb;
+  --border-2:#f0f1f3;
+  --bg:#f2f4f7;
+  --sider:#ffffff;
+  --sider-active:#e8f2ff;
+  --success:#16a34a;
+  --success-bg:#f2fbf4;
+  --danger:#e5484d;
+  --radius:6px;
+  --sider-w:264px;
+  --head-h:60px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+  font-size:14px;line-height:1.5;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--primary);text-decoration:none}
+
+/* ---------- khung ---------- */
+.app{display:flex;min-height:100vh}
+.sider{
+  width:var(--sider-w);flex:0 0 var(--sider-w);background:var(--sider);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;transition:width .18s ease,flex-basis .18s ease;
+}
+.app.collapsed .sider{width:0;flex-basis:0;overflow:hidden;border-right:none}
+.brand{
+  height:var(--head-h);display:flex;align-items:center;gap:10px;padding:0 18px;
+  border-bottom:1px solid var(--border-2);flex:0 0 auto;
+}
+.brand .mark{
+  width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
+}
+.brand b{font-size:15px;font-weight:600;color:var(--primary)}
+.brand span{color:var(--text-2);font-size:14px}
+.nav{flex:1;overflow-y:auto;padding:8px 0 24px}
+.nav::-webkit-scrollbar{width:8px}
+.nav::-webkit-scrollbar-thumb{background:#d9dde3;border-radius:8px}
+
+.nav-group>.nav-head{
+  display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
+  padding:11px 18px;cursor:pointer;color:var(--text);text-align:left;
+}
+.nav-group>.nav-head:hover{color:var(--primary)}
+.nav-head .caret{margin-left:auto;transition:transform .18s;color:var(--text-3)}
+.nav-group.open .nav-head .caret{transform:rotate(180deg)}
+.nav-children{display:none}
+.nav-group.open .nav-children{display:block}
+.nav-item{
+  display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
+  padding:10px 18px 10px 40px;cursor:pointer;color:var(--text-2);text-align:left;
+  border-right:3px solid transparent;
+}
+.nav>.nav-item{padding-left:18px;color:var(--text)}
+.nav-item:hover{color:var(--primary);background:#fafcff}
+.nav-item.active{background:var(--sider-active);color:var(--primary);border-right-color:var(--primary);font-weight:500}
+.nav-item .lbl,.nav-head .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav svg{flex:0 0 auto}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  height:var(--head-h);background:#fff;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;padding:0 22px;position:sticky;top:0;z-index:5;
+}
+.icon-btn{
+  background:none;border:0;padding:6px;border-radius:var(--radius);cursor:pointer;color:var(--text-2);
+  display:flex;align-items:center;
+}
+.icon-btn:hover{background:#f2f4f7;color:var(--primary)}
+.topbar h1{font-size:16px;font-weight:600;margin:0}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center}
+.user{font-weight:500}
+.link-btn{background:none;border:0;color:var(--text-2);cursor:pointer;padding:4px}
+.link-btn:hover{color:var(--primary)}
+
+.content{flex:1;padding:22px;min-width:0}
+.frame-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;height:calc(100vh - var(--head-h) - 44px)}
+.frame-wrap iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+
+/* ---------- panel & bảng dùng cho màn hình mẫu ---------- */
+.panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:24px 26px}
+.panel-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:18px}
+.panel-head h2{margin:0;font-size:19px;font-weight:600}
+.panel-head p{margin:5px 0 0;color:var(--text-3);font-size:13px}
+.btn{
+  border:1px solid var(--primary);background:var(--primary);color:#fff;padding:7px 16px;
+  border-radius:var(--radius);cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+}
+.btn:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn.ghost{background:#fff;color:var(--text);border-color:var(--border)}
+.btn.ghost:hover{color:var(--primary);border-color:var(--primary);background:#fff}
+.btn.sm{padding:4px 11px;font-size:13px}
+.btn.danger{background:#fff;color:var(--danger);border-color:#f3c6c7}
+.btn.danger:hover{background:#fff5f5;border-color:var(--danger)}
+.panel-head .btn{margin-left:auto;flex:0 0 auto}
+.input{
+  width:100%;padding:7px 11px;border:1px solid var(--border);border-radius:var(--radius);
+  background:#fff;outline:none;
+}
+.input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(22,119,255,.12)}
+.search{max-width:500px;margin-bottom:16px}
+
+table{width:100%;border-collapse:collapse}
+thead th{
+  text-align:left;font-weight:600;font-size:13px;color:var(--text);
+  padding:12px 14px;border-bottom:1px solid var(--border);background:#fafbfc;
+}
+tbody td{padding:13px 14px;border-bottom:1px solid var(--border-2);vertical-align:middle}
+tbody tr:hover{background:#fafcff}
+th.num,td.num{text-align:center;width:110px}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable span{color:var(--text-3);margin-left:6px;font-size:11px}
+.tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;border:1px solid}
+.tag.on{color:var(--success);background:var(--success-bg);border-color:#bfe6c8}
+.tag.off{color:var(--text-2);background:#f7f8f9;border-color:var(--border)}
+.acts{display:flex;gap:16px;white-space:nowrap}
+.acts a{cursor:pointer}
+.acts a.del{color:var(--danger)}
+.empty{padding:44px 0;text-align:center;color:var(--text-3)}
+.pager{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding-top:16px;color:var(--text-2)}
+.pager .page{border:1px solid var(--primary);color:var(--primary);border-radius:4px;padding:1px 9px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:20px}
+.stat{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.stat .k{color:var(--text-3);font-size:13px}
+.stat .v{font-size:26px;font-weight:600;margin-top:6px}
+.stat .d{font-size:12px;color:var(--text-3);margin-top:4px}
+.notice{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:56px 24px;text-align:center}
+.notice h3{margin:0 0 8px;font-size:17px;font-weight:600}
+.notice p{margin:0;color:var(--text-3)}
+.notice .btn{margin-top:18px}
+
+/* ---------- drawer cấu hình menu ---------- */
+.mask{position:fixed;inset:0;background:rgba(15,20,28,.45);display:none;z-index:40}
+.mask.show{display:block}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:#fff;z-index:41;
+  display:none;flex-direction:column;box-shadow:-8px 0 28px rgba(0,0,0,.12);
+}
+.drawer.show{display:flex}
+.drawer-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.drawer-head h2{margin:0;font-size:16px;font-weight:600}
+.drawer-head .close{margin-left:auto}
+.drawer-body{flex:1;overflow-y:auto;padding:18px 22px;background:#fafbfc}
+.drawer-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center}
+.drawer-foot .spacer{flex:1}
+
+.cfg-group{background:#fff;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px}
+.cfg-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border-2)}
+.cfg-row:last-child{border-bottom:0}
+.cfg-row.group-row{background:#f7f9fc;border-bottom:1px solid var(--border)}
+.cfg-row.child{padding-left:26px}
+.cfg-row .grip{color:var(--text-3);cursor:grab;flex:0 0 auto}
+.cfg-row .name{flex:1;min-width:120px}
+.cfg-row select{padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;max-width:170px}
+.cfg-row .mini{background:none;border:1px solid var(--border);border-radius:4px;width:26px;height:26px;cursor:pointer;color:var(--text-2);line-height:1;flex:0 0 auto}
+.cfg-row .mini:hover{color:var(--primary);border-color:var(--primary)}
+.cfg-row .mini.x:hover{color:var(--danger);border-color:var(--danger)}
+.cfg-row.drag-over{background:#eef6ff}
+.cfg-row.hidden-item .name{opacity:.5;text-decoration:line-through}
+.src{display:flex;align-items:center;gap:6px;padding:0 12px 12px 26px}
+.src .input{max-width:none}
+.src small{color:var(--text-3);white-space:nowrap}
+.hint{color:var(--text-3);font-size:12.5px;margin:0 0 14px}
+.toast{
+  position:fixed;left:50%;top:24px;transform:translateX(-50%);background:#1f2329;color:#fff;
+  padding:9px 18px;border-radius:var(--radius);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s
+}
+.toast.show{opacity:1}
+
+/* ---------- modal đơn giản ---------- */
+.modal{
+  position:fixed;inset:0;background:rgba(15,20,28,.45);z-index:50;
+  display:none;align-items:flex-start;justify-content:center;padding:80px 16px;
+}
+.modal.show{display:flex}
+.modal .box{background:#fff;border-radius:8px;width:min(520px,100%);padding:22px 24px}
+.modal h3{margin:0 0 16px;font-size:16px}
+.field{margin-bottom:14px}
+.field label{display:block;margin-bottom:6px;font-size:13px;color:var(--text-2)}
+.modal .foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+
+@media(max-width:960px){
+  :root{--sider-w:230px}
+  .content{padding:14px}
+  .panel{padding:18px 16px}
+  .acts{gap:12px}
+}
+@media(max-width:720px){
+  .app .sider{position:fixed;z-index:30;box-shadow:2px 0 12px rgba(0,0,0,.1)}
+  .app.collapsed .sider{box-shadow:none}
+}
+:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sider">
+    <div class="brand">
+      <div class="mark">E</div>
+      <b>EGO</b><span>LMS · Quản trị</span>
+    </div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="btnCollapse" title="Ẩn/hiện menu" aria-label="Ẩn hiện menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h12M3 18h18"/></svg>
+      </button>
+      <h1 id="pageTitle">Bảng quản trị</h1>
+      <div class="right">
+        <button class="icon-btn" id="btnCfg" title="Cấu hình menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+        </button>
+        <div class="avatar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+        </div>
+        <span class="user">admin02</span>
+        <button class="link-btn">Đăng xuất</button>
+      </div>
+    </header>
+    <section class="content" id="content"></section>
+  </div>
+</div>
+
+<div class="mask" id="mask"></div>
+<aside class="drawer" id="drawer" aria-label="Cấu hình menu">
+  <div class="drawer-head">
+    <h2>Cấu hình menu</h2>
+    <button class="icon-btn close" id="btnCloseCfg" aria-label="Đóng">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+    <p class="hint">Đổi tên trực tiếp trong ô tên. Kéo thả hoặc dùng nút ▲▼ để sắp xếp. Mỗi mục con gắn được một màn hình: màn hình mẫu dựng sẵn, file HTML theo đường dẫn, hoặc file HTML tải lên từ máy.</p>
+    <div id="cfgList"></div>
+    <button class="btn ghost sm" id="btnAddGroup">+ Thêm nhóm menu</button>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn" id="btnSave">Lưu cấu hình</button>
+    <button class="btn ghost" id="btnExport">Xuất JSON</button>
+    <button class="btn ghost" id="btnImport">Nhập JSON</button>
+    <span class="spacer"></span>
+    <button class="btn danger" id="btnReset">Khôi phục mặc định</button>
+    <input type="file" id="fileImport" accept=".json,application/json" hidden>
+    <input type="file" id="fileHtml" accept=".html,.htm,text/html" hidden>
+  </div>
+</aside>
+
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ====================== dữ liệu ====================== */
+const STORE_KEY = 'ego_lms_menu_v1';
+
+const ICONS = {
+  gauge:'<circle cx="12" cy="12" r="9"/><path d="M12 12l4-3"/>',
+  book:'<path d="M4 5a2 2 0 012-2h13v18H6a2 2 0 01-2-2z"/><path d="M8 3v18"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  library:'<rect x="3" y="4" width="4" height="16" rx="1"/><rect x="9" y="4" width="4" height="16" rx="1"/><path d="M16 5.5l4 14"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
+  file:'<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/>',
+  users:'<path d="M17 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.9"/>',
+  chart:'<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="13" y="7" width="3" height="10"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.4 8.4-8 9-4.6-.6-8-4-8-9V6z"/>',
+  monitor:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  folder:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
+  cog:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'
+};
+const ICON_KEYS = Object.keys(ICONS);
+
+const BUILTIN = {
+  'dashboard'    : 'Bảng điều khiển (mẫu)',
+  'chuong-trinh' : 'Chương trình đào tạo (mẫu)',
+  'khoa-hoc'     : 'Khóa học (mẫu)'
+};
+
+function defaultMenu(){
+  return [
+    {id:'m1', label:'Bảng điều khiển', icon:'gauge', source:'builtin', target:'dashboard'},
+    {id:'m2', label:'Học liệu', icon:'book', open:true, children:[
+      {id:'m2a', label:'Môn học', icon:'file'},
+      {id:'m2b', label:'Nhóm môn học', icon:'grid'},
+      {id:'m2c', label:'Danh mục', icon:'list'},
+      {id:'m2d', label:'Thư viện', icon:'library'},
+      {id:'m2e', label:'Khảo sát', icon:'edit'}
+    ]},
+    {id:'m3', label:'Tổ chức đào tạo', icon:'calendar', open:true, children:[
+      {id:'m3a', label:'Chương trình đào tạo', icon:'grid', source:'builtin', target:'chuong-trinh'},
+      {id:'m3b', label:'Khóa học', icon:'file', source:'builtin', target:'khoa-hoc'},
+      {id:'m3c', label:'Quản lý lớp', icon:'users'},
+      {id:'m3d', label:'Buổi học', icon:'calendar'},
+      {id:'m3e', label:'Giám sát lớp', icon:'monitor'},
+      {id:'m3f', label:'Báo cáo', icon:'chart'}
+    ]},
+    {id:'m4', label:'Thi sát hạch', icon:'shield', children:[
+      {id:'m4a', label:'Ngân hàng đề', icon:'file'},
+      {id:'m4b', label:'Ca thi', icon:'calendar'},
+      {id:'m4c', label:'Kết quả thi', icon:'chart'}
+    ]},
+    {id:'m5', label:'Quản lý', icon:'cog', children:[
+      {id:'m5a', label:'Người dùng', icon:'users'},
+      {id:'m5b', label:'Phân quyền', icon:'shield'},
+      {id:'m5c', label:'Nhật ký hệ thống', icon:'list'}
+    ]}
+  ];
+}
+
+let menu = load();
+let activeId = firstLeafId();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ const d = JSON.parse(raw); if(Array.isArray(d) && d.length) return d; }
+  }catch(e){}
+  return defaultMenu();
+}
+function persist(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(menu)); return true; }
+  catch(e){ return false; }
+}
+function uid(){ return 'i' + Math.random().toString(36).slice(2,8); }
+function firstLeafId(){
+  for(const g of menu){
+    if(g.hidden) continue;
+    if(g.children && g.children.length){
+      const c = g.children.find(x=>!x.hidden);
+      if(c) return c.id;
+    } else return g.id;
+  }
+  return null;
+}
+function findItem(id, list=menu, parent=null){
+  for(const it of list){
+    if(it.id===id) return {item:it, parent, list};
+    if(it.children){
+      const r = findItem(id, it.children, it);
+      if(r) return r;
+    }
+  }
+  return null;
+}
+function svg(name, size=17){
+  const p = ICONS[name] || ICONS.file;
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ====================== sidebar ====================== */
+function renderNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  menu.filter(g=>!g.hidden).forEach(g=>{
+    if(g.children && g.children.length){
+      const wrap = document.createElement('div');
+      wrap.className = 'nav-group' + (g.open ? ' open':'');
+      const head = document.createElement('button');
+      head.className = 'nav-head';
+      head.innerHTML = svg(g.icon) + '<span class="lbl">'+esc(g.label)+'</span>' +
+        '<svg class="caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
+      head.onclick = ()=>{ g.open = !g.open; renderNav(); };
+      wrap.appendChild(head);
+      const box = document.createElement('div');
+      box.className = 'nav-children';
+      g.children.filter(c=>!c.hidden).forEach(c=>box.appendChild(navItem(c)));
+      wrap.appendChild(box);
+      nav.appendChild(wrap);
+    }else{
+      const b = navItem(g);
+      b.classList.add('root');
+      nav.appendChild(b);
+    }
+  });
+}
+function navItem(it){
+  const b = document.createElement('button');
+  b.className = 'nav-item' + (it.id===activeId ? ' active':'');
+  b.innerHTML = svg(it.icon) + '<span class="lbl">'+esc(it.label)+'</span>';
+  b.onclick = ()=>{ activeId = it.id; renderNav(); renderContent(); if(innerWidth<=720) document.getElementById('app').classList.add('collapsed'); };
+  return b;
+}
+
+/* ====================== nội dung ====================== */
+function renderContent(){
+  const box = document.getElementById('content');
+  const found = findItem(activeId);
+  const it = found ? found.item : null;
+  document.getElementById('pageTitle').textContent = it ? it.label : 'Bảng quản trị';
+  box.innerHTML = '';
+  if(!it){
+    box.innerHTML = notice('Chưa chọn chức năng','Chọn một mục ở menu bên trái để mở màn hình.');
+    box.querySelector('.btn').onclick = openCfg;
+    return;
+  }
+
+  if(it.source==='builtin' && SCREENS[it.target]){ SCREENS[it.target](box); return; }
+
+  if(it.source==='path' && it.path){
+    box.innerHTML = '<div class="frame-wrap"><iframe src="'+esc(it.path)+'" title="'+esc(it.label)+'"></iframe></div>';
+    return;
+  }
+  if(it.source==='inline' && it.html){
+    const w = document.createElement('div'); w.className='frame-wrap';
+    const f = document.createElement('iframe'); f.title = it.label; f.srcdoc = it.html;
+    w.appendChild(f); box.appendChild(w);
+    return;
+  }
+  box.innerHTML = notice('Chức năng chưa gắn màn hình',
+    'Mục "'+esc(it.label)+'" chưa có nội dung. Mở Cấu hình menu để gắn màn hình mẫu hoặc file HTML chi tiết.');
+  box.querySelector('.btn').onclick = openCfg;
+}
+function notice(t, d){
+  return '<div class="notice"><h3>'+t+'</h3><p>'+d+'</p><button class="btn ghost">Mở cấu hình menu</button></div>';
+}
+
+/* ---- màn hình mẫu ---- */
+const PROGRAMS = [
+  {code:'GT-A2',   name:'Giao tiếp A2',      classes:4, learners:45, active:true},
+  {code:'IELTS-F', name:'IELTS Foundation',  classes:3, learners:28, active:true},
+  {code:'BE-01',   name:'Business English',  classes:3, learners:15, active:false}
+];
+const COURSES = [
+  {code:'GT-A2-01', name:'Ngữ âm và phát âm nền tảng', prog:'Giao tiếp A2',     sessions:12, teacher:'Nguyễn Thu Hà',  active:true},
+  {code:'GT-A2-02', name:'Hội thoại chủ đề đời sống',  prog:'Giao tiếp A2',     sessions:16, teacher:'Trần Minh Quân', active:true},
+  {code:'IF-01',    name:'IELTS Listening cơ bản',     prog:'IELTS Foundation', sessions:20, teacher:'Lê Hoàng Anh',   active:true},
+  {code:'IF-02',    name:'IELTS Writing Task 1',       prog:'IELTS Foundation', sessions:18, teacher:'Phạm Diệu Linh', active:true},
+  {code:'BE-01-01', name:'Email và văn bản thương mại',prog:'Business English', sessions:10, teacher:'Đỗ Quốc Huy',    active:false}
+];
+let progSort = {key:'code', dir:1}, progQuery = '';
+
+const SCREENS = {
+  dashboard(box){
+    const cards = [
+      ['Chương trình đang chạy','3','2 chương trình mở lớp mới trong tháng'],
+      ['Lớp đang hoạt động','10','1 lớp kết thúc tuần này'],
+      ['Học viên đang học','88','+12 so với tháng trước'],
+      ['Buổi học tuần này','24','3 buổi chờ xếp giảng viên']
+    ];
+    box.innerHTML =
+      '<div class="stats">'+cards.map(c=>'<div class="stat"><div class="k">'+c[0]+'</div><div class="v">'+c[1]+'</div><div class="d">'+c[2]+'</div></div>').join('')+'</div>'+
+      '<div class="panel"><div class="panel-head"><div><h2>Lớp cần theo dõi</h2><p>Lớp có tỷ lệ chuyên cần dưới 80% hoặc chậm tiến độ so với kế hoạch</p></div></div>'+
+      '<table><thead><tr><th>Lớp</th><th>Chương trình</th><th class="num">Chuyên cần</th><th class="num">Tiến độ</th><th>Ghi chú</th></tr></thead><tbody>'+
+      [['GT-A2-K3','Giao tiếp A2','72%','8/16','Vắng nhiều buổi tối thứ 5'],
+       ['IF-K1','IELTS Foundation','78%','11/20','Chờ bổ sung giáo trình Writing'],
+       ['BE-01-K2','Business English','85%','4/10','Giảng viên báo bận 2 buổi']]
+      .map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td class="num">'+r[2]+'</td><td class="num">'+r[3]+'</td><td>'+r[4]+'</td></tr>').join('')+
+      '</tbody></table></div>';
+  },
+
+  'chuong-trinh'(box){
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.innerHTML =
+      '<div class="panel-head"><div><h2>Chương trình đào tạo</h2>'+
+      '<p>'+PROGRAMS.length+' chương trình · mỗi chương trình gồm 1+ khóa học (nội dung)</p></div>'+
+      '<button class="btn" id="btnNewProg">+ Tạo chương trình</button></div>'+
+      '<input class="input search" id="qProg" placeholder="Tìm theo tên hoặc mã" value="'+esc(progQuery)+'">'+
+      '<div id="progTable"></div>';
+    box.appendChild(panel);
+    panel.querySelector('#btnNewProg').onclick = newProgram;
+    const q = panel.querySelector('#qProg');
+    q.oninput = ()=>{ progQuery = q.value; drawPrograms(); };
+    drawPrograms();
+  },
+
+  'khoa-hoc'(box){
+    box.innerHTML =
+      '<div class="panel"><div class="panel-head"><div><h2>Khóa học</h2>'+
+      '<p>'+COURSES.length+' khóa học thuộc 3 chương trình đào tạo</p></div>'+
+      '<button class="btn">+ Tạo khóa học</button></div>'+
+      '<input class="input search" placeholder="Tìm theo tên hoặc mã">'+
+      '<table><thead><tr><th>Mã</th><th>Tên khóa học</th><th>Chương trình</th><th class="num">Số buổi</th>'+
+      '<th>Giảng viên</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>'+
+      COURSES.map(c=>'<tr><td>'+c.code+'</td><td><b>'+c.name+'</b></td><td>'+c.prog+'</td>'+
+        '<td class="num">'+c.sessions+'</td><td>'+c.teacher+'</td>'+
+        '<td>'+(c.active?'<span class="tag on">Hoạt động</span>':'<span class="tag off">Ngừng</span>')+'</td>'+
+        '<td><div class="acts"><a>Bài giảng</a><a>Sửa</a><a class="del">Xoá</a></div></td></tr>').join('')+
+      '</tbody></table>'+
+      '<div class="pager"><span>‹</span><span class="page">1</span><span>›</span><span>10 / trang</span></div></div>';
+  }
+};
+
+function drawPrograms(){
+  const host = document.getElementById('progTable');
+  if(!host) return;
+  const q = progQuery.trim().toLowerCase();
+  let rows = PROGRAMS.filter(p=>!q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
+  rows = rows.slice().sort((a,b)=> String(a[progSort.key]).localeCompare(String(b[progSort.key]),'vi') * progSort.dir);
+  const arrow = k => progSort.key===k ? (progSort.dir>0?'▲':'▼') : '⇅';
+  host.innerHTML =
+    '<table><thead><tr>'+
+    '<th class="sortable" data-k="code">Mã <span>'+arrow('code')+'</span></th>'+
+    '<th class="sortable" data-k="name">Tên chương trình <span>'+arrow('name')+'</span></th>'+
+    '<th class="num">Số lớp</th><th class="num">Học viên</th><th>Trạng thái</th><th>Thao tác</th>'+
+    '</tr></thead><tbody>'+
+    (rows.length ? rows.map(p=>
+      '<tr><td>'+esc(p.code)+'</td><td><b>'+esc(p.name)+'</b></td>'+
+      '<td class="num">'+p.classes+'</td><td class="num">'+p.learners+'</td>'+
+      '<td>'+(p.active?'<span class="tag on">Hoạt động</span>':'<span class="tag off">Ngừng</span>')+'</td>'+
+      '<td><div class="acts"><a data-act="course" data-code="'+esc(p.code)+'">Khóa học</a>'+
+      '<a data-act="edit" data-code="'+esc(p.code)+'">Sửa</a>'+
+      '<a class="del" data-act="del" data-code="'+esc(p.code)+'">Xoá</a></div></td></tr>').join('')
+      : '<tr><td colspan="6"><div class="empty">Không có chương trình nào khớp từ khoá tìm kiếm</div></td></tr>')+
+    '</tbody></table>'+
+    '<div class="pager"><span>‹</span><span class="page">1</span><span>›</span><span>10 / trang</span></div>';
+
+  host.querySelectorAll('th.sortable').forEach(th=>{
+    th.onclick = ()=>{ const k = th.dataset.k; progSort = {key:k, dir: progSort.key===k ? -progSort.dir : 1}; drawPrograms(); };
+  });
+  host.querySelectorAll('a[data-act]').forEach(a=>{
+    a.onclick = ()=>{
+      const code = a.dataset.code, act = a.dataset.act;
+      if(act==='del'){
+        if(confirm('Xoá chương trình '+code+'?')){
+          const i = PROGRAMS.findIndex(p=>p.code===code);
+          if(i>-1){ PROGRAMS.splice(i,1); renderContent(); toast('Đã xoá '+code); }
+        }
+      }else if(act==='edit'){ editProgram(code); }
+      else{ toast('Danh sách khóa học của '+code); }
+    };
+  });
+}
+
+function newProgram(){ programForm(null); }
+function editProgram(code){ programForm(PROGRAMS.find(p=>p.code===code)); }
+function programForm(p){
+  const box = document.getElementById('modalBox');
+  box.innerHTML =
+    '<h3>'+(p?'Sửa chương trình':'Tạo chương trình')+'</h3>'+
+    '<div class="field"><label>Mã chương trình</label><input class="input" id="fCode" value="'+esc(p?p.code:'')+'"></div>'+
+    '<div class="field"><label>Tên chương trình</label><input class="input" id="fName" value="'+esc(p?p.name:'')+'"></div>'+
+    '<div class="field"><label>Trạng thái</label><select class="input" id="fStatus">'+
+      '<option value="1"'+(!p||p.active?' selected':'')+'>Hoạt động</option>'+
+      '<option value="0"'+(p&&!p.active?' selected':'')+'>Ngừng</option></select></div>'+
+    '<div class="foot"><button class="btn ghost" id="fCancel">Huỷ</button><button class="btn" id="fOk">Lưu</button></div>';
+  document.getElementById('modal').classList.add('show');
+  box.querySelector('#fCancel').onclick = closeModal;
+  box.querySelector('#fOk').onclick = ()=>{
+    const code = box.querySelector('#fCode').value.trim();
+    const name = box.querySelector('#fName').value.trim();
+    const active = box.querySelector('#fStatus').value==='1';
+    if(!code || !name){ toast('Nhập đủ mã và tên chương trình'); return; }
+    if(p){ p.code=code; p.name=name; p.active=active; }
+    else PROGRAMS.push({code, name, classes:0, learners:0, active});
+    closeModal(); renderContent(); toast(p?'Đã cập nhật '+code:'Đã tạo '+code);
+  };
+}
+function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal').onclick = e=>{ if(e.target.id==='modal') closeModal(); };
+
+/* ====================== cấu hình menu ====================== */
+let dragId = null;
+
+function openCfg(){ renderCfg(); document.getElementById('drawer').classList.add('show'); document.getElementById('mask').classList.add('show'); }
+function closeCfg(){ document.getElementById('drawer').classList.remove('show'); document.getElementById('mask').classList.remove('show'); }
+
+function renderCfg(){
+  const host = document.getElementById('cfgList');
+  host.innerHTML = '';
+  menu.forEach(g=>{
+    const card = document.createElement('div');
+    card.className = 'cfg-group';
+    card.appendChild(cfgRow(g, true));
+    if(g.children){
+      g.children.forEach(c=>{
+        card.appendChild(cfgRow(c, false));
+        card.appendChild(cfgSource(c));
+      });
+      const add = document.createElement('div');
+      add.className = 'cfg-row child';
+      add.innerHTML = '<button class="btn ghost sm">+ Thêm chức năng</button>';
+      add.querySelector('button').onclick = ()=>{
+        g.children.push({id:uid(), label:'Chức năng mới', icon:'file'});
+        g.open = true; renderCfg(); renderNav();
+      };
+      card.appendChild(add);
+    }else{
+      card.appendChild(cfgSource(g));
+    }
+    host.appendChild(card);
+  });
+}
+
+function cfgRow(it, isGroup){
+  const row = document.createElement('div');
+  row.className = 'cfg-row' + (isGroup?' group-row':' child') + (it.hidden?' hidden-item':'');
+  row.draggable = true;
+  row.dataset.id = it.id;
+
+  const grip = document.createElement('span');
+  grip.className = 'grip';
+  grip.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+  row.appendChild(grip);
+
+  const name = document.createElement('input');
+  name.className = 'input name';
+  name.value = it.label;
+  name.oninput = ()=>{ it.label = name.value; renderNav(); if(it.id===activeId) document.getElementById('pageTitle').textContent = it.label; };
+  row.appendChild(name);
+
+  const icon = document.createElement('select');
+  icon.innerHTML = ICON_KEYS.map(k=>'<option value="'+k+'"'+(it.icon===k?' selected':'')+'>'+k+'</option>').join('');
+  icon.onchange = ()=>{ it.icon = icon.value; renderNav(); };
+  row.appendChild(icon);
+
+  row.appendChild(mini('▲', ()=>move(it.id,-1)));
+  row.appendChild(mini('▼', ()=>move(it.id, 1)));
+  row.appendChild(mini(it.hidden?'○':'●', ()=>{ it.hidden = !it.hidden; if(it.id===activeId){ activeId = firstLeafId(); renderContent(); } renderCfg(); renderNav(); }, it.hidden?'Đang ẩn':'Đang hiện'));
+  row.appendChild(mini('✕', ()=>{
+    if(!confirm('Xoá mục "'+it.label+'"?')) return;
+    const f = findItem(it.id); if(!f) return;
+    f.list.splice(f.list.indexOf(it),1);
+    if(!findItem(activeId)) activeId = firstLeafId();
+    renderCfg(); renderNav(); renderContent();
+  }, 'Xoá', 'x'));
+
+  row.addEventListener('dragstart', e=>{ dragId = it.id; e.dataTransfer.effectAllowed='move'; });
+  row.addEventListener('dragover', e=>{
+    if(!dragId || dragId===it.id) return;
+    const a = findItem(dragId), b = findItem(it.id);
+    if(!a || !b || a.list!==b.list) return;
+    e.preventDefault(); row.classList.add('drag-over');
+  });
+  row.addEventListener('dragleave', ()=>row.classList.remove('drag-over'));
+  row.addEventListener('drop', e=>{
+    e.preventDefault(); row.classList.remove('drag-over');
+    const a = findItem(dragId), b = findItem(it.id);
+    if(!a || !b || a.list!==b.list) return;
+    const list = a.list;
+    list.splice(list.indexOf(a.item),1);
+    list.splice(list.indexOf(b.item),0,a.item);
+    dragId = null; renderCfg(); renderNav();
+  });
+  return row;
+}
+
+function mini(txt, fn, title, cls){
+  const b = document.createElement('button');
+  b.className = 'mini' + (cls?' '+cls:'');
+  b.textContent = txt;
+  if(title) b.title = title;
+  b.onclick = fn;
+  return b;
+}
+
+function move(id, dir){
+  const f = findItem(id); if(!f) return;
+  const i = f.list.indexOf(f.item), j = i + dir;
+  if(j<0 || j>=f.list.length) return;
+  f.list.splice(i,1); f.list.splice(j,0,f.item);
+  renderCfg(); renderNav();
+}
+
+function cfgSource(it){
+  const wrap = document.createElement('div');
+  wrap.className = 'src';
+  const sel = document.createElement('select');
+  sel.innerHTML =
+    '<option value="none">Chưa gắn màn hình</option>'+
+    '<option value="builtin">Màn hình mẫu</option>'+
+    '<option value="path">File HTML (đường dẫn)</option>'+
+    '<option value="inline">File HTML (tải lên)</option>';
+  sel.value = it.source || 'none';
+  wrap.appendChild(document.createElement('small')).textContent = 'Nội dung:';
+  wrap.appendChild(sel);
+
+  const detail = document.createElement('span');
+  detail.style.flex = '1';
+  detail.style.display = 'flex';
+  detail.style.gap = '6px';
+  wrap.appendChild(detail);
+
+  function paint(){
+    detail.innerHTML = '';
+    const s = it.source || 'none';
+    if(s==='builtin'){
+      const b = document.createElement('select');
+      b.innerHTML = Object.keys(BUILTIN).map(k=>'<option value="'+k+'"'+(it.target===k?' selected':'')+'>'+BUILTIN[k]+'</option>').join('');
+      b.style.maxWidth = '260px';
+      if(!it.target){ it.target = Object.keys(BUILTIN)[0]; b.value = it.target; }
+      b.onchange = ()=>{ it.target = b.value; if(it.id===activeId) renderContent(); };
+      detail.appendChild(b);
+    }else if(s==='path'){
+      const i = document.createElement('input');
+      i.className = 'input';
+      i.placeholder = 'man-hinh-chuong-trinh.html';
+      i.value = it.path || '';
+      i.oninput = ()=>{ it.path = i.value.trim(); };
+      i.onchange = ()=>{ if(it.id===activeId) renderContent(); };
+      detail.appendChild(i);
+    }else if(s==='inline'){
+      const btn = document.createElement('button');
+      btn.className = 'btn ghost sm';
+      btn.textContent = it.html ? 'Đổi file HTML' : 'Chọn file HTML';
+      btn.onclick = ()=>pickHtml(it, paint);
+      detail.appendChild(btn);
+      const info = document.createElement('small');
+      info.textContent = it.html ? (it.fileName || 'đã gắn') + ' · ' + Math.round(it.html.length/1024) + ' KB' : 'chưa chọn file';
+      detail.appendChild(info);
+    }
+  }
+  sel.onchange = ()=>{ it.source = sel.value; paint(); if(it.id===activeId) renderContent(); };
+  paint();
+  return wrap;
+}
+
+function pickHtml(it, done){
+  const input = document.getElementById('fileHtml');
+  input.value = '';
+  input.onchange = ()=>{
+    const f = input.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{
+      it.html = r.result; it.fileName = f.name; it.source = 'inline';
+      done(); renderNav(); if(it.id===activeId) renderContent();
+      toast('Đã gắn ' + f.name);
+    };
+    r.readAsText(f, 'UTF-8');
+  };
+  input.click();
+}
+
+/* ====================== nút chức năng ====================== */
+document.getElementById('btnCfg').onclick = openCfg;
+document.getElementById('btnCloseCfg').onclick = closeCfg;
+document.getElementById('mask').onclick = closeCfg;
+document.getElementById('btnCollapse').onclick = ()=>document.getElementById('app').classList.toggle('collapsed');
+
+document.getElementById('btnAddGroup').onclick = ()=>{
+  menu.push({id:uid(), label:'Nhóm mới', icon:'folder', open:true, children:[{id:uid(), label:'Chức năng mới', icon:'file'}]});
+  renderCfg(); renderNav();
+};
+document.getElementById('btnSave').onclick = ()=>{
+  toast(persist() ? 'Đã lưu cấu hình menu' : 'Trình duyệt chặn lưu cục bộ — dùng Xuất JSON để giữ cấu hình');
+};
+document.getElementById('btnReset').onclick = ()=>{
+  if(!confirm('Khôi phục menu về cấu hình mặc định?')) return;
+  menu = defaultMenu(); persist(); activeId = firstLeafId();
+  renderCfg(); renderNav(); renderContent(); toast('Đã khôi phục mặc định');
+};
+document.getElementById('btnExport').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(menu, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cau-hinh-menu.json';
+  a.click(); URL.revokeObjectURL(a.href);
+};
+document.getElementById('btnImport').onclick = ()=>document.getElementById('fileImport').click();
+document.getElementById('fileImport').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const d = JSON.parse(r.result);
+      if(!Array.isArray(d) || !d.length) throw 0;
+      menu = d; activeId = firstLeafId(); persist();
+      renderCfg(); renderNav(); renderContent(); toast('Đã nhập cấu hình từ ' + f.name);
+    }catch(err){ toast('File JSON không đúng định dạng cấu hình menu'); }
+    e.target.value = '';
+  };
+  r.readAsText(f, 'UTF-8');
+};
+
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ closeModal(); closeCfg(); }
+});
+
+if(innerWidth<=720) document.getElementById('app').classList.add('collapsed');
+renderNav();
+renderContent();
+</script>
+</body>
+</html>
