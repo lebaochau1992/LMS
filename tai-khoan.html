@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản lý tài khoản</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ===== EDOT Portal Design System — token màu & kiểu chữ ===== */
+:root{
+  /* thương hiệu edot */
+  --ems-brand-blue:#0091d4;
+  --ems-brand-gradient:linear-gradient(100deg,#0076d7 0%,#00bbff 48%,#006bd1 100%);
+  /* primary (navy sản phẩm) */
+  --ems-primary:#00327d;
+  --ems-primary-hover:#0047ab;
+  --ems-primary-soft:#eff6ff;
+  --ems-primary-soft-100:#dbeafe;
+  /* neutral (slate) */
+  --ems-white:#ffffff;
+  --ems-slate-50:#f8fafc;
+  --ems-slate-100:#f1f5f9;
+  --ems-slate-200:#e2e8f0;
+  --ems-slate-300:#cbd5e1;
+  --ems-slate-400:#94a3b8;
+  --ems-slate-500:#64748b;
+  --ems-slate-600:#475569;
+  --ems-slate-900:#0f172a;
+  --ems-ink:#011129;
+  /* semantic */
+  --ems-success:#059669;  --ems-success-soft:#ecfdf5;  --ems-success-border:#a7f3d0;
+  --ems-danger:#dc2626;   --ems-danger-strong:#b91c1c; --ems-danger-soft:#fef2f2; --ems-danger-border:#fecaca;
+  --ems-warning:#d97706;  --ems-warning-soft:#fffbeb;  --ems-warning-border:#fcd34d; --ems-warning-text:#92400e;
+  /* kiểu chữ */
+  --ems-font:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ems-font-mono:ui-monospace,Menlo,Consolas,monospace;
+  --ems-tracking-wide:.05em;
+  /* focus */
+  --ems-focus-ring:rgba(59,130,246,.15);
+  --ems-focus-border:#0047ab;
+}
+
+:root{--primary:var(--ems-primary);--text:var(--ems-slate-900);--text-2:var(--ems-slate-600);--text-3:var(--ems-slate-500);--border:var(--ems-slate-200);--border-2:var(--ems-slate-100);--success:var(--ems-success);--danger:var(--ems-danger);--warn:var(--ems-warning);--radius:6px}
+*{box-sizing:border-box}
+body{margin:0;padding:22px;background:#f8fafc;color:var(--text);font-family:var(--ems-font);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+.panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px}
+.panel-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.panel-head h2{margin:0;font-size:19px;font-weight:600}
+.panel-head p{margin:5px 0 0;color:var(--text-3);font-size:13px}
+.panel-head .acts{margin-left:auto;display:flex;gap:9px}
+.btn{border:1px solid var(--primary);background:var(--primary);color:#fff;padding:7px 16px;border-radius:var(--radius);cursor:pointer}
+.btn:hover{background:#0047ab;border-color:#0047ab}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--text);border-color:var(--border)}
+.btn.ghost:hover{color:var(--primary);border-color:var(--primary)}
+.btn.sm{padding:5px 12px;font-size:13px}
+
+
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.input{padding:7px 11px;border:1px solid var(--border);border-radius:var(--radius);outline:none;background:#fff}
+.input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+#q{flex:1;min-width:200px;max-width:330px}
+.chk-inline{display:flex;align-items:center;gap:7px;color:var(--text-2);font-size:13px;cursor:pointer}
+
+.bulk{display:none;align-items:center;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius);padding:9px 13px;margin-bottom:12px;font-size:13px}
+.bulk.show{display:flex}
+.bulk .n{margin-right:auto;color:var(--text-2)}
+.bulk .n b{color:var(--text)}
+
+.tbl{width:100%;border-collapse:collapse;table-layout:fixed}
+.tbl th{text-align:left;font-size:13px;font-weight:600;padding:11px 12px;background:#f8fafc;border-bottom:1px solid var(--border)}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--border-2);vertical-align:middle}
+.tbl tbody tr:hover{background:#f8fafc}
+.tbl tbody tr.sel{background:#eff6ff}
+.tbl .num{text-align:center}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{color:var(--text-3);font-size:12px}
+.who{display:flex;align-items:center;gap:9px;min-width:0}
+.ava{width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#f1f5f9;color:var(--text-2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;border:1px solid;white-space:nowrap}
+.tag.on{color:var(--success);background:#ecfdf5;border-color:#a7f3d0}
+.tag.off{color:var(--text-2);background:#f1f5f9;border-color:var(--border)}
+.tag.grp{color:var(--primary);background:#eff6ff;border-color:#bfdbfe}
+.tag.ov{color:var(--warn);background:#fffbeb;border-color:#fcd34d;margin-top:4px;cursor:pointer}
+.tag.none{color:var(--text-3);background:#f8fafc;border-color:var(--border-2)}
+.tag.adm{color:var(--warn);background:#fffbeb;border-color:#fcd34d;margin-top:4px}
+.sum{display:flex;justify-content:space-between;gap:16px;padding-top:14px;color:var(--text-2);font-size:13px;flex-wrap:wrap}
+.empty{padding:34px 0;text-align:center;color:var(--text-3)}
+
+.kebab{background:none;border:1px solid transparent;border-radius:4px;cursor:pointer;color:var(--text-2);padding:2px 8px;font-size:17px;line-height:1.2}
+.kebab:hover,.kebab.on{background:#f1f5f9;color:var(--primary)}
+.menu{position:fixed;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(15,23,42,.16);padding:4px 0;min-width:216px;z-index:30}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:8px 15px;cursor:pointer}
+.menu button:hover{background:#eff6ff;color:var(--primary)}
+.menu button:disabled{color:var(--text-3);cursor:not-allowed;background:none}
+.menu button.del{color:var(--danger)}
+.menu button.del:hover{background:#fef2f2}
+.menu hr{border:0;border-top:1px solid var(--border-2);margin:4px 0}
+
+.mask{position:fixed;inset:0;background:rgba(2,6,23,.5);display:none;align-items:flex-start;justify-content:center;padding:44px 16px;z-index:40}
+.mask.show{display:flex}
+.box{background:#fff;border-radius:8px;width:min(660px,100%);max-height:88vh;overflow:auto;padding:22px 24px}
+.box.wide{width:min(1020px,100%)}
+.box h3{margin:0 0 4px;font-size:17px}
+.box .head-sub{color:var(--text-3);font-size:13px;margin-bottom:18px}
+.field{margin-bottom:14px}
+.field label{display:block;margin-bottom:6px;font-size:13px;color:var(--text-2)}
+.field .input{width:100%}
+.field .note{color:var(--text-3);font-size:12.5px;margin-top:6px}
+.field .warn{color:var(--danger);font-size:12.5px;margin-top:6px;display:none}
+.tag.link{color:var(--text-2);background:#f8fafc;border-color:var(--border);cursor:pointer}
+.tag.link:hover{color:var(--primary);border-color:var(--primary)}
+.foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.foot .left{margin-right:auto;color:var(--text-3);font-size:13px;align-self:center}
+.stat{background:#f8fafc;border:1px solid var(--border-2);border-radius:var(--radius);padding:10px 13px;margin-bottom:12px;font-size:13px;color:var(--text-2)}
+.stat b{color:var(--text)}
+.warnbox{background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--radius);padding:10px 13px;margin-bottom:12px;font-size:13px;color:#92400e}
+.check{display:flex;align-items:flex-start;gap:9px;margin-bottom:10px;font-size:13.5px}
+.ms{position:relative}
+.ms-ctl{min-height:38px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;
+  padding:5px 30px 5px 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;cursor:pointer}
+.ms.open .ms-ctl{border-color:var(--primary);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.ms-ar{position:absolute;right:11px;top:11px;color:var(--text-3);font-size:11px;pointer-events:none}
+.ms-ph{color:var(--text-3)}
+.chip{display:inline-flex;align-items:center;gap:7px;background:#eff6ff;border:1px solid #bfdbfe;
+  color:var(--primary);border-radius:4px;padding:2px 6px 2px 9px;font-size:12.5px;white-space:nowrap}
+.chip i{font-style:normal;cursor:pointer;color:var(--text-3);font-size:15px;line-height:1}
+.chip i:hover{color:var(--danger)}
+.ms-menu{display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;
+  border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(15,23,42,.16);
+  max-height:216px;overflow:auto;z-index:6;padding:4px 0}
+.ms.open .ms-menu{display:block}
+.ms-opt{display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;font-size:13.5px}
+.ms-opt:hover{background:#eff6ff}
+.ms-empty{padding:10px 12px;color:var(--text-3);font-size:13px}
+.check input{margin:3px 0 0}
+
+.mtoolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.mtoolbar #mq{flex:1;min-width:180px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin-bottom:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.legend .g{background:#d1fae5;border:1px solid #6ee7b7}
+.legend .r{background:#fee2e2;border:1px solid #fca5a5}
+.legend .b{background:#f1f5f9;border:1px solid var(--border)}
+.mx{width:100%;border-collapse:collapse;table-layout:fixed}
+.mx th{font-size:12.5px;font-weight:600;padding:9px 10px;background:#f8fafc;border-bottom:1px solid var(--border);text-align:center;position:sticky;top:0;z-index:2}
+.mx th:first-child{text-align:left}
+.mx td{padding:7px 10px;border-bottom:1px solid var(--border-2);text-align:center}
+.mx td:first-child{text-align:left}
+.mx tr.mod td{background:#f1f5f9;font-weight:600;font-size:13px}
+.mx tr.mod .cnt{float:right;font-weight:400;font-size:12px;color:var(--text-3)}
+.mx tbody tr:hover td{background:#f8fafc}
+.mx tbody tr.mod:hover td{background:#e2e8f0}
+.mx .scr small{color:var(--text-3);font-size:11.5px}
+.mx td.exs{text-align:left;padding:6px 10px}
+.ex{display:inline-flex;align-items:center;gap:5px;margin:2px 12px 2px 0;font-size:12.5px;white-space:nowrap;cursor:pointer}
+.ex>span:last-child{color:var(--text-2)}
+.cell{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:2px 6px;border-radius:4px;border:1px solid transparent}
+.cell.add{background:#d1fae5;border-color:#6ee7b7}
+.cell.rev{background:#fee2e2;border-color:#fca5a5}
+.cell b{font-size:11px;font-weight:700}
+.cell.add b{color:#047857}
+.cell.rev b{color:#b91c1c}
+.reset{color:var(--primary);cursor:pointer;font-size:12px}
+.reset:hover{text-decoration:underline}
+input[type=checkbox]{width:15px;height:15px;margin:0;accent-color:var(--primary);cursor:pointer}
+input[type=checkbox]:disabled{cursor:not-allowed;opacity:.35}
+.na{color:var(--text-3);font-size:12px}
+@media(max-width:1100px){.col-email{display:none}}
+@media(max-width:900px){.col-unit{display:none}}
+@media(max-width:720px){body{padding:12px}.panel{padding:16px 14px}.col-last,.col-type{display:none}}
+
+/* ===== tinh chỉnh hiển thị cho Inter ===== */
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+h1,h2,h3,h4{letter-spacing:-.015em}
+a{color:var(--ems-primary-hover)}
+.stat .v,.stat div b,.pager,.prog .pv,input.sc{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>Tài khoản</h2>
+    </div>
+    <div class="acts">
+      <button class="btn ghost" id="btnExport">Xuất Excel</button>
+      <button class="btn" id="btnNew">+ Thêm tài khoản</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <input class="input" id="q" placeholder="Tìm theo tài khoản, họ tên hoặc email">
+    <select class="input" id="fType"></select>
+    <select class="input" id="fGroup"></select>
+    <select class="input" id="fUnit"></select>
+    <select class="input" id="fStatus">
+      <option value="">Tất cả trạng thái</option>
+      <option value="1">Hoạt động</option>
+      <option value="0">Ngừng</option>
+    </select>
+  </div>
+
+  <div class="bulk" id="bulk">
+    <span class="n">Đã chọn <b id="bn">0</b> tài khoản</span>
+    <button class="btn sm" id="bGroup">Đổi nhóm quyền</button>
+    <button class="btn ghost sm" id="bLock">Ngừng hoạt động</button>
+    <button class="btn ghost sm" id="bClear">Bỏ chọn</button>
+  </div>
+
+  <div id="table"></div>
+</div>
+
+<div class="mask" id="mask"><div class="box" id="box"></div></div>
+
+<script>
+/* ---------- danh mục màn hình ---------- */
+const ACTS = [['view','Xem'],['add','Thêm'],['edit','Sửa'],['del','Xoá']];
+const CORE = ['view','add','edit','del'];
+const EX = {dup:'Nhân bản', imp:'Import dữ liệu', exp:'Xuất Excel', approve:'Duyệt', mix:'Trộn đề',
+  score:'Tính điểm', recheck:'Phúc khảo', assign:'Phân công giảng viên', move:'Chuyển lớp',
+  stop:'Đình chỉ thi', retry:'Cấp lại lượt thi', handle:'Xử lý báo cáo', perm:'Phân quyền chức năng',
+  pw:'Đặt lại mật khẩu', grp:'Đổi nhóm quyền', lock:'Khoá / mở khoá',
+  enroll:'Đăng ký khoá học', learn:'Vào học', join:'Vào lớp trực tuyến', cal:'Thêm vào lịch cá nhân',
+  work:'Làm bài', submit:'Nộp bài', ans:'Xem đáp án', down:'Tải chứng chỉ', share:'Chia sẻ',
+  pay:'Thanh toán', inv:'Xuất hoá đơn', chpw:'Đổi mật khẩu'};
+const MODULES = [
+  {code:'DT', name:'Đào tạo', screens:[
+    {code:'CTDT', name:'Chương trình đào tạo', ex:['dup','exp']},
+    {code:'NDDT', name:'Nội dung đào tạo', ex:['dup','imp','exp']},
+    {code:'LOP',  name:'Lớp học', ex:['dup','assign','lock','exp']},
+    {code:'GHIDANH', name:'Ghi danh học viên', ex:['imp','move','exp']}
+  ]},
+  {code:'KT', name:'Khảo thí', screens:[
+    {code:'KYTHI', name:'Kỳ thi', ex:['dup','approve','exp']},
+    {code:'BODE',  name:'Bộ đề thi', ex:['dup','approve']},
+    {code:'DETHI', name:'Đề thi', ex:['dup','mix','approve','exp']},
+    {code:'NHCH',  name:'Ngân hàng câu hỏi', hint:'gồm nhập câu hỏi từ EMI', ex:['imp','approve','exp']},
+    {code:'CHAM',  name:'Chấm bài', ex:['score','recheck','lock','exp']},
+    {code:'GSAT',  name:'Giám sát thi', acts:['view','edit'], ex:['stop','retry']},
+    {code:'LUYEN', name:'Luyện thi', ex:['dup','exp']},
+    {code:'BCCH',  name:'Báo cáo câu hỏi', acts:['view','edit'], ex:['handle','exp']}
+  ]},
+  {code:'QL', name:'Quản lý', screens:[
+    {code:'TK',   name:'Tài khoản', ex:['grp','perm','pw','lock','exp']},
+    {code:'NQ',   name:'Nhóm quyền người dùng', ex:['dup','perm']},
+    {code:'HV',   name:'Học viên', ex:['imp','exp']},
+    {code:'GV',   name:'Giảng viên', ex:['imp','exp']},
+    {code:'DVPB', name:'Đơn vị - phòng ban', ex:['dup','exp']},
+    {code:'PHI',  name:'Danh mục phí', ex:['dup','exp']},
+    {code:'NKHD', name:'Nhật ký hoạt động', acts:['view'], hint:'dữ liệu chỉ đọc', ex:['exp']}
+  ]},
+  {code:'HS', name:'Chỉ số hiệu suất', screens:[
+    {code:'NTM', name:'Nhóm thông minh', ex:['dup','exp']},
+    {code:'BCTH', name:'Báo cáo tổng hợp', acts:['view'], ex:['exp']}
+  ]}
+];
+
+/* ---------- danh mục màn hình cổng học viên ---------- */
+const LMODULES = [
+  {code:'HT', name:'Học tập', screens:[
+    {code:'L-HOME',   name:'Trang chủ', acts:['view']},
+    {code:'L-COURSE', name:'Khoá học của tôi', acts:['view'], ex:['enroll','learn']},
+    {code:'L-SCHED',  name:'Lịch học & lớp trực tuyến', acts:['view'], ex:['join','cal']},
+    {code:'L-TASK',   name:'Bài tập & kiểm tra', acts:['view'], ex:['work','submit','ans']}
+  ]},
+  {code:'KQ', name:'Kết quả & tài chính', screens:[
+    {code:'L-RESULT', name:'Kết quả học tập', acts:['view'], ex:['exp','recheck']},
+    {code:'L-CERT',   name:'Chứng chỉ & văn bằng', acts:['view'], ex:['down','share']},
+    {code:'L-FEE',    name:'Học phí & đơn hàng', acts:['view'], ex:['pay','inv']}
+  ]},
+  {code:'CN', name:'Tương tác & tài khoản', screens:[
+    {code:'L-QA',      name:'Hỏi đáp & thảo luận', acts:['view','add','edit','del']},
+    {code:'L-PROFILE', name:'Hồ sơ & bảo mật', acts:['view','edit'], ex:['chpw']}
+  ]}
+];
+const PORTAL = {admin:{name:'Cổng quản trị', mods:MODULES}, learner:{name:'Cổng học viên', mods:LMODULES}};
+const portalOf = g => g && g.learner ? 'learner' : 'admin';
+const modsOf = g => PORTAL[portalOf(g)].mods;
+
+const core = s => s.acts || CORE;
+const exs = s => s.ex || [];
+const acts = s => core(s).concat(exs(s));
+const screensOf = mods => mods.reduce((a,m)=>a.concat(m.screens),[]);
+const allScreens = () => screensOf(MODULES).concat(screensOf(LMODULES));
+const scrOf = c => allScreens().find(s=>s.code===c);
+const totalOf = mods => screensOf(mods).reduce((n,s)=>n+acts(s).length,0);
+const key = (sc,a) => sc+'.'+a;
+function P(map){
+  const out=[];
+  Object.keys(map).forEach(sc=>{ const s=scrOf(sc); if(!s) return;
+    map[sc].split(' ').forEach(a=>{ if(acts(s).includes(a)) out.push(key(sc,a)); }); });
+  return out;
+}
+const FULL = (mods) => screensOf(mods||MODULES).reduce((a,s)=>a.concat(acts(s).map(x=>key(s.code,x))),[]);
+
+/* ---------- nhóm quyền — nguồn từ màn hình Nhóm quyền người dùng ---------- */
+const GROUPS = [
+  {code:'GRP-ADMIN', name:'Quản trị hệ thống', active:true, perms:FULL()},
+  {code:'GRP-DT', name:'Chuyên viên đào tạo', active:true, perms:P({CTDT:'view add edit del dup exp',
+    NDDT:'view add edit del dup imp exp', LOP:'view add edit del dup assign exp',
+    GHIDANH:'view add edit imp move exp', HV:'view add edit imp exp', GV:'view', DVPB:'view', BCTH:'view exp'})},
+  {code:'GRP-KT', name:'Chuyên viên khảo thí', active:true, perms:P({KYTHI:'view add edit del dup approve exp',
+    BODE:'view add edit del dup approve', DETHI:'view add edit del dup mix approve exp',
+    NHCH:'view add edit del imp approve exp', CHAM:'view add edit score recheck exp',
+    GSAT:'view edit stop retry', LUYEN:'view add edit dup', BCCH:'view edit handle exp',
+    LOP:'view', HV:'view', BCTH:'view exp'})},
+  {code:'GRP-GV', name:'Giảng viên', active:true, perms:P({CTDT:'view', NDDT:'view add edit imp',
+    LOP:'view edit', GHIDANH:'view', DETHI:'view add edit mix', NHCH:'view add edit imp',
+    CHAM:'view add edit score', GSAT:'view edit stop', LUYEN:'view', BCCH:'view edit', HV:'view'})},
+  {code:'GRP-TG', name:'Trợ giảng', active:true, perms:P({NDDT:'view', LOP:'view', GHIDANH:'view', CHAM:'view add',
+    LUYEN:'view', HV:'view'})},
+  {code:'GRP-TC', name:'Kế toán học phí', active:true, perms:P({PHI:'view add edit exp', HV:'view exp',
+    LOP:'view', GHIDANH:'view', BCTH:'view exp'})},
+  {code:'GRP-HV', name:'Học viên', active:true, def:true, learner:true,
+    perms:P({'L-HOME':'view', 'L-COURSE':'view learn', 'L-SCHED':'view join cal', 'L-TASK':'view work submit',
+      'L-RESULT':'view exp', 'L-CERT':'view down', 'L-FEE':'view pay', 'L-QA':'view add edit',
+      'L-PROFILE':'view edit chpw'})},
+  {code:'GRP-HV-VIP', name:'Học viên khoá tài trợ', active:true, learner:true,
+    perms:P({'L-COURSE':'enroll', 'L-TASK':'ans', 'L-CERT':'share', 'L-FEE':'inv'})},
+  {code:'GRP-ATTT', name:'An toàn thông tin', active:false, perms:P({NKHD:'view exp', TK:'view', NQ:'view'})}
+];
+const grp = c => GROUPS.find(g=>g.code===c);
+const defGroup = () => GROUPS.find(g=>g.def && g.active);
+
+/* ---------- phân loại tài khoản ---------- */
+const TYPES = [
+  {code:'QTHT', name:'Quản trị hệ thống'},
+  {code:'NS',   name:'Nhân sự'},
+  {code:'HV',   name:'Học viên'}
+];
+const typeName = c => (TYPES.find(t=>t.code===c)||{name:c}).name;
+
+const UNITS = ['Trung tâm CNTT','Phòng Đào tạo','Phòng Khảo thí','Khoa Ngoại ngữ','Phòng Tài chính','—'];
+
+/* ---------- hồ sơ nhân sự và học viên — nguồn từ màn hình Giảng viên / Học viên ---------- */
+const STAFF = [
+  {id:'NV-0105', name:'Ms Phương', unit:'Phòng Đào tạo', title:'Chuyên viên đào tạo', active:true},
+  {id:'NV-0106', name:'Nguyễn Thị Lan', unit:'Phòng Đào tạo', title:'Chuyên viên đào tạo', active:true},
+  {id:'NV-0107', name:'Phạm Thu Hoa', unit:'Phòng Đào tạo', title:'Chuyên viên đào tạo', active:false},
+  {id:'NV-0210', name:'Đỗ Văn Khánh', unit:'Phòng Khảo thí', title:'Chuyên viên khảo thí', active:true},
+  {id:'NV-0211', name:'Lê Thu Trang', unit:'Phòng Khảo thí', title:'Chuyên viên khảo thí', active:true},
+  {id:'NV-0312', name:'Trần Quang Minh', unit:'Khoa Ngoại ngữ', title:'Giảng viên cơ hữu', active:true},
+  {id:'NV-0313', name:'Vũ Thị Huệ', unit:'Khoa Ngoại ngữ', title:'Giảng viên cơ hữu', active:true},
+  {id:'NV-0314', name:'Ngô Anh Tuấn', unit:'Khoa Ngoại ngữ', title:'Giảng viên thỉnh giảng', active:false},
+  {id:'NV-0320', name:'Bùi Khánh Linh', unit:'Khoa Ngoại ngữ', title:'Trợ giảng', active:true},
+  {id:'NV-0405', name:'Nguyễn Kim Anh', unit:'Phòng Tài chính', title:'Kế toán học phí', active:true},
+  {id:'NV-0330', name:'Hoàng Minh Đức', unit:'Khoa Ngoại ngữ', title:'Giảng viên thỉnh giảng', active:true}
+];
+const LEARNERS = [
+  {id:'HV-24001', name:'Lê Hoài Nam', unit:'GT-A2.03', title:'Giao tiếp A2 · nhập học 03/2026', active:true},
+  {id:'HV-24002', name:'Đặng Bảo Chi', unit:'IELTS-F.01', title:'IELTS Foundation · nhập học 05/2026', active:true},
+  {id:'HV-24003', name:'Trịnh Gia Bảo', unit:'JLPT-N5.02', title:'JLPT N5 · nhập học 06/2026', active:true},
+  {id:'HV-24004', name:'Phan Thảo My', unit:'GT-A2.03', title:'Giao tiếp A2 · nhập học 03/2026', active:true},
+  {id:'HV-23087', name:'Vương Đình Hải', unit:'BE-01.01', title:'Business English · bảo lưu', active:false}
+];
+const PKIND = {staff:{name:'Hồ sơ nhân sự', list:STAFF, pre:'NV'}, learner:{name:'Hồ sơ học viên', list:LEARNERS, pre:'HV'}};
+const prof = a => a.pKind && a.pId ? (PKIND[a.pKind].list.find(x=>x.id===a.pId)||null) : null;
+const linkedBy = (kind,id) => ACCOUNTS.find(x=>x.pKind===kind && x.pId===id);
+/* phân loại tài khoản quy định loại hồ sơ được phép liên kết; quản trị hệ thống không gắn hồ sơ */
+const kindOfType = t => t==='HV' ? 'learner' : (t==='NS' ? 'staff' : null);
+
+const ACCOUNTS = [
+  {user:'admin02', name:'Quản trị viên', email:'admin02@ego.local', type:'QTHT', admin:true, groups:['GRP-ADMIN'],
+   unit:'Trung tâm CNTT', active:true, last:'15:00 15/07/26', grant:[], revoke:[], pKind:null, pId:null},
+  {user:'sysops', name:'Vận hành hệ thống', email:'sysops@ego.local', type:'QTHT', admin:true, groups:['GRP-ADMIN'],
+   unit:'Trung tâm CNTT', active:true, last:'09:12 03/09/26', grant:[], revoke:P({NKHD:'view'}), pKind:null, pId:null},
+  {user:'norole', name:'User không quyền', email:'norole@ego.local', type:'NS', admin:true, groups:[],
+   unit:'—', active:true, last:'14:30 15/07/26', grant:[], revoke:[], pKind:null, pId:null},
+  {user:'phuong', name:'Ms Phương', email:'phuong@ego.local', type:'NS', admin:true, groups:['GRP-DT'],
+   unit:'Phòng Đào tạo', active:true, last:'14:08 23/12/25', grant:P({PHI:'view'}), revoke:[], pKind:'staff', pId:'NV-0105'},
+  {user:'lan.nt', name:'Nguyễn Thị Lan', email:'lan.nt@ego.local', type:'NS', admin:true, groups:['GRP-DT'],
+   unit:'Phòng Đào tạo', active:true, last:'08:45 02/09/26', grant:[], revoke:[], pKind:'staff', pId:'NV-0106'},
+  {user:'hoa.pt', name:'Phạm Thu Hoa', email:'hoa.pt@ego.local', type:'NS', admin:true, groups:['GRP-DT'],
+   unit:'Phòng Đào tạo', active:false, last:'17:20 30/05/26', grant:[], revoke:[], pKind:'staff', pId:'NV-0107'},
+  {user:'khanh.dv', name:'Đỗ Văn Khánh', email:'khanh.dv@ego.local', type:'NS', admin:true, groups:['GRP-KT'],
+   unit:'Phòng Khảo thí', active:true, last:'16:02 03/09/26', grant:[], revoke:P({DETHI:'del', NHCH:'del'}), pKind:'staff', pId:'NV-0210'},
+  {user:'trang.lt', name:'Lê Thu Trang', email:'trang.lt@ego.local', type:'NS', admin:true, groups:['GRP-KT','GRP-DT'],
+   unit:'Phòng Khảo thí', active:true, last:'10:31 01/09/26', grant:[], revoke:[], pKind:'staff', pId:'NV-0211'},
+  {user:'gv.minh', name:'Trần Quang Minh', email:'minh.tq@ego.local', type:'NS', admin:false, groups:['GRP-GV'],
+   unit:'Khoa Ngoại ngữ', active:true, last:'20:15 03/09/26', grant:P({KYTHI:'view'}), revoke:[], pKind:'staff', pId:'NV-0312'},
+  {user:'gv.hue', name:'Vũ Thị Huệ', email:'hue.vt@ego.local', type:'NS', admin:false, groups:['GRP-GV'],
+   unit:'Khoa Ngoại ngữ', active:true, last:'19:40 02/09/26', grant:[], revoke:[], pKind:'staff', pId:'NV-0313'},
+  {user:'gv.tuan', name:'Ngô Anh Tuấn', email:'tuan.na@ego.local', type:'NS', admin:false, groups:['GRP-GV'],
+   unit:'Khoa Ngoại ngữ', active:false, last:'08:05 12/04/26', grant:[], revoke:[], pKind:'staff', pId:'NV-0314'},
+  {user:'tg.linh', name:'Bùi Khánh Linh', email:'linh.bk@ego.local', type:'NS', admin:false, groups:['GRP-TG','GRP-GV'],
+   unit:'Khoa Ngoại ngữ', active:true, last:'21:03 03/09/26', grant:P({LUYEN:'add'}), revoke:[], pKind:'staff', pId:'NV-0320'},
+  {user:'ketoan01', name:'Kế toán', email:'kt@ego.local', type:'NS', admin:true, groups:['GRP-TC'],
+   unit:'Phòng Tài chính', active:false, last:'—', grant:[], revoke:[], pKind:'staff', pId:'NV-0405'},
+  {user:'hv.nam', name:'Lê Hoài Nam', email:'nam.lh@ego.local', type:'HV', admin:false, groups:['GRP-HV'],
+   unit:'—', active:true, last:'22:47 03/09/26', grant:[], revoke:[], pKind:'learner', pId:'HV-24001'},
+  {user:'hv.chi', name:'Đặng Bảo Chi', email:'chi.db@ego.local', type:'HV', admin:false, groups:['GRP-HV'],
+   unit:'—', active:true, last:'07:58 04/09/26', grant:[], revoke:[], pKind:'learner', pId:'HV-24002'}
+];
+
+let tab = '';
+let sel = new Set();
+
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const initials = n => n.trim().split(/\s+/).slice(-2).map(x=>x[0]).join('').toUpperCase();
+const gs = a => (a.groups||[]).map(grp).filter(Boolean);
+const base = a => { const out=[]; gs(a).forEach(g=>g.perms.forEach(k=>{ if(!out.includes(k)) out.push(k); })); return out; };
+const accPortal = a => a.type==='HV' ? 'learner' : 'admin';
+const accMods = a => PORTAL[accPortal(a)].mods;
+const accTotal = a => totalOf(accMods(a));
+const groupsFor = a => GROUPS.filter(g=>portalOf(g)===accPortal(a));
+const eff = a => base(a).filter(k=>!a.revoke.includes(k)).concat(a.grant.filter(k=>!base(a).includes(k)));
+const hasOv = a => a.grant.length + a.revoke.length > 0;
+
+/* ---------- bộ lọc ---------- */
+function fillFilters(){
+  document.getElementById('fType').innerHTML =
+    '<option value="">Tất cả phân loại ('+ACCOUNTS.length+')</option>'+
+    TYPES.map(t=>'<option value="'+t.code+'"'+(tab===t.code?' selected':'')+'>'+esc(t.name)+
+      ' ('+ACCOUNTS.filter(a=>a.type===t.code).length+')</option>').join('');
+
+  const g = document.getElementById('fGroup');
+  if(!g.options.length){
+    g.innerHTML = '<option value="">Tất cả nhóm quyền</option><option value="__none">Chưa gán nhóm quyền</option>'+
+      GROUPS.map(x=>'<option value="'+esc(x.code)+'">'+esc(x.name)+'</option>').join('');
+    const u = document.getElementById('fUnit');
+    u.innerHTML = '<option value="">Tất cả đơn vị</option>'+
+      UNITS.filter(x=>x!=='—').map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+  }
+}
+
+function filtered(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const fg = document.getElementById('fGroup').value;
+  const fu = document.getElementById('fUnit').value;
+  const fs = document.getElementById('fStatus').value;
+
+  return ACCOUNTS.filter(a=>
+    (!tab || a.type===tab) &&
+    (!q || a.user.toLowerCase().includes(q) || a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q)) &&
+    (!fg || (fg==='__none' ? !a.groups.length : a.groups.includes(fg))) &&
+    (!fu || a.unit===fu) &&
+    (fs==='' || String(a.active?1:0)===fs));
+}
+
+/* ---------- combobox chọn nhiều ---------- */
+function multiSelect(el, opts, sel, onChange, ph){
+  const toggle = (v, on)=>{
+    const i = sel.indexOf(v);
+    if(on){ if(i<0) sel.push(v); } else if(i>=0) sel.splice(i,1);
+    const open = el.classList.contains('open');
+    draw();
+    if(open) el.classList.add('open');
+    if(onChange) onChange();
+  };
+  function draw(){
+    el.className = 'ms';
+    el.innerHTML =
+      '<div class="ms-ctl">'+
+        (sel.length ? sel.map(c=>{ const o = opts.find(x=>x.v===c);
+            return '<span class="chip">'+esc(o?o.n:c)+'<i data-rm="'+esc(c)+'">×</i></span>'; }).join('')
+          : '<span class="ms-ph">'+esc(ph||'Chọn nhóm quyền')+'</span>')+
+        '<span class="ms-ar">▾</span></div>'+
+      '<div class="ms-menu">'+(opts.length
+        ? opts.map(o=>'<label class="ms-opt"><input type="checkbox" data-v="'+esc(o.v)+'"'+
+            (sel.includes(o.v)?' checked':'')+'><span>'+esc(o.n)+'</span></label>').join('')
+        : '<div class="ms-empty">Không có nhóm quyền phù hợp</div>')+'</div>';
+    el.querySelector('.ms-ctl').onclick = e=>{
+      const rm = e.target.dataset ? e.target.dataset.rm : null;
+      if(rm){ e.stopPropagation(); toggle(rm, false); return; }
+      el.classList.toggle('open');
+    };
+    el.querySelectorAll('[data-v]').forEach(cb=>cb.onchange=()=>toggle(cb.dataset.v, cb.checked));
+  }
+  draw();
+}
+document.addEventListener('click', e=>{
+  document.querySelectorAll('.ms.open').forEach(el=>{ if(!el.contains(e.target)) el.classList.remove('open'); });
+});
+
+/* ---------- danh sách ---------- */
+function drawTable(){
+  const rows = filtered();
+
+  document.getElementById('table').innerHTML =
+    '<table class="tbl"><colgroup><col style="width:42px"><col style="width:180px"><col style="width:170px">'+
+      '<col class="col-email" style="width:196px"><col class="col-type" style="width:158px"><col style="width:186px">'+
+      '<col class="col-unit" style="width:150px"><col style="width:104px"><col class="col-last" style="width:126px"><col style="width:50px"></colgroup>'+
+    '<thead><tr><th class="num"><input type="checkbox" id="ckAll"></th><th>Tài khoản</th><th>Họ tên</th>'+
+      '<th class="col-email">Email</th><th class="col-type">Phân loại</th><th>Nhóm quyền</th>'+
+      '<th class="col-unit">Đơn vị</th><th>Trạng thái</th><th class="col-last">Lần cuối đăng nhập</th><th></th></tr></thead><tbody>'+
+    (rows.length ? rows.map(a=>{
+      const gl = gs(a);
+      const pf = prof(a);
+      return '<tr class="'+(sel.has(a.user)?'sel':'')+'">'+
+        '<td class="num"><input type="checkbox" data-ck="'+esc(a.user)+'"'+(sel.has(a.user)?' checked':'')+'></td>'+
+        '<td><div class="who"><span class="ava">'+esc(initials(a.name))+'</span>'+
+          '<span class="ell"><b>'+esc(a.user)+'</b></span></div></td>'+
+        '<td><div class="ell">'+esc(a.name)+'</div>'+
+          (pf ? '<div class="ell sub">'+esc(pf.id)+' · '+esc(pf.title)+'</div>'
+              : '<span class="tag none">Chưa liên kết hồ sơ</span>')+'</td>'+
+        '<td class="col-email"><div class="ell sub">'+esc(a.email)+'</div></td>'+
+        '<td class="col-type"><div class="ell">'+esc(typeName(a.type))+'</div>'+
+          (a.admin ? '<span class="tag adm">Admin hệ thống</span>' : '')+'</td>'+
+        '<td>'+(gl.length
+            ? gl.map(x=>'<span class="tag grp">'+esc(x.name)+(x.active?'':' · ngừng')+'</span>').join(' ')
+            : '<span class="tag none">Chưa gán nhóm quyền</span>')+'</td>'+
+        '<td class="col-unit"><div class="ell sub">'+esc(a.unit)+'</div></td>'+
+        '<td>'+(a.active?'<span class="tag on">Hoạt động</span>':'<span class="tag off">Ngừng</span>')+'</td>'+
+        '<td class="col-last sub">'+esc(a.last)+'</td>'+
+        '<td class="num"><button class="kebab" data-u="'+esc(a.user)+'" title="Thao tác">⋯</button></td></tr>';
+    }).join('') : '<tr><td colspan="10"><div class="empty">Không có tài khoản nào khớp điều kiện lọc</div></td></tr>')+
+    '</tbody></table>'+
+    '<div class="sum"><span>Hiển thị '+rows.length+'/'+ACCOUNTS.length+' tài khoản · '+
+      ACCOUNTS.filter(hasOv).length+' tài khoản có tuỳ chỉnh quyền riêng</span>'+
+      '<span>'+ACCOUNTS.filter(a=>!a.groups.length).length+' tài khoản chưa gán nhóm quyền · '+
+      ACCOUNTS.filter(a=>!prof(a)).length+' tài khoản chưa liên kết hồ sơ</span></div>';
+
+  const all = document.getElementById('ckAll');
+  all.checked = rows.length>0 && rows.every(a=>sel.has(a.user));
+  all.onchange = ()=>{ rows.forEach(a=> all.checked ? sel.add(a.user) : sel.delete(a.user)); drawTable(); };
+  document.querySelectorAll('[data-ck]').forEach(cb=>cb.onchange=()=>{
+    cb.checked ? sel.add(cb.dataset.ck) : sel.delete(cb.dataset.ck); drawTable(); });
+  document.querySelectorAll('#table .kebab').forEach(b=>{
+    b.onclick = e=>{ e.stopPropagation(); menu(b, acc(b.dataset.u)); }; });
+
+  document.getElementById('bulk').classList.toggle('show', sel.size>0);
+  document.getElementById('bn').textContent = sel.size;
+}
+const acc = u => ACCOUNTS.find(a=>a.user===u);
+
+/* ---------- menu thao tác ---------- */
+let menuEl = null;
+function closeMenu(){
+  if(menuEl){ menuEl.remove(); menuEl = null; }
+  document.querySelectorAll('.kebab.on').forEach(b=>b.classList.remove('on'));
+}
+function menu(btn, a){
+  const wasOpen = btn.classList.contains('on');
+  closeMenu();
+  if(wasOpen) return;
+  btn.classList.add('on');
+
+  menuEl = document.createElement('div');
+  menuEl.className = 'menu';
+  menuEl.innerHTML =
+    '<button data-act="info">Cập nhật tài khoản</button>'+
+    '<button data-act="group">Áp dụng nhóm quyền</button>'+
+    '<button data-act="perm">Cập nhật phân quyền</button>'+
+    '<hr><button data-act="toggle">'+(a.active?'Ngừng hoạt động':'Cho hoạt động lại')+'</button>'+
+    '<button data-act="reset-pw">Yêu cầu đặt lại mật khẩu</button>';
+  document.body.appendChild(menuEl);
+
+  const r = btn.getBoundingClientRect(), w = menuEl.offsetWidth, h = menuEl.offsetHeight;
+  menuEl.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + 'px';
+  menuEl.style.top  = (r.bottom + h + 8 > innerHeight ? r.top - h - 4 : r.bottom + 4) + 'px';
+
+  menuEl.querySelectorAll('button').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.disabled) return;
+      const act = b.dataset.act;
+      closeMenu();
+      if(act==='info') infoBox(a);
+      else if(act==='group') groupBox([a]);
+      else if(act==='perm') permBox(a);
+      else if(act==='toggle'){
+        if(!confirm((a.active?'Ngừng hoạt động':'Cho hoạt động lại')+' tài khoản "'+a.user+'"?')) return;
+        a.active = !a.active; drawTable();
+      }
+      else alert('Gửi yêu cầu đặt lại mật khẩu cho "'+a.user+'" sang Keycloak. Mật khẩu không lưu trong LMS.');
+    };
+  });
+}
+document.addEventListener('click', closeMenu);
+window.addEventListener('resize', closeMenu);
+window.addEventListener('scroll', closeMenu, true);
+
+/* ---------- thông tin tài khoản ---------- */
+function infoBox(a){
+  const box = document.getElementById('box');
+  box.classList.remove('wide');
+  document.getElementById('mask').classList.add('show');
+  const d = {user:a.user, name:a.name, email:a.email, type:a.type, admin:a.admin, unit:a.unit,
+             groups:(a.groups||[]).slice(), active:a.active, pKind:a.pKind, pId:a.pId};
+
+  function profileField(){
+    const allow = kindOfType(d.type);
+    if(!allow){ d.pKind = null; d.pId = null; return ''; }
+    if(d.pKind && d.pKind!==allow){ d.pKind = null; d.pId = null; }
+    const list = PKIND[allow].list;
+    const taken = x => { const o = linkedBy(allow, x.id); return o && o.user!==a.user ? o.user : null; };
+    return '<div class="field"><label>Hồ sơ liên kết · '+PKIND[allow].name+'</label>'+
+      '<select class="input" id="iProf">'+
+        '<option value="">— Chưa liên kết hồ sơ —</option>'+
+        list.map(x=>{ const t = taken(x);
+          return '<option value="'+esc(x.id)+'"'+(d.pId===x.id?' selected':'')+(t?' disabled':'')+'>'+
+            esc(x.id)+' · '+esc(x.name)+' · '+esc(x.unit)+
+            (t ? ' — đã liên kết tài khoản '+esc(t) : (x.active?'':' — hồ sơ đang ngừng'))+'</option>'; }).join('')+
+      '</select></div>';
+  }
+
+  function render(){
+    box.innerHTML =
+      '<h3>Cập nhật tài khoản</h3><div class="head-sub">'+esc(a.user)+' · tạo trên Keycloak realm ego</div>'+
+      '<div class="field"><label>Tên đăng nhập</label><input class="input" id="iUser" value="'+esc(d.user)+'">'+
+        '<div class="warn" id="wUser">Tên đăng nhập đã tồn tại</div></div>'+
+      '<div class="field"><label>Họ tên</label><input class="input" id="iName" value="'+esc(d.name)+'"></div>'+
+      '<div class="field"><label>Email</label><input class="input" id="iEmail" value="'+esc(d.email)+'">'+
+        '<div class="warn" id="wEmail">Email không hợp lệ hoặc đã dùng cho tài khoản khác</div></div>'+
+      '<div class="field"><label>Phân loại tài khoản</label><select class="input" id="iType">'+
+        TYPES.map(t=>'<option value="'+t.code+'"'+(d.type===t.code?' selected':'')+'>'+esc(t.name)+'</option>').join('')+
+        '</select></div>'+
+      '<div class="check"><input type="checkbox" id="iAdmin"'+(d.admin?' checked':'')+'>'+
+        '<label for="iAdmin">Admin hệ thống</label></div>'+
+      '<div class="field"><label>Đơn vị - phòng ban</label><select class="input" id="iUnit">'+
+        UNITS.map(u=>'<option'+(d.unit===u?' selected':'')+'>'+esc(u)+'</option>').join('')+'</select></div>'+
+      profileField()+
+      '<div class="field"><label>Nhóm quyền · '+esc(PORTAL[accPortal(d)].name)+'</label>'+
+        '<div class="ms" id="iGroups"></div>'+
+        '<div class="note" id="iGnote"></div></div>'+
+      '<div class="field"><label>Trạng thái sử dụng</label><select class="input" id="iAct">'+
+        '<option value="1"'+(d.active?' selected':'')+'>Hoạt động</option>'+
+        '<option value="0"'+(d.active?'':' selected')+'>Ngừng</option></select></div>'+
+      '<div class="foot"><span class="left">Lần cuối đăng nhập: '+esc(a.last)+'</span>'+
+        '<button class="btn ghost" id="iCancel">Huỷ</button><button class="btn" id="iOk">Lưu</button></div>';
+
+    const q = id => box.querySelector(id);
+    q('#iUser').oninput = e=>{ d.user = e.target.value; checkUser(); };
+    q('#iName').oninput = e=>{ d.name = e.target.value; };
+    q('#iEmail').oninput = e=>{ d.email = e.target.value; checkEmail(); };
+    q('#iUnit').onchange = e=>{ d.unit = e.target.value; };
+    multiSelect(box.querySelector('#iGroups'),
+      groupsFor(d).map(x=>({v:x.code, n:x.name + (x.active?'':' · đang ngừng')})), d.groups, gnote);
+    gnote();
+    q('#iAct').onchange = e=>{ d.active = e.target.value==='1'; };
+    q('#iAdmin').onchange = e=>{ d.admin = e.target.checked; };
+    q('#iType').onchange = e=>{
+      const old = kindOfType(d.type), oldP = accPortal(d);
+      d.type = e.target.value;
+      if(accPortal(d)!==oldP && d.groups.length){
+        d.groups = [];
+        alert('Phân loại mới thuộc '+PORTAL[accPortal(d)].name.toLowerCase()+', các nhóm quyền đã gán không còn phù hợp và đã được gỡ.');
+      }
+      if(kindOfType(d.type)!==old && d.pId)
+        alert('Phân loại mới không dùng loại hồ sơ đang liên kết, liên kết cũ đã được gỡ.');
+      render();
+    };
+    const pf = q('#iProf');
+    if(pf) pf.onchange = e=>{
+      d.pId = e.target.value || null;
+      d.pKind = d.pId ? kindOfType(d.type) : null;
+    };
+    q('#iCancel').onclick = close;
+    q('#iOk').onclick = save;
+  }
+
+  function gnote(){
+    const el = box.querySelector('#iGnote'); if(!el) return;
+    const u = base({groups:d.groups});
+    el.textContent = d.groups.length
+      ? 'Quyền hiệu lực là hợp của '+d.groups.length+' nhóm: '+u.length+'/'+totalOf(PORTAL[accPortal(d)].mods)+' quyền. '+
+        'Bỏ một nhóm chỉ mất phần quyền các nhóm còn lại không có.'
+      : 'Chưa gán nhóm nào, tài khoản đăng nhập được nhưng không thấy màn hình chức năng.';
+  }
+
+  const mailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  function checkUser(){
+    const bad = !d.user.trim() || ACCOUNTS.some(x=>x!==a && x.user===d.user.trim());
+    const el = box.querySelector('#wUser'); if(el) el.style.display = bad ? 'block' : 'none';
+    return !bad;
+  }
+  function checkEmail(){
+    const v = d.email.trim();
+    const bad = !mailOk(v) || ACCOUNTS.some(x=>x!==a && x.email.toLowerCase()===v.toLowerCase());
+    const el = box.querySelector('#wEmail'); if(el) el.style.display = bad ? 'block' : 'none';
+    return !bad;
+  }
+
+  function save(){
+    if(!d.name.trim()){ alert('Nhập họ tên.'); return; }
+    if(!checkUser()){ alert('Tên đăng nhập trống hoặc đã được dùng cho tài khoản khác.'); return; }
+    if(!checkEmail()){ alert('Email không hợp lệ hoặc đã được dùng cho tài khoản khác.'); return; }
+    if(kindOfType(d.type)){
+      if(d.pId){
+        const o = linkedBy(d.pKind, d.pId);
+        if(o && o.user!==a.user){ alert('Hồ sơ '+d.pId+' đã liên kết với tài khoản '+o.user+'. Gỡ liên kết ở tài khoản đó trước.'); return; }
+      }else if(!confirm('Lưu tài khoản mà không liên kết hồ sơ? Tài khoản sẽ không gắn được vào lớp học và báo cáo nhân sự.')) return;
+    }
+    if(d.user.trim()!==a.user &&
+       !confirm('Đổi tên đăng nhập từ "'+a.user+'" thành "'+d.user.trim()+'"?\nThay đổi được đẩy sang Keycloak, người dùng phải đăng nhập lại bằng tên mới.')) return;
+
+    a.user = d.user.trim(); a.name = d.name.trim(); a.email = d.email.trim();
+    a.type = d.type; a.admin = d.admin; a.unit = d.unit; a.groups = d.groups.slice(); a.active = d.active;
+    a.pKind = d.pKind; a.pId = d.pId;
+    sel.clear(); close(); fillFilters(); drawTable();
+  }
+
+  render();
+}
+
+/* ---------- đổi nhóm quyền ---------- */
+function groupBox(list){
+  const box = document.getElementById('box');
+  box.classList.remove('wide');
+  const one = list.length===1;
+  const ovCount = list.filter(hasOv).length;
+  const ports = Array.from(new Set(list.map(accPortal)));
+  if(ports.length > 1){
+    alert('Danh sách đang chọn có cả tài khoản cổng quản trị và cổng học viên. Hai cổng dùng danh mục nhóm quyền khác nhau, chọn riêng từng nhóm để gán.');
+    return;
+  }
+  const avail = GROUPS.filter(g=>portalOf(g)===ports[0]);
+  let pick = one ? (list[0].groups||[]).slice() : [];
+
+  box.innerHTML =
+    '<h3>Áp dụng nhóm quyền</h3>'+
+    '<div class="head-sub">'+(one ? esc(list[0].user)+' · '+esc(list[0].name)
+      : 'Áp dụng cho '+list.length+' tài khoản đã chọn')+'</div>'+
+    (one ? '' : '<div class="stat">'+list.slice(0,6).map(a=>esc(a.user)).join(', ')+
+      (list.length>6 ? ' và '+(list.length-6)+' tài khoản khác' : '')+'</div>')+
+    (one ? '' : '<div class="field"><label>Cách áp dụng</label><select class="input" id="gMode">'+
+      '<option value="set">Thay thế toàn bộ nhóm quyền hiện có</option>'+
+      '<option value="add">Bổ sung thêm nhóm quyền đã chọn</option>'+
+      '<option value="rm">Gỡ các nhóm quyền đã chọn</option></select></div>')+
+    '<div class="field"><label>Nhóm quyền · '+esc(PORTAL[ports[0]].name)+'</label>'+
+      '<div class="ms" id="gPick"></div>'+
+      '<div class="note" id="gNote"></div></div>'+
+    (ovCount ? '<div class="warnbox">'+ovCount+' tài khoản trong danh sách đang có tuỳ chỉnh quyền riêng. '+
+      'Giữ lại thì phần cấp thêm và thu hồi vẫn tính trên nền nhóm quyền mới.</div>'+
+      '<div class="check"><input type="checkbox" id="gClear"><label for="gClear">Xoá tuỳ chỉnh riêng, đưa các tài khoản về đúng quyền của nhóm</label></div>' : '')+
+    '<div class="foot"><button class="btn ghost" id="gCancel">Huỷ</button><button class="btn" id="gOk">Áp dụng</button></div>';
+  document.getElementById('mask').classList.add('show');
+
+  const note = ()=>{
+    const u = base({groups:pick});
+    box.querySelector('#gNote').textContent = pick.length
+      ? 'Đã chọn '+pick.length+' nhóm, hợp lại là '+u.length+'/'+totalOf(PORTAL[ports[0]].mods)+' quyền.'
+      : 'Chưa chọn nhóm nào.';
+  };
+  multiSelect(box.querySelector('#gPick'),
+    avail.map(g=>({v:g.code, n:g.name + (g.active?'':' · đang ngừng')})), pick, note);
+  note();
+
+  box.querySelector('#gCancel').onclick = close;
+  box.querySelector('#gOk').onclick = ()=>{
+    const mode = one ? 'set' : box.querySelector('#gMode').value;
+    if(mode!=='set' && !pick.length){ alert('Chọn ít nhất một nhóm quyền.'); return; }
+    if(!confirm('Áp dụng cho '+list.length+' tài khoản? Thay đổi có hiệu lực ở lần đăng nhập kế tiếp.')) return;
+    const clear = box.querySelector('#gClear');
+    list.forEach(a=>{
+      const cur = (a.groups||[]).slice();
+      if(mode==='set') a.groups = pick.slice();
+      else if(mode==='add') a.groups = cur.concat(pick.filter(c=>!cur.includes(c)));
+      else a.groups = cur.filter(c=>!pick.includes(c));
+      if(clear && clear.checked){ a.grant=[]; a.revoke=[]; }
+    });
+    sel.clear(); close(); drawTable();
+  };
+}
+
+/* ---------- tuỳ chỉnh quyền riêng ---------- */
+function setEff(a, sc, act, on){
+  const b = base(a), k = key(sc,act), inB = b.includes(k);
+  const rm = arr => { const i=arr.indexOf(k); if(i>=0) arr.splice(i,1); };
+  rm(a.grant); rm(a.revoke);
+  if(on !== inB) (on ? a.grant : a.revoke).push(k);
+  if(on && act!=='view' && acts(scrOf(sc)).includes('view')) setEff(a, sc, 'view', true);
+  if(!on && act==='view') acts(scrOf(sc)).forEach(x=>{ if(x!=='view') setEff(a, sc, x, false); });
+}
+
+function permBox(a){
+  const box = document.getElementById('box');
+  box.classList.add('wide');
+  document.getElementById('mask').classList.add('show');
+  let filter = '', onlyDiff = false;
+  const snapG = a.grant.slice(), snapR = a.revoke.slice();
+
+  const MODS = accMods(a), TT = accTotal(a);
+  const modScreens = m => m.screens.filter(s=>{
+    if(onlyDiff && !acts(s).some(x=>a.grant.includes(key(s.code,x)) || a.revoke.includes(key(s.code,x)))) return false;
+    return !filter || s.name.toLowerCase().includes(filter) || m.name.toLowerCase().includes(filter);
+  });
+
+  function render(){
+    const b = base(a), e = eff(a), gl = gs(a);
+    let mx = '<table class="mx"><colgroup><col style="width:180px"><col style="width:72px"><col style="width:72px"><col style="width:72px"><col style="width:72px"><col><col style="width:112px"></colgroup>'+
+      '<thead><tr><th>Màn hình chức năng</th>'+ACTS.map(x=>'<th>'+x[1]+'</th>').join('')+
+      '<th style="text-align:left">Thao tác khác</th><th>Theo nhóm</th></tr></thead><tbody>';
+    let shown = 0;
+    MODS.forEach(m=>{
+      const list = modScreens(m);
+      if(!list.length) return;
+      shown += list.length;
+      const tot = list.reduce((n,s)=>n+acts(s).length,0);
+      const on = list.reduce((n,s)=>n+acts(s).filter(x=>e.includes(key(s.code,x))).length,0);
+      mx += '<tr class="mod"><td colspan="7">'+esc(m.name)+'<span class="cnt">'+on+'/'+tot+' quyền</span></td></tr>';
+      list.forEach(s=>{
+        const av = acts(s);
+        const diff = av.some(x=>a.grant.includes(key(s.code,x)) || a.revoke.includes(key(s.code,x)));
+        mx += '<tr><td><span class="scr">'+esc(s.name)+'</span></td>'+
+          ACTS.map(x=>{
+            if(!av.includes(x[0])) return '<td><span class="na">—</span></td>';
+            const k = key(s.code,x[0]);
+            const cls = a.grant.includes(k) ? ' add' : (a.revoke.includes(k) ? ' rev' : '');
+            const mark = a.grant.includes(k) ? '<b>+</b>' : (a.revoke.includes(k) ? '<b>−</b>' : '');
+            return '<td><span class="cell'+cls+'"><input type="checkbox" data-sc="'+s.code+'" data-a="'+x[0]+'"'+
+              (e.includes(k)?' checked':'')+'>'+mark+'</span></td>';
+          }).join('')+
+          '<td class="exs">'+(exs(s).length
+            ? exs(s).map(x=>{ const k = key(s.code,x);
+                const cls = a.grant.includes(k) ? ' add' : (a.revoke.includes(k) ? ' rev' : '');
+                const mark = a.grant.includes(k) ? '<b>+</b>' : (a.revoke.includes(k) ? '<b>−</b>' : '');
+                return '<label class="ex"><span class="cell'+cls+'"><input type="checkbox" data-sc="'+s.code+
+                  '" data-a="'+x+'"'+(e.includes(k)?' checked':'')+'>'+mark+'</span><span>'+esc(EX[x]||x)+'</span></label>';
+              }).join('')
+            : '<span class="na">—</span>')+'</td>'+
+          '<td>'+(diff ? '<span class="reset" data-row="'+s.code+'">Về theo nhóm</span>'
+                       : '<span class="sub">'+av.filter(x=>b.includes(key(s.code,x))).length+'/'+av.length+'</span>')+'</td></tr>';
+      });
+    });
+    mx += '</tbody></table>';
+
+    box.innerHTML =
+      '<h3>Cập nhật phân quyền: '+esc(a.name)+'</h3>'+
+      '<div class="head-sub">'+esc(a.user)+' · '+esc(PORTAL[accPortal(a)].name)+'</div>'+
+      '<div class="stat">Nền quyền là hợp của '+(gl.length?'<b>'+gl.map(x=>esc(x.name)).join('</b>, <b>')+'</b>':'<b>chưa gán nhóm</b>')+
+        ' ('+b.length+' quyền). Tài khoản này được cấp thêm <b>'+a.grant.length+'</b>, thu hồi <b>'+a.revoke.length+
+        '</b> · quyền hiệu lực <b>'+e.length+'/'+TT+'</b>. '+
+        'Sửa nhóm quyền về sau vẫn tự động áp dụng cho tài khoản, phần chênh lệch dưới đây được giữ nguyên.</div>'+
+      '<div class="legend"><span><i class="b"></i>Theo nhóm quyền</span>'+
+        '<span><i class="g"></i>Cấp thêm riêng cho tài khoản</span>'+
+        '<span><i class="r"></i>Thu hồi riêng khỏi tài khoản</span></div>'+
+      '<div class="mtoolbar"><input class="input" id="mq" placeholder="Lọc theo tên màn hình" value="'+esc(filter)+'">'+
+        '<label class="chk-inline"><input type="checkbox" id="onlyDiff"'+(onlyDiff?' checked':'')+'> Chỉ hiện phần khác nhóm</label>'+
+        '<button class="btn ghost sm" id="resetAll"'+(hasOv(a)?'':' disabled')+'>Khôi phục đúng theo nhóm</button></div>'+
+      (shown ? mx : '<div class="empty">Không có màn hình nào khớp điều kiện</div>')+
+      '<div class="foot"><span class="left">Tuỳ chỉnh chỉ áp dụng cho tài khoản này, không ảnh hưởng tài khoản khác cùng nhóm</span>'+
+        '<button class="btn ghost" id="pCancel">Huỷ</button><button class="btn" id="pOk">Lưu tuỳ chỉnh</button></div>';
+
+    const mq = box.querySelector('#mq');
+    mq.oninput = ()=>{ filter = mq.value.trim().toLowerCase(); render();
+      const el = document.getElementById('mq'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); };
+    box.querySelector('#onlyDiff').onchange = ev=>{ onlyDiff = ev.target.checked; render(); };
+    box.querySelector('#resetAll').onclick = ()=>{
+      if(!confirm('Bỏ toàn bộ tuỳ chỉnh riêng, đưa tài khoản về đúng quyền của '+
+        (gs(a).length?gs(a).map(x=>x.name).join(', '):'nhóm đã gán')+'?')) return;
+      a.grant=[]; a.revoke=[]; render();
+    };
+    box.querySelectorAll('[data-sc]').forEach(cb=>cb.onchange=()=>{
+      setEff(a, cb.dataset.sc, cb.dataset.a, cb.checked); render(); });
+    box.querySelectorAll('[data-row]').forEach(el=>el.onclick=()=>{
+      const sc = el.dataset.row;
+      acts(scrOf(sc)).forEach(x=>{
+        const k = key(sc,x);
+        [a.grant, a.revoke].forEach(arr=>{ const i=arr.indexOf(k); if(i>=0) arr.splice(i,1); });
+      });
+      render(); });
+    box.querySelector('#pCancel').onclick = ()=>{ a.grant = snapG; a.revoke = snapR; close(); drawTable(); };
+    box.querySelector('#pOk').onclick = ()=>{ close(); drawTable(); };
+  }
+  render();
+}
+
+/* ---------- thêm tài khoản ---------- */
+function newBox(){
+  const box = document.getElementById('box');
+  box.classList.remove('wide');
+  box.innerHTML =
+    '<h3>Thêm tài khoản</h3><div class="head-sub"></div>'+
+    '<div class="field"><label>Tên đăng nhập</label><input class="input" id="nUser" placeholder="vd: gv.hoa"></div>'+
+    '<div class="field"><label>Họ tên</label><input class="input" id="nName"></div>'+
+    '<div class="field"><label>Email</label><input class="input" id="nEmail" placeholder="ten@ego.local"></div>'+
+    '<div class="field"><label>Phân loại tài khoản</label><select class="input" id="nType">'+
+      TYPES.map(t=>'<option value="'+t.code+'">'+esc(t.name)+'</option>').join('')+'</select></div>'+
+    '<div class="check"><input type="checkbox" id="nAdmin"><label for="nAdmin">Admin hệ thống</label></div>'+
+    '<div class="field"><label>Đơn vị - phòng ban</label><select class="input" id="nUnit">'+
+      UNITS.map(u=>'<option>'+esc(u)+'</option>').join('')+'</select></div>'+
+    '<div class="field" id="nProfWrap"><label id="nProfLb">Hồ sơ liên kết</label><select class="input" id="nProf"></select></div>'+
+    '<div class="field"><label id="nGroupLb">Nhóm quyền</label><div class="ms" id="nGroups"></div></div>'+
+    '<div class="foot"><button class="btn ghost" id="nCancel">Huỷ</button><button class="btn" id="nOk">Lưu</button></div>';
+  document.getElementById('mask').classList.add('show');
+
+  const picked = [];
+  const fillProf = ()=>{
+    const t = box.querySelector('#nType').value;
+    const kind = kindOfType(t);
+    const wrap = box.querySelector('#nProfWrap');
+    wrap.style.display = kind ? '' : 'none';
+    const port = t==='HV' ? 'learner' : 'admin', dg = defGroup();
+    box.querySelector('#nGroupLb').textContent = 'Nhóm quyền · ' + PORTAL[port].name;
+    picked.length = 0;
+    if(port==='learner' && dg) picked.push(dg.code);
+    multiSelect(box.querySelector('#nGroups'),
+      GROUPS.filter(g=>g.active && portalOf(g)===port).map(g=>({v:g.code, n:g.name})), picked);
+    if(!kind){ box.querySelector('#nProf').innerHTML = ''; return; }
+    box.querySelector('#nProfLb').textContent = 'Hồ sơ liên kết · ' + PKIND[kind].name;
+    box.querySelector('#nProf').innerHTML = '<option value="">— Chưa liên kết —</option>'+
+      PKIND[kind].list.map(x=>{ const o = linkedBy(kind, x.id);
+        return '<option value="'+esc(x.id)+'"'+(o?' disabled':'')+'>'+esc(x.id)+' · '+esc(x.name)+' · '+esc(x.unit)+
+          (o?' — đã liên kết '+esc(o.user):'')+'</option>'; }).join('');
+  };
+  box.querySelector('#nType').onchange = fillProf;
+  fillProf();
+
+  box.querySelector('#nCancel').onclick = close;
+  box.querySelector('#nOk').onclick = ()=>{
+    const u = box.querySelector('#nUser').value.trim();
+    const n = box.querySelector('#nName').value.trim();
+    if(!u || !n){ alert('Nhập tên đăng nhập và họ tên.'); return; }
+    if(ACCOUNTS.some(x=>x.user===u)){ alert('Tài khoản '+u+' đã có trong danh sách.'); return; }
+    const t = box.querySelector('#nType').value;
+    const pid = kindOfType(t) ? (box.querySelector('#nProf').value || null) : null;
+
+    ACCOUNTS.push({user:u, name:n, email:box.querySelector('#nEmail').value.trim() || u+'@ego.local',
+      type:t, admin:box.querySelector('#nAdmin').checked, groups:picked.slice(),
+      unit:box.querySelector('#nUnit').value, active:true, last:'—', grant:[], revoke:[],
+      pKind: pid ? kindOfType(t) : null, pId: pid});
+    close(); fillFilters(); drawTable();
+  };
+}
+
+function close(){
+  document.getElementById('mask').classList.remove('show');
+  document.getElementById('box').classList.remove('wide');
+}
+document.getElementById('mask').onclick = e=>{ if(e.target.id==='mask') close(); };
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ close(); closeMenu(); } });
+
+document.getElementById('btnNew').onclick = newBox;
+document.getElementById('btnExport').onclick = ()=>alert('Kết xuất '+filtered().length+' tài khoản theo điều kiện lọc đang áp dụng.');
+['q','fGroup','fUnit','fStatus'].forEach(id=>{
+  const el = document.getElementById(id);
+  el[id==='q'?'oninput':'onchange'] = ()=>{ sel.clear(); drawTable(); };
+});
+document.getElementById('fType').onchange = e=>{ tab = e.target.value; sel.clear(); drawTable(); };
+document.getElementById('bGroup').onclick = ()=>groupBox(Array.from(sel).map(acc));
+document.getElementById('bClear').onclick = ()=>{ sel.clear(); drawTable(); };
+document.getElementById('bLock').onclick = ()=>{
+  const list = Array.from(sel).map(acc);
+  if(!confirm('Ngừng hoạt động '+list.length+' tài khoản? Người dùng bị đăng xuất khỏi phiên hiện tại.')) return;
+  list.forEach(a=>a.active=false); sel.clear(); drawTable();
+};
+
+fillFilters();
+drawTable();
+</script>
+</body>
+</html>

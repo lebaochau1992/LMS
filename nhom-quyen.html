@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nhóm quyền người dùng</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ===== EDOT Portal Design System — token màu & kiểu chữ ===== */
+:root{
+  /* thương hiệu edot */
+  --ems-brand-blue:#0091d4;
+  --ems-brand-gradient:linear-gradient(100deg,#0076d7 0%,#00bbff 48%,#006bd1 100%);
+  /* primary (navy sản phẩm) */
+  --ems-primary:#00327d;
+  --ems-primary-hover:#0047ab;
+  --ems-primary-soft:#eff6ff;
+  --ems-primary-soft-100:#dbeafe;
+  /* neutral (slate) */
+  --ems-white:#ffffff;
+  --ems-slate-50:#f8fafc;
+  --ems-slate-100:#f1f5f9;
+  --ems-slate-200:#e2e8f0;
+  --ems-slate-300:#cbd5e1;
+  --ems-slate-400:#94a3b8;
+  --ems-slate-500:#64748b;
+  --ems-slate-600:#475569;
+  --ems-slate-900:#0f172a;
+  --ems-ink:#011129;
+  /* semantic */
+  --ems-success:#059669;  --ems-success-soft:#ecfdf5;  --ems-success-border:#a7f3d0;
+  --ems-danger:#dc2626;   --ems-danger-strong:#b91c1c; --ems-danger-soft:#fef2f2; --ems-danger-border:#fecaca;
+  --ems-warning:#d97706;  --ems-warning-soft:#fffbeb;  --ems-warning-border:#fcd34d; --ems-warning-text:#92400e;
+  /* kiểu chữ */
+  --ems-font:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ems-font-mono:ui-monospace,Menlo,Consolas,monospace;
+  --ems-tracking-wide:.05em;
+  /* focus */
+  --ems-focus-ring:rgba(59,130,246,.15);
+  --ems-focus-border:#0047ab;
+}
+
+:root{--primary:var(--ems-primary);--text:var(--ems-slate-900);--text-2:var(--ems-slate-600);--text-3:var(--ems-slate-500);--border:var(--ems-slate-200);--border-2:var(--ems-slate-100);--success:var(--ems-success);--danger:var(--ems-danger);--warn:var(--ems-warning);--radius:6px}
+*{box-sizing:border-box}
+body{margin:0;padding:22px;background:#f8fafc;color:var(--text);font-family:var(--ems-font);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+.panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px}
+.panel-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+.panel-head h2{margin:0;font-size:19px;font-weight:600}
+.panel-head p{margin:5px 0 0;color:var(--text-3);font-size:13px}
+.panel-head .btn{margin-left:auto}
+.btn{border:1px solid var(--primary);background:var(--primary);color:#fff;padding:7px 16px;border-radius:var(--radius);cursor:pointer}
+.btn:hover{background:#0047ab;border-color:#0047ab}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--text);border-color:var(--border)}
+.btn.ghost:hover{color:var(--primary);border-color:var(--primary)}
+.btn.sm{padding:5px 12px;font-size:13px}
+.note-bar{display:flex;gap:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--text-2)}
+.note-bar b{color:var(--text);display:block;margin-bottom:2px;font-size:13.5px}
+.note-bar .ic{color:var(--primary);font-size:15px;line-height:1.3}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.input{padding:7px 11px;border:1px solid var(--border);border-radius:var(--radius);outline:none;background:#fff}
+.input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+#q{flex:1;min-width:200px;max-width:360px}
+
+.tbl{width:100%;border-collapse:collapse;table-layout:fixed}
+.tbl th{text-align:left;font-size:13px;font-weight:600;padding:12px 14px;background:#f8fafc;border-bottom:1px solid var(--border)}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--border-2);vertical-align:middle}
+.tbl tbody tr:hover{background:#f8fafc}
+.tbl .num{text-align:center}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.code{color:var(--text-2);font-variant-numeric:tabular-nums}
+.sub{color:var(--text-3);font-size:12px}
+.tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;border:1px solid;white-space:nowrap}
+.tag.on{color:var(--success);background:#ecfdf5;border-color:#a7f3d0}
+.tag.off{color:var(--text-2);background:#f1f5f9;border-color:var(--border)}
+.tag.sys{color:var(--warn);background:#fffbeb;border-color:#fcd34d}
+.link{color:var(--primary);cursor:pointer}
+.link:hover{text-decoration:underline}
+.bar{width:74px;height:5px;background:var(--border-2);border-radius:3px;overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;background:var(--primary)}
+.sum{display:flex;justify-content:space-between;gap:16px;padding-top:14px;color:var(--text-2);font-size:13px;flex-wrap:wrap}
+.empty{padding:34px 0;text-align:center;color:var(--text-3)}
+
+.kebab{background:none;border:1px solid transparent;border-radius:4px;cursor:pointer;color:var(--text-2);padding:2px 8px;font-size:17px;line-height:1.2}
+.kebab:hover,.kebab.on{background:#f1f5f9;color:var(--primary)}
+.menu{position:fixed;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(15,23,42,.16);padding:4px 0;min-width:200px;z-index:30}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:8px 15px;cursor:pointer}
+.menu button:hover{background:#eff6ff;color:var(--primary)}
+.menu button:disabled{color:var(--text-3);cursor:not-allowed;background:none}
+.menu button.del{color:var(--danger)}
+.menu button.del:hover{background:#fef2f2}
+.menu hr{border:0;border-top:1px solid var(--border-2);margin:4px 0}
+
+.mask{position:fixed;inset:0;background:rgba(2,6,23,.5);display:none;align-items:flex-start;justify-content:center;padding:44px 16px;z-index:40}
+.mask.show{display:flex}
+.box{background:#fff;border-radius:8px;width:min(680px,100%);max-height:88vh;overflow:auto;padding:22px 24px}
+.box.wide{width:min(1000px,100%)}
+.box h3{margin:0 0 4px;font-size:17px}
+.box .head-sub{color:var(--text-3);font-size:13px;margin-bottom:18px}
+.field{margin-bottom:14px}
+.field label{display:block;margin-bottom:6px;font-size:13px;color:var(--text-2)}
+.field .input{width:100%}
+.field textarea.input{resize:vertical;min-height:64px}
+.field .note{color:var(--text-3);font-size:12.5px;margin-top:6px}
+.field .warn{color:var(--danger);font-size:12.5px;margin-top:6px;display:none}
+.foot{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.foot .left{margin-right:auto;color:var(--text-3);font-size:13px;align-self:center}
+
+.mtoolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.mtoolbar #mq{flex:1;min-width:180px}
+.stat{background:#f8fafc;border:1px solid var(--border-2);border-radius:var(--radius);padding:10px 13px;margin-bottom:12px;font-size:13px;color:var(--text-2)}
+.stat b{color:var(--text)}
+.mx{width:100%;border-collapse:collapse;table-layout:fixed}
+.mx th{font-size:12.5px;font-weight:600;padding:9px 10px;background:#f8fafc;border-bottom:1px solid var(--border);text-align:center;position:sticky;top:0;z-index:2}
+.mx th:first-child{text-align:left}
+.mx th .all{display:block;font-weight:400;font-size:11.5px;color:var(--primary);cursor:pointer;margin-top:2px}
+.mx th .all:hover{text-decoration:underline}
+.mx td{padding:8px 10px;border-bottom:1px solid var(--border-2);text-align:center}
+.mx td:first-child{text-align:left}
+.mx tr.mod td{background:#f1f5f9;font-weight:600;font-size:13px;padding:8px 10px}
+.mx tr.mod .modline{display:flex;align-items:center;gap:9px}
+.mx tr.mod .cnt{margin-left:auto;font-weight:400;font-size:12px;color:var(--text-3)}
+.mx tbody tr:hover td{background:#f8fafc}
+.mx tbody tr.mod:hover td{background:#e2e8f0}
+.mx .scr{display:block}
+.mx td.exs{text-align:left;padding:6px 10px}
+.ex{display:inline-flex;align-items:center;gap:5px;margin:2px 12px 2px 0;font-size:12.5px;white-space:nowrap;cursor:pointer}
+.ex span{color:var(--text-2)}
+.ex input:checked+span{color:var(--text)}
+.mx .scr small{color:var(--text-3);font-size:11.5px}
+input[type=checkbox]{width:15px;height:15px;margin:0;accent-color:var(--primary);cursor:pointer}
+input[type=checkbox]:disabled{cursor:not-allowed;opacity:.35}
+.na{color:var(--text-3);font-size:12px}
+@media(max-width:900px){.col-desc{display:none}}
+@media(max-width:720px){body{padding:12px}.panel{padding:16px 14px}.col-perm{display:none}}
+
+/* ===== tinh chỉnh hiển thị cho Inter ===== */
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+h1,h2,h3,h4{letter-spacing:-.015em}
+a{color:var(--ems-primary-hover)}
+.stat .v,.stat div b,.pager,.prog .pv,input.sc{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>Nhóm quyền người dùng</h2>
+      <p><span id="count">0</span> nhóm quyền · phân quyền theo từng màn hình và từng thao tác</p>
+    </div>
+    <button class="btn" id="btnNew">+ Tạo nhóm quyền</button>
+  </div>
+
+
+  <div class="filters">
+    <input class="input" id="q" placeholder="Tìm theo mã hoặc tên nhóm quyền">
+    <select class="input" id="fStatus">
+      <option value="">Tất cả trạng thái</option>
+      <option value="1">Hoạt động</option>
+      <option value="0">Ngừng</option>
+    </select>
+    <select class="input" id="fUse">
+      <option value="">Tất cả nhóm</option>
+      <option value="used">Đang có tài khoản dùng</option>
+      <option value="free">Chưa gán tài khoản nào</option>
+    </select>
+  </div>
+
+  <div id="table"></div>
+</div>
+
+<div class="mask" id="mask"><div class="box" id="box"></div></div>
+
+<script>
+/* ---------- danh mục màn hình theo menu hệ thống ---------- */
+const ACTS = [['view','Xem'],['add','Thêm'],['edit','Sửa'],['del','Xoá']];
+const CORE = ['view','add','edit','del'];
+const EX = {dup:'Nhân bản', imp:'Import dữ liệu', exp:'Xuất Excel', approve:'Duyệt', mix:'Trộn đề',
+  score:'Tính điểm', recheck:'Phúc khảo', assign:'Phân công giảng viên', move:'Chuyển lớp',
+  stop:'Đình chỉ thi', retry:'Cấp lại lượt thi', handle:'Xử lý báo cáo', perm:'Phân quyền chức năng',
+  pw:'Đặt lại mật khẩu', grp:'Đổi nhóm quyền', lock:'Khoá / mở khoá',
+  enroll:'Đăng ký khoá học', learn:'Vào học', join:'Vào lớp trực tuyến', cal:'Thêm vào lịch cá nhân',
+  work:'Làm bài', submit:'Nộp bài', ans:'Xem đáp án', down:'Tải chứng chỉ', share:'Chia sẻ',
+  pay:'Thanh toán', inv:'Xuất hoá đơn', chpw:'Đổi mật khẩu'};
+const MODULES = [
+  {code:'DT', name:'Đào tạo', screens:[
+    {code:'CTDT', name:'Chương trình đào tạo', ex:['dup','exp']},
+    {code:'NDDT', name:'Nội dung đào tạo', ex:['dup','imp','exp']},
+    {code:'LOP',  name:'Lớp học', ex:['dup','assign','lock','exp']},
+    {code:'GHIDANH', name:'Ghi danh học viên', ex:['imp','move','exp']}
+  ]},
+  {code:'KT', name:'Khảo thí', screens:[
+    {code:'KYTHI', name:'Kỳ thi', ex:['dup','approve','exp']},
+    {code:'BODE',  name:'Bộ đề thi', ex:['dup','approve']},
+    {code:'DETHI', name:'Đề thi', ex:['dup','mix','approve','exp']},
+    {code:'NHCH',  name:'Ngân hàng câu hỏi', hint:'gồm nhập câu hỏi từ EMI', ex:['imp','approve','exp']},
+    {code:'CHAM',  name:'Chấm bài', ex:['score','recheck','lock','exp']},
+    {code:'GSAT',  name:'Giám sát thi', acts:['view','edit'], ex:['stop','retry']},
+    {code:'LUYEN', name:'Luyện thi', ex:['dup','exp']},
+    {code:'BCCH',  name:'Báo cáo câu hỏi', acts:['view','edit'], ex:['handle','exp']}
+  ]},
+  {code:'QL', name:'Quản lý', screens:[
+    {code:'TK',   name:'Tài khoản', ex:['grp','perm','pw','lock','exp']},
+    {code:'NQ',   name:'Nhóm quyền người dùng', ex:['dup','perm']},
+    {code:'HV',   name:'Học viên', ex:['imp','exp']},
+    {code:'GV',   name:'Giảng viên', ex:['imp','exp']},
+    {code:'DVPB', name:'Đơn vị - phòng ban', ex:['dup','exp']},
+    {code:'PHI',  name:'Danh mục phí', ex:['dup','exp']},
+    {code:'NKHD', name:'Nhật ký hoạt động', acts:['view'], hint:'dữ liệu chỉ đọc', ex:['exp']}
+  ]},
+  {code:'HS', name:'Chỉ số hiệu suất', screens:[
+    {code:'NTM', name:'Nhóm thông minh', ex:['dup','exp']},
+    {code:'BCTH', name:'Báo cáo tổng hợp', acts:['view'], ex:['exp']}
+  ]}
+];
+
+/* ---------- danh mục màn hình cổng học viên ---------- */
+const LMODULES = [
+  {code:'HT', name:'Học tập', screens:[
+    {code:'L-HOME',   name:'Trang chủ', acts:['view']},
+    {code:'L-COURSE', name:'Khoá học của tôi', acts:['view'], ex:['enroll','learn']},
+    {code:'L-SCHED',  name:'Lịch học & lớp trực tuyến', acts:['view'], ex:['join','cal']},
+    {code:'L-TASK',   name:'Bài tập & kiểm tra', acts:['view'], ex:['work','submit','ans']}
+  ]},
+  {code:'KQ', name:'Kết quả & tài chính', screens:[
+    {code:'L-RESULT', name:'Kết quả học tập', acts:['view'], ex:['exp','recheck']},
+    {code:'L-CERT',   name:'Chứng chỉ & văn bằng', acts:['view'], ex:['down','share']},
+    {code:'L-FEE',    name:'Học phí & đơn hàng', acts:['view'], ex:['pay','inv']}
+  ]},
+  {code:'CN', name:'Tương tác & tài khoản', screens:[
+    {code:'L-QA',      name:'Hỏi đáp & thảo luận', acts:['view','add','edit','del']},
+    {code:'L-PROFILE', name:'Hồ sơ & bảo mật', acts:['view','edit'], ex:['chpw']}
+  ]}
+];
+const PORTAL = {admin:{name:'Cổng quản trị', mods:MODULES}, learner:{name:'Cổng học viên', mods:LMODULES}};
+const portalOf = g => g && g.learner ? 'learner' : 'admin';
+const modsOf = g => PORTAL[portalOf(g)].mods;
+
+const core = s => s.acts || CORE;
+const exs = s => s.ex || [];
+const acts = s => core(s).concat(exs(s));
+const screensOf = mods => mods.reduce((a,m)=>a.concat(m.screens),[]);
+const allScreens = () => screensOf(MODULES).concat(screensOf(LMODULES));
+const scrOf = c => allScreens().find(s=>s.code===c);
+const totalOf = mods => screensOf(mods).reduce((n,s)=>n+acts(s).length,0);
+const key = (sc,a) => sc+'.'+a;
+
+/* dựng nhanh tập quyền: {MÃ_MÀN_HÌNH: 'view add edit del'} */
+function P(map){
+  const out=[];
+  Object.keys(map).forEach(sc=>{ const s=scrOf(sc); if(!s) return;
+    map[sc].split(' ').forEach(a=>{ if(acts(s).includes(a)) out.push(key(sc,a)); }); });
+  return out;
+}
+const FULL = (mods) => screensOf(mods||MODULES).reduce((a,s)=>a.concat(acts(s).map(x=>key(s.code,x))),[]);
+
+const GROUPS = [
+  {code:'GRP-ADMIN', name:'Quản trị hệ thống', desc:'Toàn quyền trên mọi phân hệ, gồm cả cấu hình phân quyền và nhật ký.',
+   system:true, active:true, upd:'12/07/26', perms:FULL()},
+  {code:'GRP-DT', name:'Chuyên viên đào tạo', desc:'Quản lý chương trình, nội dung, lớp học và ghi danh học viên.',
+   active:true, upd:'28/07/26', perms:P({CTDT:'view add edit del dup exp', NDDT:'view add edit del dup imp exp',
+     LOP:'view add edit del dup assign exp', GHIDANH:'view add edit imp move exp',
+     HV:'view add edit imp exp', GV:'view', DVPB:'view', BCTH:'view exp'})},
+  {code:'GRP-KT', name:'Chuyên viên khảo thí', desc:'Tổ chức kỳ thi, quản lý ngân hàng câu hỏi, đề thi và chấm bài.',
+   active:true, upd:'05/08/26', perms:P({KYTHI:'view add edit del dup approve exp', BODE:'view add edit del dup approve',
+     DETHI:'view add edit del dup mix approve exp', NHCH:'view add edit del imp approve exp',
+     CHAM:'view add edit score recheck exp', GSAT:'view edit stop retry',
+     LUYEN:'view add edit dup', BCCH:'view edit handle exp', LOP:'view', HV:'view', BCTH:'view exp'})},
+  {code:'GRP-GV', name:'Giảng viên', desc:'Giảng dạy lớp được phân công, ra đề, chấm bài và theo dõi học viên trong lớp.',
+   active:true, upd:'19/08/26', perms:P({CTDT:'view', NDDT:'view add edit imp', LOP:'view edit', GHIDANH:'view',
+     DETHI:'view add edit mix', NHCH:'view add edit imp', CHAM:'view add edit score',
+     GSAT:'view edit stop', LUYEN:'view', BCCH:'view edit', HV:'view'})},
+  {code:'GRP-TG', name:'Trợ giảng', desc:'Hỗ trợ giảng viên: điểm danh, nhắc học, chấm bài tự luận theo phân công.',
+   active:true, upd:'19/08/26', perms:P({NDDT:'view', LOP:'view', GHIDANH:'view', CHAM:'view add', LUYEN:'view', HV:'view'})},
+  {code:'GRP-TC', name:'Kế toán học phí', desc:'Theo dõi danh mục phí, đối chiếu thu học phí theo lớp và học viên.',
+   active:true, upd:'02/06/26', perms:P({PHI:'view add edit exp', HV:'view exp', LOP:'view', GHIDANH:'view', BCTH:'view exp'})},
+  {code:'GRP-HV', name:'Học viên', desc:'Nhóm mặc định của tài khoản học viên trên cổng học trực tuyến.',
+   system:true, learner:true, def:true, active:true, upd:'12/07/26',
+   perms:P({'L-HOME':'view', 'L-COURSE':'view learn', 'L-SCHED':'view join cal', 'L-TASK':'view work submit',
+     'L-RESULT':'view exp', 'L-CERT':'view down', 'L-FEE':'view pay', 'L-QA':'view add edit',
+     'L-PROFILE':'view edit chpw'})},
+  {code:'GRP-ATTT', name:'An toàn thông tin', desc:'Chỉ tra cứu nhật ký hoạt động và cấu hình phân quyền, không can thiệp dữ liệu nghiệp vụ.',
+   active:false, upd:'14/03/26', perms:P({NKHD:'view exp', TK:'view', NQ:'view'})}
+];
+
+/* tài khoản tham chiếu — nguồn từ màn hình Tài khoản */
+const ACCOUNTS = [
+  {user:'admin02', name:'Quản trị viên', group:'GRP-ADMIN', type:'Quản trị hệ thống', active:true},
+  {user:'sysops',  name:'Vận hành hệ thống', group:'GRP-ADMIN', type:'Quản trị hệ thống', active:true},
+  {user:'phuong',  name:'Ms Phương', group:'GRP-DT', type:'Admin hệ thống', active:true},
+  {user:'lan.nt',  name:'Nguyễn Thị Lan', group:'GRP-DT', type:'Admin hệ thống', active:true},
+  {user:'hoa.pt',  name:'Phạm Thu Hoa', group:'GRP-DT', type:'Admin hệ thống', active:false},
+  {user:'khanh.dv',name:'Đỗ Văn Khánh', group:'GRP-KT', type:'Admin hệ thống', active:true},
+  {user:'trang.lt',name:'Lê Thu Trang', group:'GRP-KT', type:'Admin hệ thống', active:true},
+  {user:'gv.minh', name:'Trần Quang Minh', group:'GRP-GV', type:'Nhân sự - Giảng viên', active:true},
+  {user:'gv.hue',  name:'Vũ Thị Huệ', group:'GRP-GV', type:'Nhân sự - Giảng viên', active:true},
+  {user:'gv.tuan', name:'Ngô Anh Tuấn', group:'GRP-GV', type:'Nhân sự - Giảng viên', active:true},
+  {user:'tg.linh', name:'Bùi Khánh Linh', group:'GRP-TG', type:'Nhân sự - Trợ giảng', active:true},
+  {user:'ketoan01',name:'Kế toán', group:'GRP-TC', type:'Admin hệ thống', active:false},
+  {user:'hv.nam',  name:'Lê Hoài Nam', group:'GRP-HV', type:'Học viên', active:true},
+  {user:'hv.chi',  name:'Đặng Bảo Chi', group:'GRP-HV', type:'Học viên', active:true}
+];
+/* số lượng thực tế của môi trường vận hành, phần trên chỉ là mẫu hiển thị */
+const EXTRA = {'GRP-GV':31, 'GRP-TG':11, 'GRP-HV':1278};
+
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const get = c => GROUPS.find(g=>g.code===c);
+const users = c => ACCOUNTS.filter(a=>a.group===c).length + (EXTRA[c]||0);
+const scrCount = g => screensOf(modsOf(g)).filter(s=>acts(s).some(a=>g.perms.includes(key(s.code,a)))).length;
+
+/* ---------- danh sách ---------- */
+function drawTable(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const st = document.getElementById('fStatus').value;
+  const us = document.getElementById('fUse').value;
+  const rows = GROUPS.filter(g=>
+    (!q || g.name.toLowerCase().includes(q) || g.code.toLowerCase().includes(q)) &&
+    (st==='' || String(g.active?1:0)===st) &&
+    (us==='' || (us==='used' ? users(g.code)>0 : users(g.code)===0)));
+
+  document.getElementById('count').textContent = GROUPS.length;
+  document.getElementById('table').innerHTML =
+    '<table class="tbl"><colgroup><col style="width:120px"><col style="width:196px"><col class="col-desc">'+
+      '<col style="width:124px"><col class="col-perm" style="width:128px"><col style="width:104px"><col style="width:100px"><col style="width:100px"><col style="width:52px"></colgroup>'+
+    '<thead><tr><th>Mã nhóm</th><th>Tên nhóm quyền</th><th class="col-desc">Mô tả</th>'+
+      '<th>Cổng áp dụng</th><th class="col-perm">Phạm vi quyền</th><th class="num">Tài khoản</th><th>Trạng thái</th><th>Cập nhật</th><th></th></tr></thead><tbody>'+
+    (rows.length ? rows.map(g=>{
+      const n = users(g.code), pc = g.perms.length, tt = totalOf(modsOf(g));
+      return '<tr>'+
+        '<td class="code ell">'+esc(g.code)+'</td>'+
+        '<td><div class="ell"><b>'+esc(g.name)+'</b></div></td>'+
+        '<td class="col-desc"><div class="ell" title="'+esc(g.desc)+'">'+esc(g.desc)+'</div></td>'+
+        '<td>'+esc(PORTAL[portalOf(g)].name)+'</td>'+
+        '<td class="col-perm">'+pc+'/'+tt+' quyền<div class="sub">'+scrCount(g)+' màn hình</div>'+
+          '<div class="bar"><i style="width:'+Math.round(pc/tt*100)+'%"></i></div></td>'+
+        '<td class="num">'+(n ? '<span class="link" data-ref="'+esc(g.code)+'">'+n+'</span>' : '<span class="sub">0</span>')+'</td>'+
+        '<td>'+(g.active?'<span class="tag on">Hoạt động</span>':'<span class="tag off">Ngừng</span>')+'</td>'+
+        '<td class="sub">'+esc(g.upd)+'</td>'+
+        '<td class="num"><button class="kebab" data-code="'+esc(g.code)+'" title="Thao tác">⋯</button></td></tr>';
+    }).join('') : '<tr><td colspan="9"><div class="empty">Không có nhóm quyền nào khớp điều kiện lọc</div></td></tr>')+
+    '</tbody></table>'+
+    '<div class="sum"><span>Tổng '+GROUPS.reduce((n,g)=>n+users(g.code),0)+' tài khoản đang gán nhóm quyền</span>'+
+    '<span>Cổng quản trị '+screensOf(MODULES).length+' màn hình · '+totalOf(MODULES)+' quyền · '+
+      'Cổng học viên '+screensOf(LMODULES).length+' màn hình · '+totalOf(LMODULES)+' quyền</span></div>';
+
+  document.querySelectorAll('#table .kebab').forEach(b=>{
+    b.onclick = e=>{ e.stopPropagation(); menu(b, get(b.dataset.code)); };
+  });
+  document.querySelectorAll('#table [data-ref]').forEach(el=>{
+    el.onclick = ()=>refBox(get(el.dataset.ref));
+  });
+}
+
+/* ---------- menu thao tác ---------- */
+let menuEl = null;
+function closeMenu(){
+  if(menuEl){ menuEl.remove(); menuEl = null; }
+  document.querySelectorAll('.kebab.on').forEach(b=>b.classList.remove('on'));
+}
+function menu(btn, g){
+  const wasOpen = btn.classList.contains('on');
+  closeMenu();
+  if(wasOpen) return;
+  btn.classList.add('on');
+  const n = users(g.code);
+
+  menuEl = document.createElement('div');
+  menuEl.className = 'menu';
+  menuEl.innerHTML =
+    '<button data-act="edit">Cập nhật thông tin</button>'+
+    '<button data-act="perm">Phân quyền chức năng</button>'+
+    '<button data-act="dup">Nhân bản</button>'+
+    '<button data-act="ref"'+(n?'':' disabled')+'>Tài khoản áp dụng</button>'+
+    '<hr><button class="del" data-act="del"'+(g.system?' disabled':'')+'>Xoá</button>';
+  document.body.appendChild(menuEl);
+
+  const r = btn.getBoundingClientRect(), w = menuEl.offsetWidth, h = menuEl.offsetHeight;
+  menuEl.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + 'px';
+  menuEl.style.top  = (r.bottom + h + 8 > innerHeight ? r.top - h - 4 : r.bottom + 4) + 'px';
+
+  menuEl.querySelectorAll('button').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.disabled) return;
+      const act = b.dataset.act;
+      closeMenu();
+      if(act==='perm') permBox(g);
+      else if(act==='ref') refBox(g);
+      else if(act==='edit') form(g);
+      else if(act==='dup') dupBox(g);
+      else remove(g);
+    };
+  });
+}
+document.addEventListener('click', closeMenu);
+window.addEventListener('resize', closeMenu);
+window.addEventListener('scroll', closeMenu, true);
+
+/* ---------- ma trận phân quyền ---------- */
+function setPerm(set, sc, a, on){
+  const k = key(sc,a), i = set.indexOf(k);
+  if(on){
+    if(i<0) set.push(k);
+    if(a!=='view' && acts(scrOf(sc)).includes('view')) setPerm(set, sc, 'view', true);
+  }else{
+    if(i>=0) set.splice(i,1);
+    if(a==='view') acts(scrOf(sc)).forEach(x=>{ if(x!=='view') setPerm(set, sc, x, false); });
+  }
+}
+
+function permBox(g){
+  const MODS = modsOf(g), TT = totalOf(MODS);
+  let draft = g.perms.slice();
+  let filter = '';
+  const box = document.getElementById('box');
+  box.classList.add('wide');
+  document.getElementById('mask').classList.add('show');
+
+  const modScreens = m => m.screens.filter(s=>!filter ||
+    s.name.toLowerCase().includes(filter) || m.name.toLowerCase().includes(filter) || s.code.toLowerCase().includes(filter));
+
+  function matrix(){
+    let html = '<table class="mx"><colgroup><col style="width:190px"><col style="width:74px"><col style="width:74px"><col style="width:74px"><col style="width:74px"><col><col style="width:74px"></colgroup>'+
+      '<thead><tr><th>Màn hình chức năng</th>'+
+      ACTS.map(a=>'<th>'+a[1]+'<span class="all" data-col="'+a[0]+'">chọn cột</span></th>').join('')+
+      '<th style="text-align:left">Thao tác khác</th><th>Tất cả</th></tr></thead><tbody>';
+    let shown = 0;
+    MODS.forEach(m=>{
+      const list = modScreens(m);
+      if(!list.length) return;
+      shown += list.length;
+      const tot = list.reduce((n,s)=>n+acts(s).length,0);
+      const on  = list.reduce((n,s)=>n+acts(s).filter(a=>draft.includes(key(s.code,a))).length,0);
+      html += '<tr class="mod"><td colspan="7"><div class="modline">'+
+        '<input type="checkbox" data-mod="'+m.code+'"'+(on===tot?' checked':'')+'>'+
+        '<span>'+esc(m.name)+'</span><span class="cnt">'+on+'/'+tot+' quyền</span></div></td></tr>';
+      list.forEach(s=>{
+        const av = acts(s);
+        const ex = exs(s);
+        html += '<tr><td><span class="scr">'+esc(s.name)+
+          (s.hint?' <small>· '+esc(s.hint)+'</small>':'')+'</span></td>'+
+          ACTS.map(a=>av.includes(a[0])
+            ? '<td><input type="checkbox" data-sc="'+s.code+'" data-a="'+a[0]+'"'+(draft.includes(key(s.code,a[0]))?' checked':'')+'></td>'
+            : '<td><span class="na">—</span></td>').join('')+
+          '<td class="exs">'+(ex.length
+            ? ex.map(a=>'<label class="ex"><input type="checkbox" data-sc="'+s.code+'" data-a="'+a+'"'+
+                (draft.includes(key(s.code,a))?' checked':'')+'><span>'+esc(EX[a]||a)+'</span></label>').join('')
+            : '<span class="na">—</span>')+'</td>'+
+          '<td><input type="checkbox" data-row="'+s.code+'"'+
+            (av.every(a=>draft.includes(key(s.code,a)))?' checked':'')+'></td></tr>';
+      });
+    });
+    html += '</tbody></table>';
+    return shown ? html : '<div class="empty">Không có màn hình nào khớp từ khoá</div>';
+  }
+
+  function stat(){
+    const sc = screensOf(MODS).filter(s=>acts(s).some(a=>draft.includes(key(s.code,a)))).length;
+    const dif = draft.length - g.perms.length;
+    return 'Đã chọn <b>'+draft.length+'/'+TT+'</b> quyền trên <b>'+sc+'</b> màn hình '+
+      PORTAL[portalOf(g)].name.toLowerCase()+''+
+      (dif===0 ? '' : ' · thay đổi <b>'+(dif>0?'+':'')+dif+'</b> so với bản đang lưu');
+  }
+
+  function render(){
+    box.innerHTML =
+      '<h3>Phân quyền chức năng: '+esc(g.name)+'</h3><div class="head-sub"></div>'+
+      '<div class="mtoolbar"><input class="input" id="mq" placeholder="Lọc theo tên màn hình hoặc phân hệ" value="'+esc(filter)+'">'+
+        '<button class="btn ghost sm" id="selAll">Chọn tất cả</button>'+
+        '<button class="btn ghost sm" id="selNone">Bỏ chọn tất cả</button>'+
+        '<button class="btn ghost sm" id="selView">Chỉ quyền xem</button></div>'+
+      '<div class="stat" id="mStat">'+stat()+'</div>'+
+      matrix()+
+      '<div class="foot"><span class="left">Quyền Thêm, Sửa, Xoá luôn kèm quyền Xem của cùng màn hình</span>'+
+        '<button class="btn ghost" id="pCancel">Huỷ</button><button class="btn" id="pOk">Lưu phân quyền</button></div>';
+
+    const mq = box.querySelector('#mq');
+    mq.oninput = ()=>{ filter = mq.value.trim().toLowerCase(); render();
+      const el = document.getElementById('mq'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); };
+
+    box.querySelectorAll('[data-sc]').forEach(cb=>cb.onchange=()=>{
+      setPerm(draft, cb.dataset.sc, cb.dataset.a, cb.checked); render(); });
+    box.querySelectorAll('[data-row]').forEach(cb=>cb.onchange=()=>{
+      const s = scrOf(cb.dataset.row);
+      acts(s).forEach(a=>setPerm(draft, s.code, a, cb.checked)); render(); });
+    box.querySelectorAll('[data-mod]').forEach(cb=>cb.onchange=()=>{
+      const m = MODULES.find(x=>x.code===cb.dataset.mod);
+      modScreens(m).forEach(s=>acts(s).forEach(a=>setPerm(draft, s.code, a, cb.checked))); render(); });
+    box.querySelectorAll('[data-col]').forEach(el=>el.onclick=()=>{
+      const a = el.dataset.col;
+      const target = MODS.some(m=>modScreens(m).some(s=>acts(s).includes(a) && !draft.includes(key(s.code,a))));
+      MODS.forEach(m=>modScreens(m).forEach(s=>{ if(acts(s).includes(a)) setPerm(draft, s.code, a, target); }));
+      render(); });
+
+    box.querySelector('#selAll').onclick = ()=>{ draft = FULL(MODS); render(); };
+    box.querySelector('#selNone').onclick = ()=>{ draft = []; render(); };
+    box.querySelector('#selView').onclick = ()=>{
+      draft = screensOf(MODS).map(s=>key(s.code,'view')); render(); };
+
+    box.querySelector('#pCancel').onclick = close;
+    box.querySelector('#pOk').onclick = ()=>{
+      if(!draft.length){ alert('Nhóm quyền phải có tối thiểu một quyền xem.'); return; }
+      const n = users(g.code);
+      const lost = g.perms.filter(k=>!draft.includes(k)).length;
+      if(n && !confirm('Áp dụng phân quyền mới cho '+n+' tài khoản đang dùng nhóm "'+g.name+'"?\n'+
+        'Cấp thêm '+draft.filter(k=>!g.perms.includes(k)).length+' quyền, thu hồi '+lost+' quyền.')) return;
+      g.perms = draft; g.upd = today();
+      close(); drawTable();
+    };
+  }
+  render();
+}
+
+/* ---------- tài khoản tham chiếu ---------- */
+function refBox(g){
+  const list = ACCOUNTS.filter(a=>a.group===g.code);
+  const more = (EXTRA[g.code]||0);
+  document.getElementById('box').classList.remove('wide');
+  document.getElementById('box').innerHTML =
+    '<h3>Tài khoản đang dùng nhóm quyền: '+esc(g.name)+'</h3>'+
+    '<div class="head-sub">'+esc(g.code)+' · tổng '+users(g.code)+' tài khoản</div>'+
+    (list.length ?
+      '<table class="mx"><thead><tr><th>Tài khoản</th><th style="text-align:left">Họ tên</th>'+
+      '<th style="text-align:left">Phân loại</th><th style="width:104px">Trạng thái</th></tr></thead><tbody>'+
+      list.map(a=>'<tr><td><b>'+esc(a.user)+'</b></td><td style="text-align:left">'+esc(a.name)+'</td>'+
+        '<td style="text-align:left">'+esc(a.type)+'</td>'+
+        '<td>'+(a.active?'<span class="tag on">Hoạt động</span>':'<span class="tag off">Ngừng</span>')+'</td></tr>').join('')+
+      '</tbody></table>'
+      : '<div class="empty">Chưa có tài khoản nào dùng nhóm quyền này</div>')+
+    (more ? '<div class="stat" style="margin-top:12px">Còn <b>'+more+'</b> tài khoản khác cùng nhóm quyền, tra cứu đầy đủ tại màn hình Tài khoản.</div>' : '')+
+    '<div class="foot"><button class="btn ghost" id="rClose">Đóng</button></div>';
+  document.getElementById('mask').classList.add('show');
+  document.getElementById('rClose').onclick = close;
+}
+
+/* ---------- thông tin nhóm ---------- */
+function today(){
+  const d = new Date();
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2);
+}
+function form(g){
+  const box = document.getElementById('box');
+  box.classList.remove('wide');
+  box.innerHTML =
+    '<h3>'+(g?'Cập nhật thông tin nhóm quyền':'Tạo nhóm quyền')+'</h3><div class="head-sub"></div>'+
+    '<div class="field"><label>Mã nhóm quyền</label><input class="input" id="gCode" value="'+esc(g?g.code:'')+'"'+(g&&g.system?' disabled':'')+'>'+
+      '<div class="warn" id="gWarn">Mã đã tồn tại</div></div>'+
+    '<div class="field"><label>Tên nhóm quyền</label><input class="input" id="gName" value="'+esc(g?g.name:'')+'"></div>'+
+    '<div class="check"><input type="checkbox" id="gLn"'+(g&&g.learner?' checked':'')+'>'+
+      '<label for="gLn">Nhóm học viên</label></div>'+
+    '<div class="field"><label>Mô tả phạm vi sử dụng</label><textarea class="input" id="gDesc">'+esc(g?g.desc:'')+'</textarea></div>'+
+    '<div class="field"><label>Trạng thái</label><select class="input" id="gAct">'+
+      '<option value="1"'+(!g||g.active?' selected':'')+'>Hoạt động</option>'+
+      '<option value="0"'+(g&&!g.active?' selected':'')+'>Ngừng</option></select>'+
+      '</div>'+
+    '<div class="foot"><button class="btn ghost" id="gCancel">Huỷ</button><button class="btn" id="gOk">Lưu</button></div>';
+  document.getElementById('mask').classList.add('show');
+
+  const code = box.querySelector('#gCode');
+  const ln = box.querySelector('#gLn');
+  const checkCode = ()=>{
+    const dup = GROUPS.some(x=>x.code===code.value.trim() && x!==g);
+    box.querySelector('#gWarn').style.display = dup ? 'block' : 'none';
+    return !dup;
+  };
+  code.oninput = checkCode;
+  box.querySelector('#gCancel').onclick = close;
+  box.querySelector('#gOk').onclick = ()=>{
+    const c = code.value.trim(), n = box.querySelector('#gName').value.trim();
+    if(!c || !n){ alert('Nhập đủ mã và tên nhóm quyền.'); return; }
+    if(!checkCode()){ alert('Mã '+c+' đã được dùng cho nhóm khác.'); return; }
+    const active = box.querySelector('#gAct').value==='1';
+    const isLn = ln.checked;
+    const desc = box.querySelector('#gDesc').value.trim();
+    if(g && !!g.learner !== isLn && g.perms.length &&
+       !confirm('Đổi cổng áp dụng sẽ xoá toàn bộ '+g.perms.length+' quyền đã cấu hình vì hai cổng dùng danh mục màn hình khác nhau. Tiếp tục?')) return;
+    if(g && !!g.learner !== isLn && users(g.code) &&
+       !confirm(users(g.code)+' tài khoản đang gán nhóm này. Sau khi đổi cổng, nhóm sẽ bị gỡ khỏi các tài khoản không thuộc cổng mới. Tiếp tục?')) return;
+    if(g){
+      if(!!g.learner !== isLn) g.perms = [];
+      if(!g.system) g.code=c;
+      g.name=n; g.desc=desc; g.active=active; g.learner=isLn; g.upd=today();
+      if(!isLn) g.def = false;
+    }
+    else{
+      const ng = {code:c, name:n, desc:desc, active, def:false, learner:isLn, upd:today(), perms:[]};
+      GROUPS.push(ng); close(); drawTable(); permBox(ng); return;
+    }
+    close(); drawTable();
+  };
+}
+
+function dupBox(g){
+  const box = document.getElementById('box');
+  box.classList.remove('wide');
+  let base = g.code+'-COPY', i = 2;
+  while(GROUPS.some(x=>x.code===base)) base = g.code+'-COPY-'+(i++);
+  box.innerHTML =
+    '<h3>Nhân bản nhóm quyền: '+esc(g.name)+'</h3>'+
+    '<div class="head-sub">'+esc(g.code)+' · '+esc(PORTAL[portalOf(g)].name)+' · '+g.perms.length+'/'+totalOf(modsOf(g))+' quyền</div>'+
+    '<div class="field"><label>Mã nhóm quyền mới</label><input class="input" id="dCode" value="'+esc(base)+'">'+
+      '<div class="warn" id="dWarn">Mã đã tồn tại</div></div>'+
+    '<div class="field"><label>Tên nhóm quyền mới</label><input class="input" id="dName" value="'+esc(g.name+' (bản sao)')+'"></div>'+
+    '<div class="stat">Bản sao giữ nguyên <b>'+g.perms.length+'</b> quyền của nhóm gốc và <b>không</b> gán sẵn tài khoản nào. '+
+      'Trạng thái ban đầu là Ngừng, chuyển sang Hoạt động sau khi rà soát lại ma trận quyền.</div>'+
+    '<div class="foot"><button class="btn ghost" id="dCancel">Huỷ</button><button class="btn" id="dOk">Nhân bản</button></div>';
+  document.getElementById('mask').classList.add('show');
+  const code = box.querySelector('#dCode');
+  const checkCode = ()=>{
+    const dup = GROUPS.some(x=>x.code===code.value.trim());
+    box.querySelector('#dWarn').style.display = dup ? 'block' : 'none';
+    return !dup;
+  };
+  code.oninput = checkCode;
+  box.querySelector('#dCancel').onclick = close;
+  box.querySelector('#dOk').onclick = ()=>{
+    const c = code.value.trim(), n = box.querySelector('#dName').value.trim();
+    if(!c || !n){ alert('Nhập đủ mã và tên cho bản sao.'); return; }
+    if(!checkCode()){ alert('Mã '+c+' đã được dùng cho nhóm khác.'); return; }
+    GROUPS.push({code:c, name:n, desc:g.desc, active:false, def:false, learner:!!g.learner, upd:today(), perms:g.perms.slice()});
+    close(); drawTable();
+  };
+}
+
+function remove(g){
+  if(g.def){ alert('"'+g.name+'" đang là nhóm mặc định của học viên. Chỉ định nhóm mặc định khác trước khi xoá.'); return; }
+  const n = users(g.code);
+  if(n){
+    alert('Nhóm "'+g.name+'" đang được '+n+' tài khoản sử dụng. Chuyển các tài khoản này sang nhóm quyền khác tại màn hình Tài khoản trước khi xoá.');
+    refBox(g); return;
+  }
+  if(!confirm('Xoá nhóm quyền "'+g.name+'"? Thao tác này được ghi vào nhật ký hoạt động.')) return;
+  GROUPS.splice(GROUPS.indexOf(g),1);
+  drawTable();
+}
+
+function close(){
+  document.getElementById('mask').classList.remove('show');
+  document.getElementById('box').classList.remove('wide');
+}
+document.getElementById('mask').onclick = e=>{ if(e.target.id==='mask') close(); };
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ close(); closeMenu(); } });
+
+document.getElementById('btnNew').onclick = ()=>form(null);
+document.getElementById('q').oninput = drawTable;
+document.getElementById('fStatus').onchange = drawTable;
+document.getElementById('fUse').onchange = drawTable;
+drawTable();
+</script>
+</body>
+</html>
