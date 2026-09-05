@@ -430,6 +430,108 @@ label.sw.dis{cursor:not-allowed;color:var(--text-3)}
 .chip.on{background:var(--ems-primary);border-color:var(--ems-primary);color:#fff}
 .chip.on i{color:#fff}
 .chip.on:hover{color:#fff;border-color:var(--ems-primary)}
+
+/* ---- chế độ chọn khung chương trình ---- */
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#fff}
+.seg button{border:0;background:none;padding:6px 14px;cursor:pointer;color:var(--text-2);font-size:13px;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:0}
+.seg button:hover{color:var(--primary);background:#f8fafc}
+.seg button.on{background:var(--primary);color:#fff}
+.segrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.segrow .desc{color:var(--text-3);font-size:12.5px}
+.tree .nd.np{cursor:default;color:var(--text-2)}
+.tree .nd.np:hover{background:#fff}
+.tree .nd.np .fdr{width:13px;text-align:center;color:var(--text-3);font-size:12px}
+.tree .nd.np.d1{color:var(--text)}
+.tree .nd.np .meta{opacity:.8}
+
+/* ---- nội dung học tập & tiến độ ---- */
+.lstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.lstat div{background:#f8fafc;border:1px solid var(--border-2);border-radius:var(--radius);padding:11px 14px}
+.lstat span{display:block;color:var(--text-3);font-size:12.5px}
+.lstat b{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.lstat small{display:block;color:var(--text-3);font-size:12px;margin-top:2px}
+.mod-h{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius);margin:14px 0 6px;cursor:pointer}
+.mod-h:first-child{margin-top:0}
+.mod-h b{font-size:13.5px}
+.mod-h .cd{color:var(--text-3);font-size:12.5px}
+.mod-h .meta{margin-left:auto;color:var(--text-3);font-size:12.5px}
+.mod-h .fold{width:14px;text-align:center;color:var(--text-3);font-size:11px}
+.ltbl{width:100%;border-collapse:collapse;table-layout:fixed}
+.ltbl th{text-align:left;font-size:12.5px;font-weight:600;color:var(--text-2);padding:8px 10px;border-bottom:1px solid var(--border);background:#fff}
+.ltbl td{padding:8px 10px;border-bottom:1px solid var(--border-2);vertical-align:middle}
+.ltbl tr:last-child td{border-bottom:0}
+.ltbl tr.hid td{color:var(--text-3)}
+.ltbl tr.hid td .lname{text-decoration:line-through}
+.ltbl .num{text-align:center}
+.ltbl select.input,.ltbl input.input{padding:4px 8px;font-size:13px;width:100%}
+.ltbl .tk{display:flex;align-items:center;gap:8px}
+.ltbl .tk .input{flex:1}
+.lno{display:inline-flex;width:24px;height:24px;border-radius:50%;background:#eff6ff;color:var(--primary);font-size:12px;font-weight:600;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.gate{display:inline-flex;align-items:center;gap:5px;color:var(--text-3);font-size:12px}
+.gate i{font-style:normal}
+.mbar{display:flex;align-items:center;gap:8px;font-size:12.5px;font-variant-numeric:tabular-nums}
+.mbar .pb{flex:1;height:6px;background:#f1f5f9;border-radius:4px;overflow:hidden;min-width:50px}
+.mbar .pb i{display:block;height:100%;background:var(--primary)}
+.mbar .pb i.g{background:var(--success)}
+.mbar .pb i.w{background:var(--warn)}
+.mbar .pv{min-width:46px;text-align:right;color:var(--text-2)}
+.mbar.lk{cursor:pointer}
+.mbar.lk:hover .pv{color:var(--primary);text-decoration:underline}
+.rulebox{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;padding:12px 16px;background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px}
+.rulebox .lb{font-size:13px;color:var(--text-2);padding-top:6px}
+.rulebox .desc{flex:1 1 260px;color:var(--text-3);font-size:12.5px;padding-top:6px}
+.rulebox .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.mx{border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:520px}
+.mx table{border-collapse:separate;border-spacing:0;font-size:12.5px}
+.mx th,.mx td{border-bottom:1px solid var(--border-2);border-right:1px solid var(--border-2);padding:0;text-align:center;height:32px}
+.mx th{background:#f8fafc;position:sticky;top:0;z-index:2;font-weight:600;color:var(--text-2);font-size:11.5px;min-width:32px}
+.mx th.st,.mx td.st{position:sticky;left:0;z-index:3;background:#fff;text-align:left;padding:0 12px;min-width:190px;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.mx th.st{z-index:4;background:#f8fafc}
+.mx th.mod{background:#eff6ff;color:var(--primary);font-size:11px;letter-spacing:.02em}
+.mx td.c{min-width:32px}
+.mx td.c span{display:inline-block;width:18px;height:18px;border-radius:4px;vertical-align:middle}
+.mx td.c .d{background:var(--success)}
+.mx td.c .v{background:#93c5fd}
+.mx td.c .n{background:#f1f5f9;border:1px solid var(--border)}
+.mx td.c .l{background:repeating-linear-gradient(45deg,#f1f5f9 0 3px,#e2e8f0 3px 6px)}
+.mx td.c .t{background:#fde68a}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:8px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:3px;display:inline-block}
+.stuprog td .cur{color:var(--text-2);font-size:12.5px}
+.lesson-row.on{background:#eff6ff}
+.stu-ls{border:1px solid var(--border);border-radius:var(--radius);max-height:380px;overflow:auto}
+.stu-ls .r{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border-2);font-size:13px}
+.stu-ls .r:last-child{border-bottom:0}
+.stu-ls .r .lno{flex:0 0 24px}
+.stu-ls .r .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stu-ls .r .st{color:var(--text-3);font-size:12.5px;white-space:nowrap}
+.stu-ls .r.lock{color:var(--text-3)}
+.stu-ls .r .mk{background:none;border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:12px;cursor:pointer;color:var(--text-2)}
+.stu-ls .r .mk:hover{border-color:var(--primary);color:var(--primary)}
+.lk2{background:none;border:1px dashed var(--border);border-radius:4px;padding:3px 9px;font-size:12.5px;color:var(--text-2);cursor:pointer;text-align:left;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lk2:hover{border-color:var(--primary);color:var(--primary);border-style:solid}
+.lk2 .b{color:var(--primary);font-weight:600}
+.lk2 .own{color:var(--warn);font-size:11px;margin-left:4px}
+.ltbl td .ro-t{font-size:12.5px;color:var(--text-2)}
+.crline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin:-4px 0 14px 2px}
+.crline .tag{margin:0}
+.chkrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-2);font-size:13.5px}
+.chkrow:last-child{border-bottom:0}
+.chkrow .input{width:80px;padding:4px 8px}
+.chkrow .d{color:var(--text-3);font-size:12.5px;margin-left:auto;text-align:right;max-width:46%}
+.chkrow.dis{opacity:.45}
+.chkrow.qm{flex-direction:column;align-items:flex-start;gap:8px}
+.chkrow.qm label{white-space:nowrap;font-size:13px;color:var(--text-2)}
+.chkrow.qm .input{width:70px}
+.chkrow.qm .d{margin-left:0;max-width:none;text-align:left}
+.reqls{border:1px solid var(--border);border-radius:var(--radius);max-height:300px;overflow:auto}
+.reqls label{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border-2);cursor:pointer;font-size:13px}
+.reqls label:last-child{border-bottom:0}
+.reqls label:hover{background:#f8fafc}
+.reqls .lno{flex:0 0 24px}
+.reqls .m{margin-left:auto;color:var(--text-3);font-size:12px}
 </style>
 </head>
 <body>
@@ -515,6 +617,21 @@ function hiText(txt, q){
   if(i < 0) return esc(txt);
   return esc(txt.slice(0,i))+'<mark>'+esc(txt.slice(i,i+q.length))+'</mark>'+esc(txt.slice(i+q.length));
 }
+const PMODE = {
+  tree:  {label:'Theo cây chương trình', desc:'Lớp học toàn bộ học phần thuộc chương trình hoặc khối kiến thức được chọn, bài học xếp theo thứ tự trong cây.'},
+  module:{label:'Một học phần', desc:'Lớp chỉ học một học phần, danh sách bài học lấy từ học phần đó.'}
+};
+function pickable(st, code){
+  const kids = pKids(code).length;
+  const m = st.mode || 'any';
+  return m==='any' || (m==='tree' ? kids>0 : kids===0);
+}
+function modeBar(st){
+  const m = st.mode || 'tree';
+  return '<div class="segrow"><div class="seg" data-modeseg>'+
+    Object.keys(PMODE).map(k=>'<button type="button" data-mode="'+k+'"'+(m===k?' class="on"':'')+'>'+PMODE[k].label+'</button>').join('')+
+    '</div><span class="desc" data-modedesc>'+PMODE[m].desc+'</span></div>';
+}
 function treeBar(st, ph){
   return '<div class="treebar">'+
     '<input class="input" data-tq placeholder="'+esc(ph||'Lọc theo tên hoặc mã chương trình đào tạo')+'" value="'+esc(st.q||'')+'">'+
@@ -536,10 +653,11 @@ function progTree(st, opts){
       const kids = pKids(p.code);
       const open = q ? true : st.fold[p.code] !== true;
       found++;
-      rows += '<div class="nd d'+Math.min(d,3)+(st.prog===p.code?' sel':'')+'" data-p="'+esc(p.code)+'">'+
+      const ok = pickable(st, p.code);
+      rows += '<div class="nd d'+Math.min(d,3)+(st.prog===p.code?' sel':'')+(ok?'':' np')+'" data-p="'+esc(p.code)+'"'+(ok?'':' data-np="1"')+'>'+
         '<span class="fold"'+(kids.length && !q ? ' data-fold="'+esc(p.code)+'"' : '')+'>'+
           (kids.length ? (open?'▾':'▸') : '')+'</span>'+
-        '<input type="radio"'+(st.prog===p.code?' checked':'')+'>'+
+        (ok ? '<input type="radio"'+(st.prog===p.code?' checked':'')+'>' : '<span class="fdr">'+(kids.length?'▣':'·')+'</span>')+
         '<span class="cd">'+hiText(p.code, q)+'</span><span>'+hiText(p.name, q)+'</span>'+
         '<span class="meta">'+(kids.length ? kids.length+' mục con · '+progLessons(p.code)+' bài học'
           : p.credit+' tín chỉ · '+p.lessons+' bài học')+'</span></div>';
@@ -557,11 +675,25 @@ function bindProgTree(rootId, st, onPick){
       nd.onclick = e=>{
         const fd = e.target.closest('[data-fold]');
         if(fd){ st.fold[fd.dataset.fold] = st.fold[fd.dataset.fold] !== true; redraw(); return; }
+        if(nd.dataset.np){
+          const k = nd.dataset.p;
+          if(pKids(k).length){ st.fold[k] = st.fold[k] !== true; redraw(); }
+          return;
+        }
         st.prog = nd.dataset.p; redraw(); if(onPick) onPick();
       };
     });
   }
   function redraw(){ box.innerHTML = progTree(st); bindRows(); }
+  root.querySelectorAll('[data-mode]').forEach(b=>{
+    b.onclick = ()=>{
+      st.mode = b.dataset.mode;
+      root.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('on', x===b));
+      const d = root.querySelector('[data-modedesc]'); if(d) d.textContent = PMODE[st.mode].desc;
+      if(st.prog && !pickable(st, st.prog)) st.prog = '';
+      redraw(); if(onPick) onPick();
+    };
+  });
   const qi = root.querySelector('[data-tq]');
   if(qi) qi.oninput = ()=>{ st.q = qi.value; redraw(); };
   root.querySelectorAll('[data-tall]').forEach(b=>{
@@ -573,12 +705,15 @@ function bindProgTree(rootId, st, onPick){
   });
   bindRows();
 }
-function progPickNote(code){
-  if(!code) return 'Chọn được ở cấp chương trình, khối kiến thức hoặc từng học phần. Bỏ qua nếu lớp gắn nội dung sau.';
+function progPickNote(code, mode){
+  if(!code) return mode==='module'
+    ? 'Chọn một học phần ở cấp cuối của cây. Bỏ qua nếu lớp gắn nội dung sau.'
+    : 'Chọn ở cấp chương trình hoặc khối kiến thức, lớp sẽ học lần lượt các học phần bên dưới. Bỏ qua nếu lớp gắn nội dung sau.';
   const path = pPath(code);
   return 'Đã chọn <b>'+esc(path[path.length-1])+'</b> ở cấp '+LVNAME[pLevel(code)].toLowerCase()+
     ' · '+progModules(code)+' học phần · '+progLessons(code)+' bài học · đường dẫn: '+esc(path.join(' › '));
 }
+const modeOf = c => c.progMode || (c.prog && pKids(c.prog).length ? 'tree' : 'module');
 
 /* ---------- danh mục ---------- */
 var CENTERS = [
@@ -726,6 +861,566 @@ const defGrade = () => ({mode:'weight', scale:'10', passScore:5, comps:[
   {id:uid('gc'), name:'Kiểm tra giữa kỳ', src:'manual', weight:30},
   {id:uid('gc'), name:'Thi cuối kỳ', src:'manual', weight:40}
 ]});
+
+/* ---------- nội dung học tập và tiến độ ---------- */
+const LAYOUT = 'split';   /* 'split' : 2 tab riêng · 'merged' : 1 tab gộp */
+
+const LESSON_POOL = ['Chào hỏi và giới thiệu bản thân','Gia đình và bạn bè','Thói quen hằng ngày','Mua sắm và giá cả',
+  'Ăn uống và nhà hàng','Chỉ đường và phương tiện','Sức khoẻ và lối sống','Công việc và nghề nghiệp','Thời tiết và mùa',
+  'Kỳ nghỉ và du lịch','Nhà cửa và đồ dùng','Sở thích và giải trí','Mô tả người và tính cách','Kể lại sự việc đã qua',
+  'Kế hoạch tương lai','Đưa ra lời khuyên','So sánh và lựa chọn','Trình bày ý kiến','Viết email ngắn','Tổng ôn và kiểm tra'];
+const DEF_DONE = () => ({auto:true, view:true, viewPct:80, quiz:true, qMode:'score', qPct:70, qScore:5});
+
+function hsh(str){ let h = 7; for(let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) & 0x7fffffff; return h; }
+function leafModules(code){
+  const out = [];
+  (function w(c){ const k = pKids(c); if(!k.length){ out.push(c); return; } k.forEach(x=>w(x.code)); })(code);
+  return out;
+}
+var LESSON_CACHE = {};
+function modLessons(mod){
+  if(LESSON_CACHE[mod]) return LESSON_CACHE[mod];
+  const p = prog(mod), out = [], h0 = hsh(mod);
+  for(let i=0;i<(p.lessons||0);i++){
+    const h = hsh(mod+'#'+i);
+    const last = i === p.lessons-1;
+    out.push({no:i+1, name: last ? 'Tổng ôn và kiểm tra cuối học phần' : LESSON_POOL[(h0 + i*7) % (LESSON_POOL.length-1)],
+      quiz: (last || h % 3 !== 0) ? (last ? 20 : [5,8,10,10,12,15][h % 6]) : 0});
+  }
+  LESSON_CACHE[mod] = out;
+  return out;
+}
+function buildContent(c){
+  const mods = c.prog && prog(c.prog) ? leafModules(c.prog) : [];
+  const lessons = [];
+  mods.forEach(m=>modLessons(m).forEach(l=>lessons.push({
+    id:m+'-'+l.no, mod:m, no:l.no, name:l.name, quiz:l.quiz, task:!!l.quiz,
+    req:[], done:null, show:true })));
+  lessons.forEach((l,i)=>{ if(i>0) l.req = [lessons[i-1].id]; });
+  return {rule:'seq', done:DEF_DONE(), lessons};
+}
+function ensureContent(c){
+  if(!c.content) c.content = buildContent(c);
+  if(!c.progress) c.progress = {};
+  return c.content;
+}
+function seedProgress(c){
+  const ct = ensureContent(c), L = ct.lessons;
+  if(!L.length || !c.students.length) return;
+  const st = parseD(c.start), en = parseD(c.end);
+  let frac = c.status==='done' ? 1 : (st >= TODAY ? 0 : Math.min(1, (TODAY - st) / Math.max(1, en - st)));
+  if(c.status==='learning') frac = Math.max(frac, 0.25);
+  c.students.forEach(s=>{
+    const k = Math.min(L.length, Math.round(L.length * frac * (0.55 + Math.random()*0.6)));
+    const pr = {viewed:{}, done:{}, at:{}, pct:{}, score:{}, manual:{}};
+    /* mô phỏng theo đúng luật mở bài: rớt quiz mà không thi lại thì dừng ở bài đó */
+    for(let i=0;i<k;i++){
+      const l = L[i];
+      pr.viewed[l.id] = true;
+      pr.pct[l.id] = i < k-1 ? 85 + rnd(16) : 30 + rnd(71);
+      pr.at[l.id] = iso(addD(st, Math.round(i * ((en-st)/86400000) / L.length)));
+      if(i === k-1) break;
+      if(l.quiz){
+        const need = quizNeed(ct.done, l);
+        pr.done[l.id] = true;
+        let sc = Math.round(l.quiz * (0.4 + Math.random()*0.6));
+        if(sc < need && Math.random() < 0.7) sc = need + rnd(l.quiz - need + 1);
+        pr.score[l.id] = sc;
+        if(sc < need) break;
+      }
+    }
+    if(c.status!=='done' && k < L.length && Math.random() < 0.35){ pr.viewed[L[k].id] = true; pr.pct[L[k].id] = 10 + rnd(60); }
+    c.progress[s.id] = pr;
+  });
+}
+const shown = c => ensureContent(c).lessons.filter(l=>l.show);
+const pOf = (c, sid) => c.progress[sid] || (c.progress[sid] = {viewed:{}, done:{}, at:{}, pct:{}, score:{}, manual:{}});
+const isViewed = (c, sid, l) => !!pOf(c,sid).viewed[l.id];
+const isDone = (c, sid, l) => !l.task || !!pOf(c,sid).done[l.id];
+/* tiêu chí hoàn thành: riêng của bài, không có thì dùng mặc định lớp */
+const crOf = (c, l) => l.done || c.content.done;
+/* điểm quiz thang 10 = số câu đúng / tổng câu × 10 */
+const quizScore = (correct, n) => n ? Math.round(correct / n * 100) / 10 : 0;
+/* số câu đúng tối thiểu để đạt tiêu chí, quy đổi từ điểm hoặc phần trăm */
+function quizNeed(cr, l){
+  if(!l.quiz) return 0;
+  return cr.qMode==='pct' ? Math.ceil(l.quiz * cr.qPct / 100) : Math.ceil(l.quiz * cr.qScore / 10);
+}
+const quizNeedText = (cr, l) => cr.qMode==='pct' ? 'quiz đúng ≥'+quizNeed(cr,l)+'/'+l.quiz+' câu' : 'quiz ≥'+cr.qScore+' điểm';
+function crText(c, l, cr){
+  cr = cr || crOf(c, l);
+  const p = [];
+  if(cr.view) p.push('xem ≥'+cr.viewPct+'%');
+  if(cr.quiz && l.quiz) p.push(l.id ? quizNeedText(cr, l)
+    : (cr.qMode==='pct' ? 'quiz đúng ≥'+cr.qPct+'% số câu' : 'quiz ≥'+cr.qScore+' điểm'));
+  return p.length ? p.join(' · ') : 'chỉ cần mở bài';
+}
+function metCriteria(c, sid, l){
+  const cr = crOf(c, l), pr = pOf(c, sid);
+  if(cr.view && !(pr.viewed[l.id] && (pr.pct[l.id]||0) >= cr.viewPct)) return false;
+  if(cr.quiz && l.quiz && !(pr.done[l.id] && (pr.score[l.id]||0) >= quizNeed(cr, l))) return false;
+  return true;
+}
+/* hoàn thành = xác nhận thủ công, hoặc đủ tiêu chí khi lớp bật tự động ghi nhận */
+function completed(c, sid, l){
+  const pr = pOf(c, sid);
+  if(pr.manual[l.id]) return true;
+  return !!c.content.done.auto && metCriteria(c, sid, l);
+}
+/* bài i đã mở với học viên chưa: mọi bài tiên quyết đều đã hoàn thành */
+function unlocked(c, sid, i){
+  const L = shown(c);
+  if(c.content.rule === 'open') return true;
+  const l = L[i]; if(!l) return true;
+  return (l.req||[]).every(id=>{ const r = L.find(x=>x.id===id); return !r || completed(c, sid, r); });
+}
+function reqText(c, l){
+  const L = shown(c);
+  const rs = (l.req||[]).map(id=>L.find(x=>x.id===id)).filter(Boolean);
+  if(!rs.length) return 'Không yêu cầu';
+  return 'Bài '+rs.map(r=>r.no + (leafModules(c.prog).length>1 && r.mod!==l.mod ? ' ('+r.mod+')' : '')).join(', ');
+}
+function stuProg(c, sid){
+  const L = shown(c), T = L.filter(l=>l.task);
+  const v = L.filter(l=>isViewed(c,sid,l)).length;
+  const k = L.filter(l=>completed(c,sid,l)).length;
+  const d = T.filter(l=>pOf(c,sid).done[l.id]).length;
+  let cur = -1;
+  for(let i=0;i<L.length;i++){ if(!completed(c,sid,L[i])){ cur = i; break; } }
+  const lockAt = cur >= 0 && !unlocked(c, sid, cur);
+  const pending = L.filter(l=>!completed(c,sid,l) && metCriteria(c,sid,l) && isViewed(c,sid,l)).length;
+  return {n:L.length, v, k, t:T.length, d, cur, lockAt, pending, pct: L.length ? Math.round(k/L.length*100) : 0,
+    missing: T.filter(l=>isViewed(c,sid,l) && !pOf(c,sid).done[l.id]).length};
+}
+function lessonProg(c, l){
+  const A = actives(c);
+  const v = A.filter(s=>isViewed(c,s.id,l)).length;
+  const k = A.filter(s=>completed(c,s.id,l)).length;
+  const d = l.task ? A.filter(s=>pOf(c,s.id).done[l.id]).length : null;
+  return {n:A.length, v, k, d};
+}
+function classProg(c){
+  const A = actives(c), L = shown(c);
+  if(!A.length || !L.length) return {avg:0, full:0, none:0, missing:0, tasks:0, n:A.length};
+  const ps = A.map(s=>stuProg(c,s.id));
+  return {n:A.length,
+    avg: Math.round(ps.reduce((a,p)=>a+p.pct,0)/ps.length),
+    full: ps.filter(p=>p.k===p.n).length,
+    none: ps.filter(p=>p.v===0).length,
+    pending: ps.reduce((a,p)=>a+p.pending,0),
+    missing: ps.reduce((a,p)=>a+p.missing,0),
+    tasks: ps.reduce((a,p)=>a+p.d,0), tasksAll: ps.reduce((a,p)=>a+p.t,0),
+    behind: ps.filter(p=>p.pct < Math.max(0, ps.reduce((a,x)=>a+x.pct,0)/ps.length - 20) && p.k < p.n).length};
+}
+function bar(v, n, cls, lk){
+  const pct = n ? Math.round(v/n*100) : 0;
+  return '<span class="mbar'+(lk?' lk':'')+'"'+(lk?' '+lk:'')+'><span class="pb"><i class="'+(cls||'')+'" style="width:'+pct+'%"></i></span><span class="pv">'+v+' / '+n+'</span></span>';
+}
+const canEditContent = c => c.status !== 'done';
+
+/* ---- khối quy tắc học ---- */
+function ruleBox(c){
+  const ct = ensureContent(c), ro = !canEditContent(c), cr = ct.done;
+  const T = ct.lessons.filter(l=>l.show && l.task).length, H = ct.lessons.filter(l=>!l.show).length;
+  const own = ct.lessons.filter(l=>l.show && l.done).length;
+  const sample = {quiz:1};
+  return '<div class="rulebox">'+
+    '<span class="lb">Mở bài</span>'+
+    '<div class="seg" id="ruleSeg">'+
+      '<button type="button" data-rule="seq"'+(ct.rule==='seq'?' class="on"':'')+(ro?' disabled':'')+'>Theo điều kiện tiên quyết</button>'+
+      '<button type="button" data-rule="open"'+(ct.rule==='open'?' class="on"':'')+(ro?' disabled':'')+'>Mở toàn bộ</button></div>'+
+    '<span class="desc">'+(ct.rule==='seq'
+      ? 'Mỗi bài chỉ mở khi học viên đã hoàn thành các bài đặt ở cột <b>Mở khi đã hoàn thành</b>. Chọn được nhiều bài, không bắt buộc là bài liền trước.'
+      : 'Toàn bộ bài học mở ngay từ đầu, cột tiên quyết được bỏ qua nhưng vẫn giữ lại để bật lại sau.')+'</span>'+
+    '<span class="right">'+(ct.rule==='seq' && !ro ? '<button class="btn ghost sm" id="reqSeq">Đặt lại theo thứ tự</button>' : '')+
+      '<button class="btn ghost sm" id="doneCfg">Tiêu chí hoàn thành</button>'+
+      '<span class="tag off">'+ct.lessons.filter(l=>l.show).length+' bài</span>'+
+      '<span class="tag off">'+T+' bài có quiz</span>'+(H?'<span class="tag draft">'+H+' bài ẩn</span>':'')+'</span>'+
+  '</div>'+
+  '<div class="crline">Hoàn thành bài khi: <b>'+crText(c, sample, cr)+'</b>'+
+    (cr.auto ? '<span class="tag on">tự động ghi nhận khi đủ tiêu chí</span>' : '<span class="tag draft">chờ giảng viên xác nhận</span>')+
+    (own ? '<span class="tag off">'+own+' bài đặt tiêu chí riêng</span>' : '')+
+    '<span style="color:var(--text-3)">· tiêu chí quiz chỉ áp dụng với bài có quiz, bài không có quiz chỉ tính phần xem</span></div>';
+}
+function bindRule(c){
+  const seg = F('ruleSeg'); if(!seg) return;
+  seg.querySelectorAll('[data-rule]').forEach(b=>{
+    b.onclick = ()=>{
+      if(b.disabled) return;
+      c.content.rule = b.dataset.rule; c.updated = fmtD(iso(TODAY));
+      toast(c.content.rule==='seq' ? 'Đã bật điều kiện tiên quyết' : 'Đã mở toàn bộ bài học'); redrawTab();
+    };
+  });
+  if(F('reqSeq')) F('reqSeq').onclick = ()=>{
+    askBox('Đặt lại điều kiện tiên quyết', 'Mỗi bài sẽ yêu cầu hoàn thành đúng bài liền trước nó, các thiết lập riêng hiện có bị ghi đè.', 'Đặt lại', ()=>{
+      const L = shown(c); L.forEach((l,i)=>{ l.req = i>0 ? [L[i-1].id] : []; });
+      c.updated = fmtD(iso(TODAY)); toast('Đã đặt lại tiên quyết theo thứ tự bài'); redrawTab();
+    });
+  };
+  if(F('doneCfg')) F('doneCfg').onclick = ()=>doneBox(c, null);
+}
+/* ---- hộp tiêu chí hoàn thành (mặc định lớp hoặc riêng từng bài) ---- */
+function doneBox(c, l){
+  const ro = !canEditContent(c);
+  const base = l ? (l.done ? Object.assign({}, l.done) : Object.assign({}, c.content.done)) : Object.assign({}, c.content.done);
+  let useDef = !!(l && !l.done);
+  const row = (id, chk, label, extra, desc, dis) =>
+    '<div class="chkrow'+(dis?' dis':'')+'"><input type="checkbox" id="'+id+'"'+(chk?' checked':'')+(dis||ro?' disabled':'')+'><label for="'+id+'">'+label+'</label>'+(extra||'')+'<span class="d">'+desc+'</span></div>';
+  function body(){
+    const dis = useDef;
+    return (l ? '<div class="chkrow"><input type="checkbox" id="dUseDef"'+(useDef?' checked':'')+(ro?' disabled':'')+'><label for="dUseDef"><b>Dùng tiêu chí mặc định của lớp</b></label>'+
+        '<span class="d">'+crText(c, l, c.content.done)+'</span></div>' : '')+
+      row('dView', base.view, 'Xem nội dung đạt tối thiểu', ' <input class="input" id="dPct" type="number" min="1" max="100" value="'+base.viewPct+'"'+(dis||ro?' disabled':'')+'> %',
+        'tính theo thời lượng video, trang tài liệu đã cuộn hết', dis)+
+      (l && !l.quiz
+        ? '<div class="chkrow dis"><input type="checkbox" disabled><label>Quiz trong bài đạt yêu cầu</label><span class="d">bài này không có quiz, chỉ tính phần xem nội dung</span></div>'
+        : row('dQuiz', base.quiz, 'Quiz trong bài đạt yêu cầu', '', l ? 'quiz '+l.quiz+' câu' : 'chỉ áp dụng với bài có quiz', dis)+
+          '<div class="chkrow qm'+(dis||!base.quiz?' dis':'')+'" style="padding-left:26px;gap:16px">'+
+            '<label style="display:inline-flex;align-items:center;gap:6px"><input type="radio" name="qMode" value="score" id="qmC"'+(base.qMode!=='pct'?' checked':'')+(dis||ro||!base.quiz?' disabled':'')+'> Đạt tối thiểu '+
+              '<input class="input" id="dQScore" type="number" min="0.5" max="10" step="0.5" value="'+base.qScore+'"'+(dis||ro||!base.quiz?' disabled':'')+'> điểm <span style="color:var(--text-3)">/ 10</span></label>'+
+            '<label style="display:inline-flex;align-items:center;gap:6px"><input type="radio" name="qMode" value="pct" id="qmP"'+(base.qMode==='pct'?' checked':'')+(dis||ro||!base.quiz?' disabled':'')+'> Đúng tối thiểu '+
+              '<input class="input" id="dQPct" type="number" min="1" max="100" value="'+base.qPct+'"'+(dis||ro||!base.quiz?' disabled':'')+'> % số câu</label>'+
+            '<span class="d">'+(l ? 'với quiz '+l.quiz+' câu, cần đúng tối thiểu '+quizNeed(base, l)+' câu' : 'điểm quiz tính theo thang 10, quy đổi từ tỷ lệ câu đúng')+'</span></div>')+
+      (l ? '' : '<div class="chkrow" style="margin-top:6px;border-top:1px solid var(--border);padding-top:14px"><input type="checkbox" id="dAuto"'+(base.auto?' checked':'')+(ro?' disabled':'')+'>'+
+        '<label for="dAuto"><b>Tự động ghi nhận hoàn thành</b> khi học viên đủ tiêu chí</label>'+
+        '<span class="d">tắt thì giảng viên xác nhận từng bài trong màn Tiến độ</span></div>');
+  }
+  openBox('<h3>'+(l ? 'Tiêu chí hoàn thành · Bài '+l.no : 'Tiêu chí hoàn thành mặc định của lớp')+'</h3>'+
+    '<div class="head-sub">'+(l ? esc(l.name)+' · '+esc(prog(l.mod).name) : esc(c.name)+' · áp dụng cho mọi bài không đặt tiêu chí riêng')+'</div>'+
+    '<div id="dBody">'+body()+'</div>'+
+    '<div class="foot"><button class="btn ghost" id="dCancel">'+(ro?'Đóng':'Huỷ')+'</button>'+(ro?'':'<button class="btn" id="dOk">Lưu</button>')+'</div>');
+  function bind(){
+    const ud = F('dUseDef');
+    if(ud) ud.onchange = ()=>{ useDef = ud.checked; F('dBody').innerHTML = body(); bind(); };
+    const q = F('dQuiz');
+    if(q) q.onchange = ()=>{ base.quiz = q.checked; readQ(); F('dBody').innerHTML = body(); bind(); };
+    ['qmP','qmC'].forEach(id=>{ const r = F(id); if(r) r.onchange = ()=>{ readQ(); F('dBody').innerHTML = body(); bind(); }; });
+    ['dQPct','dQScore'].forEach(id=>{ const i = F(id); if(i) i.onchange = ()=>{ readQ(); const d = document.querySelector('.chkrow.qm .d'); if(d && l) d.textContent = 'với quiz '+l.quiz+' câu, cần đúng tối thiểu '+quizNeed(base, l)+' câu'; }; });
+  }
+  function readQ(){
+    if(F('qmC')) base.qMode = F('qmC').checked ? 'score' : 'pct';
+    if(F('dQPct')) base.qPct = Math.min(100, Math.max(1, +F('dQPct').value||70));
+    if(F('dQScore')) base.qScore = Math.min(10, Math.max(0.5, +F('dQScore').value||5));
+    if(F('dPct')) base.viewPct = Math.min(100, Math.max(1, +F('dPct').value||80));
+    if(F('dView')) base.view = F('dView').checked;
+  }
+  bind();
+  F('dCancel').onclick = closeBox;
+  if(F('dOk')) F('dOk').onclick = ()=>{
+    if(l && useDef){ l.done = null; }
+    else{
+      readQ();
+      const cr = {view:base.view, viewPct:base.viewPct, quiz:F('dQuiz') ? F('dQuiz').checked : base.quiz,
+        qMode:base.qMode, qPct:base.qPct, qScore:base.qScore};
+      if(l) l.done = cr;
+      else{
+        const auto = F('dAuto').checked;
+        /* tắt tự động: chốt lại các bài đã được ghi nhận, không thu hồi hoàn thành cũ của học viên */
+        if(c.content.done.auto && !auto) c.students.forEach(s=>shown(c).forEach(x=>{ if(completed(c,s.id,x)) pOf(c,s.id).manual[x.id] = true; }));
+        Object.assign(c.content.done, cr, {auto});
+      }
+    }
+    c.updated = fmtD(iso(TODAY)); closeBox(); toast('Đã lưu tiêu chí hoàn thành'); redrawTab();
+  };
+}
+/* ---- hộp chọn bài tiên quyết ---- */
+function reqBox(c, l){
+  const L = shown(c), idx = L.indexOf(l), prior = L.slice(0, idx);
+  let pick = (l.req||[]).slice();
+  const ro = !canEditContent(c);
+  const list = ()=> prior.length ? prior.map(r=>'<label><input type="checkbox" data-r="'+r.id+'"'+(pick.indexOf(r.id)>=0?' checked':'')+(ro?' disabled':'')+'>'+
+      '<span class="lno">'+r.no+'</span><span>'+esc(r.name)+'</span><span class="m">'+esc(prog(r.mod).name)+(r.quiz?' · quiz '+r.quiz+' câu':'')+'</span></label>').join('')
+    : '<div class="none" style="padding:18px;text-align:center;color:var(--text-3);font-size:13px">Đây là bài đầu, không có bài nào trước để yêu cầu.</div>';
+  openBox('<h3>Mở bài '+l.no+' khi đã hoàn thành</h3><div class="head-sub">'+esc(l.name)+' · '+esc(prog(l.mod).name)+
+      ' · học viên phải hoàn thành <b>tất cả</b> bài được tích mới mở được bài này</div>'+
+    (prior.length && !ro ? '<div class="qa"><button type="button" class="chip" id="rPrev">Bài liền trước</button>'+
+      '<button type="button" class="chip" id="rAll">Tất cả bài trước</button><button type="button" class="chip" id="rNone">Không yêu cầu</button></div>' : '')+
+    '<div class="reqls" id="rList">'+list()+'</div>'+
+    '<div class="note" id="rCnt" style="margin-top:8px">'+(pick.length ? 'Đang yêu cầu '+pick.length+' bài' : 'Không yêu cầu, bài mở ngay khi lớp bắt đầu')+'</div>'+
+    '<div class="foot"><button class="btn ghost" id="rCancel">'+(ro?'Đóng':'Huỷ')+'</button>'+(ro?'':'<button class="btn" id="rOk">Lưu</button>')+'</div>');
+  const redraw = ()=>{ F('rList').innerHTML = list(); F('rCnt').textContent = pick.length ? 'Đang yêu cầu '+pick.length+' bài' : 'Không yêu cầu, bài mở ngay khi lớp bắt đầu'; bind(); };
+  function bind(){
+    document.querySelectorAll('#rList [data-r]').forEach(cb=>cb.onchange = ()=>{
+      pick = cb.checked ? pick.concat([cb.dataset.r]) : pick.filter(x=>x!==cb.dataset.r); redraw();
+    });
+  }
+  bind();
+  if(F('rPrev')) F('rPrev').onclick = ()=>{ pick = [prior[prior.length-1].id]; redraw(); };
+  if(F('rAll')) F('rAll').onclick = ()=>{ pick = prior.map(r=>r.id); redraw(); };
+  if(F('rNone')) F('rNone').onclick = ()=>{ pick = []; redraw(); };
+  F('rCancel').onclick = closeBox;
+  if(F('rOk')) F('rOk').onclick = ()=>{
+    l.req = L.filter(r=>pick.indexOf(r.id)>=0).map(r=>r.id);
+    c.updated = fmtD(iso(TODAY)); closeBox(); toast('Đã lưu điều kiện mở bài '+l.no); redrawTab();
+  };
+}
+
+/* ---- bảng bài học theo học phần ---- */
+var MODFOLD = {};
+function lessonTable(c, opts){
+  opts = opts || {};
+  const ct = ensureContent(c), ro = !canEditContent(c);
+  if(!c.prog) return '<div class="empty">Lớp chưa gắn chương trình đào tạo. Gắn ở tab Thông tin lớp để lấy danh sách bài học.</div>';
+  if(!ct.lessons.length) return '<div class="empty">Chương trình đã gắn chưa có bài học nào.</div>';
+  const withProg = !!opts.progress, A = actives(c);
+  const mods = leafModules(c.prog);
+  return mods.map(m=>{
+    const p = prog(m), L = ct.lessons.filter(l=>l.mod===m), fold = MODFOLD[c.code+'|'+m] === true;
+    let head = '<div class="mod-h" data-mfold="'+esc(m)+'"><span class="fold">'+(fold?'▸':'▾')+'</span>'+
+      '<b>'+esc(p.name)+'</b><span class="cd">'+esc(m)+' · '+p.credit+' tín chỉ</span>'+
+      '<span class="meta">'+L.filter(l=>l.show).length+' / '+L.length+' bài hiển thị';
+    if(withProg && A.length){
+      const done = A.filter(s=>L.every(l=>!l.show || isViewed(c,s.id,l))).length;
+      head += ' · '+done+' / '+A.length+' học viên xem hết';
+    }
+    head += '</span></div>';
+    if(fold) return head;
+    const cols = withProg
+      ? '<colgroup><col style="width:44px"><col><col style="width:200px"><col style="width:190px"><col style="width:170px"><col style="width:150px"><col style="width:150px"><col style="width:70px"></colgroup>'
+      : '<colgroup><col style="width:44px"><col><col style="width:280px"><col style="width:220px"><col style="width:80px"></colgroup>';
+    const th = '<thead><tr><th class="num">#</th><th>Bài học</th><th>Hoàn thành bài học</th><th>Mở khi đã hoàn thành</th>'+
+      (withProg ? '<th>Đã xem</th><th>Đã nộp bài tập</th>' : '')+'<th class="num">Hiện</th></tr></thead>';
+    const rows = L.map(l=>{
+      const rq = reqText(c, l);
+      const gateCell = ct.rule==='open'
+        ? '<span class="gate"><i>—</i> mở sẵn</span>'
+        : (!l.show ? '<span class="gate">—</span>'
+          : '<button type="button" class="lk2" data-req="'+l.id+'" title="Chọn bài phải hoàn thành trước">'+
+              (l.req && l.req.length ? '<span class="b">'+esc(rq)+'</span>' : esc(rq))+'</button>');
+      const doneCell = !l.show ? '<span class="gate">—</span>'
+        : '<button type="button" class="lk2" data-done="'+l.id+'" title="Tiêu chí hoàn thành bài này">'+esc(crText(c, l))+
+          (l.done ? '<span class="own">riêng</span>' : '')+'</button>';
+      let progCells = '';
+      if(withProg){
+        const lp = lessonProg(c, l);
+        progCells = '<td>'+(A.length ? bar(lp.v, lp.n, '', 'data-who="v:'+l.id+'"') : '<span style="color:var(--text-3)">—</span>')+'</td>'+
+          '<td>'+(l.task ? (A.length ? bar(lp.d, lp.n, 'g', 'data-who="d:'+l.id+'"') : '<span style="color:var(--text-3)">—</span>') : '<span style="color:var(--text-3);font-size:12.5px">không giao</span>')+'</td>';
+      }
+      return '<tr'+(l.show?'':' class="hid"')+'><td class="num"><span class="lno">'+l.no+'</span></td>'+
+        '<td><span class="lname">'+esc(l.name)+'</span>'+
+          (l.quiz ? '<div style="color:var(--text-3);font-size:12px">Quiz '+l.quiz+' câu</div>' : '')+'</td>'+
+        '<td>'+doneCell+'</td><td>'+gateCell+'</td>'+progCells+
+        '<td class="num">'+(ro ? (l.show?'<span class="tag on">Hiện</span>':'<span class="tag off">Ẩn</span>')
+          : '<label class="sw" style="margin:0"><input type="checkbox" data-show="'+l.id+'"'+(l.show?' checked':'')+'><i></i></label>')+'</td></tr>';
+    }).join('');
+    return head + '<table class="ltbl">'+cols+th+'<tbody>'+rows+'</tbody></table>';
+  }).join('');
+}
+function bindLessonTable(c){
+  const ct = ensureContent(c);
+  const byId = id => ct.lessons.find(l=>l.id===id);
+  const body = F('tabBody');
+  body.querySelectorAll('[data-mfold]').forEach(h=>{
+    h.onclick = ()=>{ const k = c.code+'|'+h.dataset.mfold; MODFOLD[k] = MODFOLD[k] !== true; redrawTab(); };
+  });
+  body.querySelectorAll('[data-show]').forEach(cb=>cb.onchange = ()=>{
+    const l = byId(cb.dataset.show); l.show = cb.checked; c.updated = fmtD(iso(TODAY)); redrawTab();
+  });
+  body.querySelectorAll('[data-req]').forEach(b=>b.onclick = ()=>reqBox(c, byId(b.dataset.req)));
+  body.querySelectorAll('[data-done]').forEach(b=>b.onclick = ()=>doneBox(c, byId(b.dataset.done)));
+  body.querySelectorAll('[data-who]').forEach(el=>el.onclick = ()=>{
+    const [kind, id] = el.dataset.who.split(':'); whoBox(c, byId(id), kind);
+  });
+}
+/* danh sách học viên đã / chưa với một bài */
+function whoBox(c, l, kind){
+  const A = actives(c);
+  const ok = s => kind==='v' ? isViewed(c,s.id,l) : kind==='k' ? completed(c,s.id,l) : !!pOf(c,s.id).done[l.id];
+  const yes = A.filter(ok), no = A.filter(s=>!ok(s));
+  const lbl = kind==='v' ? ['Đã xem','Chưa xem'] : kind==='k' ? ['Đã hoàn thành','Chưa hoàn thành'] : ['Đã làm quiz','Chưa làm quiz'];
+  const list = arr => arr.length ? arr.map(s=>'<div class="r"><span class="nm">'+esc(s.name)+'</span><span class="st">'+esc(s.code)+
+    (kind==='v' && pOf(c,s.id).at[l.id] ? ' · '+fmtD(pOf(c,s.id).at[l.id]) : '')+
+    (kind==='v' && pOf(c,s.id).pct[l.id] ? ' · '+pOf(c,s.id).pct[l.id]+'%' : '')+
+    (kind==='k' && pOf(c,s.id).manual[l.id] ? ' · xác nhận tay' : '')+
+    (kind==='d' && pOf(c,s.id).done[l.id] ? ' · '+quizScore(pOf(c,s.id).score[l.id]||0, l.quiz)+' điểm · đúng '+(pOf(c,s.id).score[l.id]||0)+'/'+l.quiz : '')+'</span></div>').join('')
+    : '<div class="r" style="color:var(--text-3)">Không có</div>';
+  openBox('<h3>Bài '+l.no+' · '+esc(l.name)+'</h3><div class="head-sub">'+esc(prog(l.mod).name)+(kind==='d'?' · quiz '+l.quiz+' câu · đạt khi '+quizNeedText(crOf(c,l),l):'')+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
+      '<div><div class="hint" style="margin-bottom:6px;color:var(--text-2)">'+lbl[0]+' <b>'+yes.length+'</b></div><div class="stu-ls">'+list(yes)+'</div></div>'+
+      '<div><div class="hint" style="margin-bottom:6px;color:var(--text-2)">'+lbl[1]+' <b>'+no.length+'</b></div><div class="stu-ls">'+list(no)+'</div></div>'+
+    '</div>'+
+    '<div class="foot">'+(no.length && kind==='d' ? '<button class="btn ghost" id="whoPing">Nhắc '+no.length+' học viên chưa làm quiz</button>':'')+
+      '<button class="btn ghost" id="whoClose">Đóng</button></div>', 'wide');
+  F('whoClose').onclick = closeBox;
+  if(F('whoPing')) F('whoPing').onclick = ()=>{ closeBox(); toast('Đã gửi nhắc làm quiz tới '+no.length+' học viên'); };
+}
+
+/* ---- thống kê tiến độ ---- */
+function progStats(c){
+  const A = actives(c), L = shown(c);
+  if(!A.length) return '';
+  const cp = classProg(c);
+  return '<div class="lstat">'+
+    '<div><span>Hoàn thành trung bình</span><b>'+cp.avg+'%</b><small>'+L.length+' bài · '+A.length+' học viên đang học</small></div>'+
+    '<div><span>Đã hoàn thành lớp</span><b>'+cp.full+' / '+cp.n+'</b><small>học viên hoàn thành toàn bộ bài</small></div>'+
+    '<div><span>Chưa bắt đầu</span><b>'+cp.none+'</b><small>học viên chưa xem bài nào</small></div>'+
+    '<div><span>Quiz đã làm</span><b>'+cp.tasks+' / '+cp.tasksAll+'</b><small>'+cp.missing+' bài đã xem nhưng chưa làm quiz</small></div>'+
+    (c.content.done.auto ? '' : '<div><span>Chờ xác nhận</span><b>'+cp.pending+'</b><small>lượt đủ tiêu chí, chưa được giảng viên xác nhận</small></div>')+
+    '<div><span>Chậm tiến độ</span><b>'+cp.behind+'</b><small>thấp hơn trung bình lớp trên 20%</small></div>'+
+  '</div>';
+}
+var PF = {q:'', f:'', view:''};
+function stuTable(c){
+  const A = actives(c), L = shown(c);
+  if(!A.length) return '<div class="empty">Lớp chưa có học viên đang học.</div>';
+  if(!L.length) return '<div class="empty">Chưa có bài học để theo dõi tiến độ.</div>';
+  const cp = classProg(c), q = noAcc(PF.q);
+  let rows = A.map(s=>({s, p:stuProg(c,s.id)}));
+  if(q) rows = rows.filter(x=>noAcc(x.s.name+' '+x.s.code).indexOf(q)>=0);
+  if(PF.f==='behind') rows = rows.filter(x=>x.p.pct < cp.avg-20 && x.p.v < x.p.n);
+  if(PF.f==='none') rows = rows.filter(x=>x.p.v===0);
+  if(PF.f==='full') rows = rows.filter(x=>x.p.k===x.p.n);
+  if(PF.f==='miss') rows = rows.filter(x=>x.p.missing>0);
+  if(PF.f==='lock') rows = rows.filter(x=>x.p.lockAt);
+  if(PF.f==='pend') rows = rows.filter(x=>x.p.pending>0);
+  rows.sort((a,b)=>b.p.pct - a.p.pct || a.s.name.localeCompare(b.s.name,'vi'));
+  return '<table class="tbl stuprog"><colgroup><col style="width:220px"><col style="width:104px"><col><col style="width:210px"><col style="width:210px"><col style="width:120px"><col style="width:52px"></colgroup>'+
+    '<thead><tr><th>Học viên</th><th>Mã</th><th>Đang ở bài</th><th>Hoàn thành</th><th>Quiz</th><th>Tiến độ</th><th></th></tr></thead><tbody>'+
+    (rows.length ? rows.map(x=>{
+      const p = x.p, curL = p.cur>=0 ? L[p.cur] : null;
+      return '<tr><td><b>'+esc(x.s.name)+'</b></td><td><span class="mono">'+esc(x.s.code)+'</span></td>'+
+        '<td>'+(curL ? '<span class="cur">Bài '+curL.no+' · '+esc(curL.name)+
+              (p.lockAt ? ' <span class="tag draft">đang chờ mở</span>' : (p.pending ? ' <span class="tag trial">'+p.pending+' chờ xác nhận</span>' : ''))+'</span>'
+                     : '<span class="tag on">Đã hoàn thành</span>')+'</td>'+
+        '<td>'+bar(p.k, p.n)+'</td>'+
+        '<td>'+(p.t ? bar(p.d, p.t, p.missing?'w':'g') : '<span style="color:var(--text-3);font-size:12.5px">không có quiz</span>')+'</td>'+
+        '<td><b>'+p.pct+'%</b>'+(p.pct < cp.avg-20 && p.k<p.n ? ' <span class="tag draft">chậm</span>':'')+'</td>'+
+        '<td class="num"><button class="kebab" data-stuprog="'+x.s.id+'" title="Chi tiết">⋯</button></td></tr>';
+    }).join('') : '<tr><td colspan="7"><div class="empty">Không có học viên khớp bộ lọc</div></td></tr>')+
+    '</tbody></table>';
+}
+function lessonProgTable(c){
+  const A = actives(c), L = shown(c);
+  if(!A.length) return '<div class="empty">Lớp chưa có học viên đang học.</div>';
+  if(!L.length) return '<div class="empty">Chưa có bài học để theo dõi tiến độ.</div>';
+  const mods = leafModules(c.prog);
+  return mods.map(m=>{
+    const p = prog(m), ML = L.filter(l=>l.mod===m);
+    if(!ML.length) return '';
+    return '<div class="mod-h" style="cursor:default"><b>'+esc(p.name)+'</b><span class="cd">'+esc(m)+'</span><span class="meta">'+ML.length+' bài</span></div>'+
+      '<table class="ltbl"><colgroup><col style="width:44px"><col><col style="width:200px"><col style="width:200px"><col style="width:200px"><col style="width:120px"></colgroup>'+
+      '<thead><tr><th class="num">#</th><th>Bài học</th><th>Đã xem</th><th>Đã làm quiz</th><th>Đã hoàn thành</th><th>Chưa hoàn thành</th></tr></thead><tbody>'+
+      ML.map(l=>{ const lp = lessonProg(c,l);
+        return '<tr><td class="num"><span class="lno">'+l.no+'</span></td><td>'+esc(l.name)+
+            '<div style="color:var(--text-3);font-size:12px">'+(l.quiz?'quiz '+l.quiz+' câu · ':'')+'hoàn thành khi '+esc(crText(c,l))+'</div></td>'+
+          '<td>'+bar(lp.v, lp.n, '', 'data-who="v:'+l.id+'"')+'</td>'+
+          '<td>'+(l.quiz ? bar(lp.d, lp.n, '', 'data-who="d:'+l.id+'"') : '<span style="color:var(--text-3);font-size:12.5px">không có quiz</span>')+'</td>'+
+          '<td>'+bar(lp.k, lp.n, 'g', 'data-who="k:'+l.id+'"')+'</td>'+
+          '<td>'+(lp.n-lp.k ? '<span class="tag draft">'+(lp.n-lp.k)+' học viên</span>' : '<span class="tag on">Đủ</span>')+'</td></tr>';
+      }).join('')+'</tbody></table>';
+  }).join('');
+}
+function matrix(c){
+  const A = actives(c), L = shown(c);
+  if(!A.length || !L.length) return '<div class="empty">Chưa có dữ liệu để dựng ma trận.</div>';
+  const mods = leafModules(c.prog).filter(m=>L.some(l=>l.mod===m));
+  let h = '<div class="mx"><table><thead>';
+  if(mods.length > 1){
+    h += '<tr><th class="st" rowspan="2">Học viên</th>'+mods.map(m=>'<th class="mod" colspan="'+L.filter(l=>l.mod===m).length+'">'+esc(m)+'</th>').join('')+'</tr><tr>';
+  } else h += '<tr><th class="st">Học viên</th>';
+  h += L.map(l=>'<th title="Bài '+l.no+' · '+esc(l.name)+'">'+l.no+'</th>').join('')+'</tr></thead><tbody>';
+  const rows = A.map(s=>({s, p:stuProg(c,s.id)})).sort((a,b)=>b.p.pct-a.p.pct);
+  h += rows.map(x=>'<tr><td class="st" title="'+esc(x.s.name)+'">'+esc(x.s.name)+'</td>'+
+    L.map((l,i)=>{
+      let cls, tt;
+      if(completed(c,x.s.id,l)){ cls='d'; tt = pOf(c,x.s.id).manual[l.id] ? 'Hoàn thành (xác nhận tay)' : 'Hoàn thành'; }
+      else if(isViewed(c,x.s.id,l)){ cls='t'; tt = metCriteria(c,x.s.id,l) ? 'Đủ tiêu chí, chờ xác nhận' : 'Đang học, chưa đủ tiêu chí'; }
+      else if(!unlocked(c,x.s.id,i)){ cls='l'; tt='Chưa mở, chờ bài tiên quyết'; }
+      else { cls='n'; tt='Đã mở, chưa xem'; }
+      return '<td class="c" title="Bài '+l.no+': '+tt+'"><span class="'+cls+'"></span></td>';
+    }).join('')+'</tr>').join('');
+  h += '</tbody></table></div>'+
+    '<div class="legend"><span><i style="background:var(--success)"></i>Đã hoàn thành</span>'+
+    '<span><i style="background:#fde68a"></i>Đang học, chưa đủ tiêu chí</span>'+
+    '<span><i style="background:#f1f5f9;border:1px solid var(--border)"></i>Đã mở, chưa xem</span>'+
+    '<span><i style="background:repeating-linear-gradient(45deg,#f1f5f9 0 3px,#e2e8f0 3px 6px)"></i>Chưa mở</span></div>';
+  return h;
+}
+function progToolbar(c, views){
+  return '<div class="rowbar" style="flex-wrap:wrap">'+
+    '<div class="seg" id="pvSeg">'+views.map(v=>'<button type="button" data-pv="'+v[0]+'"'+(PF.view===v[0]?' class="on"':'')+'>'+v[1]+'</button>').join('')+'</div>'+
+    (PF.view==='stu' ? '<input class="input" id="pfQ" placeholder="Tìm học viên" value="'+esc(PF.q)+'" style="width:200px">'+
+      '<select class="input" id="pfF"><option value="">Tất cả học viên</option><option value="behind"'+(PF.f==='behind'?' selected':'')+'>Chậm tiến độ</option>'+
+        '<option value="miss"'+(PF.f==='miss'?' selected':'')+'>Đã xem nhưng chưa làm quiz</option><option value="lock"'+(PF.f==='lock'?' selected':'')+'>Đang chờ mở bài</option>'+
+        (c.content.done.auto ? '' : '<option value="pend"'+(PF.f==='pend'?' selected':'')+'>Đủ tiêu chí, chờ xác nhận</option>')+
+        '<option value="none"'+(PF.f==='none'?' selected':'')+'>Chưa bắt đầu</option><option value="full"'+(PF.f==='full'?' selected':'')+'>Đã hoàn thành</option></select>' : '')+
+    '<span class="right"><button class="btn ghost sm" id="pfExport">Xuất Excel</button></span></div>';
+}
+function bindProgCommon(c){
+  const seg = F('pvSeg');
+  if(seg) seg.querySelectorAll('[data-pv]').forEach(b=>b.onclick = ()=>{ PF.view = b.dataset.pv; redrawTab(); });
+  const q = F('pfQ');
+  if(q) q.oninput = ()=>{ PF.q = q.value; const t = F('stuTbl'); if(t){ t.innerHTML = stuTable(c); bindStuRows(c); } };
+  const f = F('pfF');
+  if(f) f.onchange = ()=>{ PF.f = f.value; redrawTab(); };
+  const ex = F('pfExport');
+  if(ex) ex.onclick = ()=>toast('Đã xuất tiến độ '+actives(c).length+' học viên · '+shown(c).length+' bài ra Excel');
+  bindStuRows(c);
+  F('tabBody').querySelectorAll('[data-who]').forEach(el=>el.onclick = ()=>{
+    const [kind, id] = el.dataset.who.split(':'); whoBox(c, shown(c).find(l=>l.id===id), kind);
+  });
+}
+function bindStuRows(c){
+  F('tabBody').querySelectorAll('[data-stuprog]').forEach(b=>b.onclick = ()=>stuProgBox(c, c.students.find(s=>s.id===b.dataset.stuprog)));
+}
+function stuProgBox(c, s){
+  const L = shown(c), p = stuProg(c, s.id), pr = pOf(c, s.id);
+  const edit = canEditContent(c);
+  const rows = L.map((l,i)=>{
+    const v = isViewed(c,s.id,l), d = l.task && pr.done[l.id], un = unlocked(c,s.id,i), ok = completed(c,s.id,l);
+    const det = [];
+    if(v) det.push('xem '+(pr.pct[l.id]||0)+'%');
+    if(l.quiz) det.push(d ? 'quiz '+quizScore(pr.score[l.id]||0, l.quiz)+' điểm · đúng '+(pr.score[l.id]||0)+'/'+l.quiz+' (cần '+quizNeed(crOf(c,l),l)+')' : 'chưa làm quiz');
+    let st, cls = '';
+    if(ok) st = '<span class="tag on">'+(pr.manual[l.id]?'Hoàn thành · xác nhận tay':'Hoàn thành')+'</span>'+(pr.at[l.id]?' <span class="st">'+fmtD(pr.at[l.id])+'</span>':'');
+    else if(v && metCriteria(c,s.id,l)) st = '<span class="tag trial" style="margin:0">Đủ tiêu chí, chờ xác nhận</span>'+(edit?' <button class="mk" data-ok="'+l.id+'">Xác nhận hoàn thành</button>':'');
+    else if(v) st = '<span class="tag draft">Đang học</span>'+(edit ? ' <button class="mk" data-ok="'+l.id+'" title="Bỏ qua tiêu chí, xác nhận hoàn thành">Xác nhận</button>' : '');
+    else if(!un){ st = '<span class="tag off">Chưa mở</span>'; cls=' lock'; }
+    else st = '<span class="tag off">Chưa xem</span>';
+    return '<div class="r'+cls+'"><span class="lno">'+l.no+'</span><span class="nm">'+esc(l.name)+
+      '<span class="st"> · '+(det.length ? esc(det.join(' · ')) : 'cần '+esc(crText(c,l)))+'</span></span><span class="st">'+st+'</span></div>';
+  }).join('');
+  openBox('<h3>'+esc(s.name)+'</h3><div class="head-sub">'+esc(s.code)+' · hoàn thành '+p.k+' / '+p.n+' bài · làm '+p.d+' / '+p.t+' quiz · '+p.pct+'%'+
+      (p.lockAt ? ' · đang chờ mở bài '+L[p.cur].no : '')+'</div>'+
+    '<div class="stu-ls">'+rows+'</div>'+
+    '<div class="foot"><span class="left" style="margin-right:auto;color:var(--text-3);font-size:12.5px;align-self:center">'+
+      (c.content.done.auto ? 'Lớp đang tự động ghi nhận hoàn thành, xác nhận tay chỉ dùng cho trường hợp ngoại lệ' : 'Lớp tắt tự động ghi nhận, giảng viên xác nhận từng bài tại đây')+'</span>'+
+      '<button class="btn ghost" id="spClose">Đóng</button></div>', 'wide');
+  F('spClose').onclick = closeBox;
+  document.querySelectorAll('[data-ok]').forEach(b=>b.onclick = ()=>{
+    const l = L.find(x=>x.id===b.dataset.ok);
+    pr.manual[l.id] = true; if(!pr.viewed[l.id]){ pr.viewed[l.id] = true; pr.at[l.id] = iso(TODAY); }
+    toast('Đã xác nhận '+s.name+' hoàn thành bài '+l.no); closeBox(); redrawTab();
+  });
+}
+
+/* ---- bản tách: tab Nội dung học tập ---- */
+function tabContent(c){
+  return ruleBox(c) + lessonTable(c);
+}
+function bindContent(c){ bindRule(c); bindLessonTable(c); }
+
+/* ---- bản tách: tab Tiến độ học tập ---- */
+function tabProgress(c){
+  if(!c.prog || !shown(c).length) return '<div class="empty">Chưa có bài học để theo dõi. Gắn chương trình ở tab Thông tin lớp trước.</div>';
+  if(!['stu','les','mx'].includes(PF.view)) PF.view = 'stu';
+  const views = [['stu','Theo học viên'],['les','Theo bài học'],['mx','Ma trận']];
+  return progStats(c) + progToolbar(c, views) +
+    (PF.view==='stu' ? '<div id="stuTbl">'+stuTable(c)+'</div>' : PF.view==='les' ? lessonProgTable(c) : matrix(c));
+}
+function bindProgress(c){ bindProgCommon(c); }
+
+/* ---- bản gộp: một tab Nội dung và tiến độ ---- */
+function tabLearning(c){
+  if(!c.prog) return ruleBox(c) + lessonTable(c);
+  if(!['les','stu','mx'].includes(PF.view)) PF.view = 'les';
+  const views = [['les','Theo bài học'],['stu','Theo học viên'],['mx','Ma trận']];
+  return (actives(c).length ? progStats(c) : '') + ruleBox(c) + progToolbar(c, views) +
+    (PF.view==='les' ? lessonTable(c, {progress:true}) : PF.view==='stu' ? '<div id="stuTbl">'+stuTable(c)+'</div>' : matrix(c));
+}
+function bindLearning(c){ bindRule(c); bindLessonTable(c); bindProgCommon(c); }
+
+
 const SESNAME = ['Warm-up và từ vựng chủ đề','Luyện nghe theo dạng bài','Luyện nói theo cặp','Kỹ năng đọc lướt','Bài viết tại lớp','Ngữ pháp trọng tâm','Kiểm tra nhanh','Chữa bài và phản hồi'];
 
 var SEED = [
@@ -785,6 +1480,7 @@ CLASSES.forEach(c=>{
   if(!c.attendance){ c.sessions = []; }       // lớp tự học, xem lại học liệu không có buổi
   if(c.capacity && c.capacity < c.students.length) c.capacity = c.students.length + 4;
   if(!c.teachers.length) c.teachers = ['gv01'];
+  seedProgress(c);
 });
 const get = code => CLASSES.find(c=>c.code===code);
 const clsName = code => { const x = CLASSES.find(c=>c.code===code); return x? x.name : (code||'—'); };
@@ -1286,7 +1982,7 @@ function readClassFields(){
 /* ---------- mở lớp ---------- */
 var WZ = null;
 function openWizard(){
-  WZ = {step:1, prog:'', fold:{}, q:'', f:{center:'ego', learn:'gv', nature:'hoc', teachers:['gv01'], capacity:0,
+  WZ = {step:1, prog:'', mode:'tree', fold:{}, q:'', f:{center:'ego', learn:'gv', nature:'hoc', teachers:['gv01'], capacity:0,
     allowReg:false, grading:false, attendance:true, fee:false, start:'', end:'', name:'', code:''}};
   drawWizard();
 }
@@ -1311,8 +2007,8 @@ function drawWizard(){
 }
 function wizardBody(){
   if(WZ.step===1){
-    return '<div id="wzPick">'+treeBar(WZ)+'<div data-treebox>'+progTree(WZ)+'</div>'+
-      '<div class="note" id="wzInfo" style="margin-top:12px">'+progPickNote(WZ.prog)+'</div></div>';
+    return '<div id="wzPick">'+modeBar(WZ)+treeBar(WZ)+'<div data-treebox>'+progTree(WZ)+'</div>'+
+      '<div class="note" id="wzInfo" style="margin-top:12px">'+progPickNote(WZ.prog, WZ.mode)+'</div></div>';
   }
   if(WZ.step===2){
     if(WZ.prog && !WZ.f.name){
@@ -1324,7 +2020,7 @@ function wizardBody(){
   const f = WZ.f, lt = LEARN[f.learn];
   return '<dl class="dl">'+
     '<dt>Tên lớp</dt><dd><b>'+esc(f.name)+'</b>'+(f.code?' · <span class="mono">'+esc(f.code)+'</span>':'')+'</dd>'+
-    '<dt>Nội dung học</dt><dd>'+(WZ.prog ? esc(pPath(WZ.prog).join(' › '))+
+    '<dt>Nội dung học</dt><dd>'+(WZ.prog ? '<span class="tag off" style="margin-right:6px">'+PMODE[WZ.mode].label+'</span>'+esc(pPath(WZ.prog).join(' › '))+
       ' <span style="color:var(--text-3)">· '+progModules(WZ.prog)+' học phần · '+progLessons(WZ.prog)+' bài học</span>'
       : '<span style="color:var(--text-3)">Chưa gắn chương trình</span>')+'</dd>'+
     '<dt>Cơ sở / Trung tâm</dt><dd>'+esc(cenName(f.center))+'</dd>'+
@@ -1340,7 +2036,7 @@ function wizardBody(){
   '</dl><div class="note" style="margin-top:14px">Các thông tin này đều sửa lại được trong tab Thông tin lớp sau khi mở.</div>';
 }
 function bindTree(){
-  bindProgTree('wzPick', WZ, ()=>{ if(F('wzInfo')) F('wzInfo').innerHTML = progPickNote(WZ.prog); });
+  bindProgTree('wzPick', WZ, ()=>{ if(F('wzInfo')) F('wzInfo').innerHTML = progPickNote(WZ.prog, WZ.mode); });
 }
 function wzNext(){
   if(WZ.step===1){ WZ.step=2; drawWizard(); return; }
@@ -1350,20 +2046,24 @@ function wzNext(){
     WZ.step=3; drawWizard(); return;
   }
   const f = WZ.f;
-  const c = {code: f.code || ('L'+(1000+CLASSES.length)), name:f.name, prog:WZ.prog, center:f.center,
+  const c = {code: f.code || ('L'+(1000+CLASSES.length)), name:f.name, prog:WZ.prog, progMode:WZ.mode, center:f.center,
     learn:f.learn, nature:f.nature, start:f.start||iso(TODAY), end:f.end||iso(addD(TODAY,90)),
     status:'plan', capacity:f.capacity, allowReg:f.allowReg, grading:f.grading,
     attendance:LEARN[f.learn].ses, cert:{minScore:5, minAtt:80}, note:f.note, teachers:f.teachers.slice(),
     fee:f.fee, feePlan:[],
     students:[], sessions:[], grades:{}, gradeCfg:defGrade(), surveys:[], notices:[], regs:[], moves:[], updated:fmtD(iso(TODAY))};
+  ensureContent(c);
   CLASSES.unshift(c);
   closeBox(); toast('Đã mở lớp '+c.name);
-  openClass(c.code, 'students');
+  openClass(c.code, c.prog ? (LAYOUT==='merged' ? 'learning' : 'content') : 'students');
 }
 
 /* ---------- chi tiết lớp ---------- */
 function tabsOf(c){
   const t = [['info','Thông tin lớp'], ['students','Học viên ('+c.students.length+')']];
+  const nL = ensureContent(c).lessons.filter(l=>l.show).length;
+  if(LAYOUT==='merged') t.push(['learning','Nội dung và tiến độ ('+nL+')']);
+  else t.push(['content','Nội dung học tập ('+nL+')'], ['progress','Tiến độ học tập']);
   if(LEARN[c.learn].ses) t.push(['sessions', 'Buổi học và điểm danh ('+c.sessions.length+')']);
   t.push(['grades','Điểm']);
   if(c.fee) t.push(['fees','Kế hoạch thu ('+c.feePlan.length+')']);
@@ -1378,7 +2078,8 @@ function drawDetail(){
   const tabs = tabsOf(c);
   if(!tabs.some(t=>t[0]===tab)) tab = 'info';
   const body = {info:tabInfo, students:tabStudents, sessions:tabSessions, grades:tabGrades, fees:tabFees,
-    surveys:tabSurveys, teachers:tabTeachers, notices:tabNotices, regs:tabRegs}[tab](c);
+    surveys:tabSurveys, teachers:tabTeachers, notices:tabNotices, regs:tabRegs,
+    content:tabContent, progress:tabProgress, learning:tabLearning}[tab](c);
 
   F('detailView').innerHTML =
     '<button class="back" id="dBack">‹ Quay lại danh sách lớp</button>'+
@@ -1399,7 +2100,8 @@ function drawDetail(){
     b.onclick = ()=>{ tab = b.dataset.tab; drawDetail(); };
   });
   const bind = {info:bindInfo, students:bindStudents, sessions:bindSessions, grades:bindGrades, fees:bindFees,
-    surveys:bindSurveys, teachers:bindTeachers, notices:bindNotices, regs:bindRegs}[tab];
+    surveys:bindSurveys, teachers:bindTeachers, notices:bindNotices, regs:bindRegs,
+    content:bindContent, progress:bindProgress, learning:bindLearning}[tab];
   if(bind) bind(c);
 }
 
@@ -1446,14 +2148,14 @@ function progField(c){
   const L = classLocks(c);
   if(L.prog){
     return '<div class="wide"><label>Chương trình đào tạo</label>'+
-      '<div class="input ro">'+(c.prog ? esc(pPath(c.prog).join(' › '))+' · '+esc(c.prog) : 'Chưa gắn chương trình')+'</div></div>';
+      '<div class="input ro">'+(c.prog ? '<span class="tag off" style="margin-right:8px">'+PMODE[modeOf(c)].label+'</span>'+esc(pPath(c.prog).join(' › '))+' · '+esc(c.prog) : 'Chưa gắn chương trình')+'</div></div>';
   }
-  PT = {prog: c.prog || '', fold:{}, q:''};
+  PT = {prog: c.prog || '', mode: modeOf(c), fold:{}, q:''};
   PROGRAMS.forEach(p=>{ if(pKids(p.code).length) PT.fold[p.code] = true; });
   if(c.prog){ let x = prog(c.prog); while(x){ PT.fold[x.code] = false; x = x.parent ? prog(x.parent) : null; } }
   return '<div class="wide" id="pgPick"><label>Chương trình đào tạo</label>'+
-    treeBar(PT)+'<div data-treebox>'+progTree(PT)+'</div>'+
-    '<div class="note" id="pgInfo" style="margin-top:10px">'+progPickNote(PT.prog)+'</div></div>';
+    modeBar(PT)+treeBar(PT)+'<div data-treebox>'+progTree(PT)+'</div>'+
+    '<div class="note" id="pgInfo" style="margin-top:10px">'+progPickNote(PT.prog, PT.mode)+'</div></div>';
 }
 function bindInfo(c){
   bindClassFields();
@@ -1463,7 +2165,7 @@ function bindInfo(c){
     F('iHelp').classList.toggle('on', helpOpen);
   };
   const L = classLocks(c);
-  if(!L.prog) bindProgTree('pgPick', PT, ()=>{ if(F('pgInfo')) F('pgInfo').innerHTML = progPickNote(PT.prog); });
+  if(!L.prog) bindProgTree('pgPick', PT, ()=>{ if(F('pgInfo')) F('pgInfo').innerHTML = progPickNote(PT.prog, PT.mode); });
   if(L.learn) F('iLearn').disabled = true;
   if(L.grade){ F('iGrade').disabled = true; F('iGrade').parentNode.classList.add('dis'); }
   if(L.fee){ F('iFee').disabled = true; F('iFee').parentNode.classList.add('dis'); }
@@ -1483,7 +2185,9 @@ function bindInfo(c){
     if(L.fee) f.fee = c.fee;
     f.attendance = LEARN[f.learn].ses;
     const oldCode = c.code;
-    Object.assign(c, f, {prog: L.prog ? c.prog : PT.prog, teachers:f.teachers.slice()});
+    const progChanged = !L.prog && (PT.prog !== c.prog || PT.mode !== modeOf(c));
+    Object.assign(c, f, {prog: L.prog ? c.prog : PT.prog, progMode: L.prog ? modeOf(c) : PT.mode, teachers:f.teachers.slice()});
+    if(progChanged){ c.content = null; c.progress = {}; ensureContent(c); }
     if(!c.code) c.code = oldCode;
     c.updated = fmtD(iso(TODAY));
     current = c.code;
@@ -1680,9 +2384,11 @@ function bindStudents(c){
 function redrawTab(){
   const c = get(current);
   F('tabBody').innerHTML = {info:tabInfo, students:tabStudents, sessions:tabSessions, grades:tabGrades, fees:tabFees,
-    surveys:tabSurveys, teachers:tabTeachers, notices:tabNotices, regs:tabRegs}[tab](c);
+    surveys:tabSurveys, teachers:tabTeachers, notices:tabNotices, regs:tabRegs,
+    content:tabContent, progress:tabProgress, learning:tabLearning}[tab](c);
   const bind = {info:bindInfo, students:bindStudents, sessions:bindSessions, grades:bindGrades, fees:bindFees,
-    surveys:bindSurveys, teachers:bindTeachers, notices:bindNotices, regs:bindRegs}[tab];
+    surveys:bindSurveys, teachers:bindTeachers, notices:bindNotices, regs:bindRegs,
+    content:bindContent, progress:bindProgress, learning:bindLearning}[tab];
   if(bind) bind(c);
 }
 function studentBox(c, s){
