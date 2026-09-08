@@ -125,8 +125,41 @@ a{color:var(--primary);text-decoration:none}
 .topbar .right{margin-left:auto;display:flex;align-items:center;gap:14px}
 .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center}
 .user{font-weight:500}
-.link-btn{background:none;border:0;color:var(--text-2);cursor:pointer;padding:4px}
-.link-btn:hover{color:var(--primary)}
+.userbtn{display:flex;align-items:center;gap:9px;background:none;border:0;padding:4px 6px 4px 4px;border-radius:var(--radius);cursor:pointer;color:var(--text);position:relative}
+.userbtn:hover,.userbtn.on{background:#f8fafc}
+.userbtn .chev{color:var(--text-3);font-size:11px;margin-left:-2px}
+.umenu{position:absolute;right:22px;top:calc(var(--head-h) - 6px);background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(15,23,42,.14);min-width:230px;padding:6px;z-index:30;display:none}
+.umenu.show{display:block}
+.umenu .who{padding:8px 10px 10px;border-bottom:1px solid var(--border-2);margin-bottom:6px}
+.umenu .who b{display:block;font-size:13.5px}
+.umenu .who span{color:var(--text-3);font-size:12.5px}
+.umenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:8px 10px;border-radius:4px;cursor:pointer;font-size:13.5px;color:var(--text)}
+.umenu button:hover{background:#f8fafc;color:var(--primary)}
+.umenu button svg{color:var(--text-3);flex:0 0 16px}
+.umenu button:hover svg{color:var(--primary)}
+.umenu hr{border:0;border-top:1px solid var(--border-2);margin:6px 0}
+.umenu button.out{color:var(--danger)}
+.umenu button.out svg{color:var(--danger)}
+.input.ro,.input[readonly]{background:#f8fafc;color:var(--text-2);cursor:default}
+.field .warn{color:var(--danger);font-size:12.5px;margin-top:6px;display:none}
+.field .warn.show{display:block}
+.pw-wrap{position:relative}
+.pw-wrap .input{padding-right:56px}
+.pw-wrap .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--text-3);font-size:12.5px;cursor:pointer;padding:2px 6px}
+.pw-wrap .eye:hover{color:var(--primary)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+/* màn đăng nhập */
+.login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:100}
+.login.show{display:flex}
+.login .card{background:#fff;border:1px solid var(--border);border-radius:10px;width:min(400px,92vw);padding:30px 32px 26px}
+.login .brand{height:auto;padding:0 0 16px;margin:0 0 20px;border-bottom:1px solid var(--border-2)}
+.login .brand .mark{width:36px;height:36px;font-size:16px}
+.login h2{margin:0 0 4px;font-size:18px}
+.login .sub{color:var(--text-3);font-size:13px;margin-bottom:20px}
+.login .btn{width:100%;justify-content:center;padding:9px}
+.login .foot-note{text-align:center;color:var(--text-3);font-size:12px;margin-top:16px}
+.login .err{color:var(--danger);font-size:12.5px;margin:-6px 0 12px;display:none}
+.login .err.show{display:block}
 
 .content{flex:1;padding:22px;min-width:0}
 .frame-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;height:calc(100vh - var(--head-h) - 44px)}
@@ -286,11 +319,20 @@ a{color:var(--ems-primary-hover)}
         <button class="icon-btn" id="btnCfg" title="Cấu hình menu">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
         </button>
-        <div class="avatar">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+        <button class="userbtn" id="userBtn" aria-haspopup="true">
+          <div class="avatar" id="uAvatar">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+          </div>
+          <span class="user" id="uName">admin02</span>
+          <span class="chev">▾</span>
+        </button>
+        <div class="umenu" id="userMenu">
+          <div class="who"><b id="uFull">Quản trị viên</b><span id="uMail">admin02@ego.local</span></div>
+          <button id="umProfile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>Thông tin người dùng</button>
+          <button id="umPw"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Đổi mật khẩu</button>
+          <hr>
+          <button class="out" id="umOut"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4H6a2 2 0 00-2 2v12a2 2 0 002 2h4M15 8l4 4-4 4M19 12H9"/></svg>Đăng xuất</button>
         </div>
-        <span class="user">admin02</span>
-        <button class="link-btn">Đăng xuất</button>
       </div>
     </header>
     <section class="content" id="content"></section>
@@ -323,6 +365,18 @@ a{color:var(--ems-primary-hover)}
 
 <div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
 <div class="toast" id="toast"></div>
+<div class="login" id="login">
+  <div class="card">
+    <div class="brand"><div class="mark">E</div><b>EGO</b> <span>LMS · Quản trị</span></div>
+    <h2>Đăng nhập</h2>
+    <div class="sub">Dùng tài khoản được cấp trên Keycloak realm ego</div>
+    <div class="field"><label>Tên đăng nhập</label><input class="input" id="lgUser" autocomplete="username"></div>
+    <div class="field"><label>Mật khẩu</label><div class="pw-wrap"><input class="input" id="lgPw" type="password" autocomplete="current-password"><button type="button" class="eye" id="lgEye">Hiện</button></div></div>
+    <div class="err" id="lgErr">Tên đăng nhập hoặc mật khẩu không đúng</div>
+    <button class="btn" id="lgOk">Đăng nhập</button>
+    <div class="foot-note">Quên mật khẩu thì liên hệ quản trị hệ thống để được cấp lại</div>
+  </div>
+</div>
 
 <script src="cau-hinh-menu.js"></script>
 <script>
@@ -652,6 +706,94 @@ function programForm(p){
   };
 }
 function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+
+/* ====================== tài khoản đang đăng nhập ====================== */
+const ME = {user:'admin02', name:'Quản trị viên', email:'admin02@ego.local', type:'Quản trị hệ thống', unit:'Trung tâm CNTT'};
+function paintMe(){
+  document.getElementById('uName').textContent = ME.user;
+  document.getElementById('uFull').textContent = ME.name;
+  document.getElementById('uMail').textContent = ME.email;
+}
+const userBtn = document.getElementById('userBtn'), userMenu = document.getElementById('userMenu');
+function closeUserMenu(){ userMenu.classList.remove('show'); userBtn.classList.remove('on'); }
+userBtn.onclick = e=>{ e.stopPropagation(); const on = userMenu.classList.toggle('show'); userBtn.classList.toggle('on', on); };
+userMenu.onclick = e=>e.stopPropagation();
+document.addEventListener('click', closeUserMenu);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeUserMenu(); closeModal(); } });
+
+document.getElementById('umProfile').onclick = ()=>{ closeUserMenu(); profileBox(); };
+document.getElementById('umPw').onclick = ()=>{ closeUserMenu(); myPwBox(); };
+document.getElementById('umOut').onclick = ()=>{ closeUserMenu(); logout(); };
+
+function profileBox(){
+  const box = document.getElementById('modalBox');
+  box.innerHTML =
+    '<h3>Thông tin người dùng</h3>'+
+    '<div class="field"><label>Tên đăng nhập</label><input class="input" id="mUser" value="'+esc(ME.user)+'" autocomplete="off"><div class="warn" id="wUser">Tên đăng nhập chỉ gồm chữ, số, dấu chấm hoặc gạch dưới, từ 3 ký tự</div></div>'+
+    '<div class="field"><label>Họ tên</label><input class="input" id="mName" value="'+esc(ME.name)+'"><div class="warn" id="wName">Nhập họ tên</div></div>'+
+    '<div class="field"><label>Email</label><input class="input" id="mEmail" type="email" value="'+esc(ME.email)+'"><div class="warn" id="wEmail">Email không đúng định dạng</div></div>'+
+    '<div class="grid2">'+
+      '<div class="field"><label>Phân loại tài khoản</label><input class="input ro" value="'+esc(ME.type)+'" readonly tabindex="-1"></div>'+
+      '<div class="field"><label>Đơn vị - phòng ban</label><input class="input ro" value="'+esc(ME.unit)+'" readonly tabindex="-1"></div>'+
+    '</div>'+
+    '<div class="foot"><button class="btn ghost" id="mCancel">Huỷ</button><button class="btn" id="mOk">Lưu</button></div>';
+  document.getElementById('modal').classList.add('show');
+  box.querySelector('#mCancel').onclick = closeModal;
+  box.querySelector('#mOk').onclick = ()=>{
+    const u = box.querySelector('#mUser').value.trim(), n = box.querySelector('#mName').value.trim(), m = box.querySelector('#mEmail').value.trim();
+    const okU = /^[a-zA-Z0-9._]{3,}$/.test(u), okN = !!n, okM = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m);
+    box.querySelector('#wUser').classList.toggle('show', !okU);
+    box.querySelector('#wName').classList.toggle('show', !okN);
+    box.querySelector('#wEmail').classList.toggle('show', !okM);
+    if(!(okU && okN && okM)) return;
+    const renamed = u !== ME.user;
+    ME.user = u; ME.name = n; ME.email = m; paintMe();
+    closeModal(); toast(renamed ? 'Đã lưu, tên đăng nhập mới có hiệu lực từ lần đăng nhập sau' : 'Đã cập nhật thông tin người dùng');
+  };
+  setTimeout(()=>box.querySelector('#mUser').focus(), 30);
+}
+
+function myPwBox(){
+  const box = document.getElementById('modalBox');
+  box.innerHTML =
+    '<h3>Đổi mật khẩu</h3>'+
+    '<div class="field"><label>Mật khẩu mới</label><div class="pw-wrap"><input class="input" id="pw1" type="password" autocomplete="new-password"><button type="button" class="eye" id="pwEye">Hiện</button></div></div>'+
+    '<div class="field"><label>Xác nhận mật khẩu mới</label><input class="input" id="pw2" type="password" autocomplete="new-password"><div class="warn" id="pwW">Mật khẩu xác nhận không khớp</div></div>'+
+    '<div class="foot"><button class="btn ghost" id="pwNo">Huỷ</button><button class="btn" id="pwOk" disabled>Đổi mật khẩu</button></div>';
+  document.getElementById('modal').classList.add('show');
+  const p1 = box.querySelector('#pw1'), p2 = box.querySelector('#pw2'), ok = box.querySelector('#pwOk'), w = box.querySelector('#pwW');
+  const paint = ()=>{ const match = p2.value && p1.value === p2.value; w.classList.toggle('show', !!p2.value && !match); ok.disabled = !(p1.value && match); };
+  p1.oninput = p2.oninput = paint;
+  box.querySelector('#pwEye').onclick = ()=>{ const t = p1.type==='password' ? 'text' : 'password'; p1.type = p2.type = t; box.querySelector('#pwEye').textContent = t==='password' ? 'Hiện' : 'Ẩn'; };
+  box.querySelector('#pwNo').onclick = closeModal;
+  ok.onclick = ()=>{ closeModal(); toast('Đã đổi mật khẩu, các phiên khác sẽ phải đăng nhập lại'); };
+  setTimeout(()=>p1.focus(), 30);
+}
+
+/* ---- đăng xuất / đăng nhập lại ---- */
+const loginEl = document.getElementById('login');
+function logout(){
+  closeModal();
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('mask').classList.remove('show');
+  document.getElementById('lgUser').value = '';
+  document.getElementById('lgPw').value = '';
+  document.getElementById('lgErr').classList.remove('show');
+  loginEl.classList.add('show');
+  setTimeout(()=>document.getElementById('lgUser').focus(), 30);
+}
+function tryLogin(){
+  const u = document.getElementById('lgUser').value.trim(), p = document.getElementById('lgPw').value;
+  if(!u || !p){ document.getElementById('lgErr').classList.add('show'); return; }
+  ME.user = u; paintMe();
+  loginEl.classList.remove('show');
+  document.getElementById('lgErr').classList.remove('show');
+  toast('Xin chào '+ME.name);
+}
+document.getElementById('lgOk').onclick = tryLogin;
+['lgUser','lgPw'].forEach(id=>document.getElementById(id).onkeydown = e=>{ if(e.key==='Enter') tryLogin(); });
+document.getElementById('lgEye').onclick = ()=>{ const i = document.getElementById('lgPw'); i.type = i.type==='password' ? 'text' : 'password'; document.getElementById('lgEye').textContent = i.type==='password' ? 'Hiện' : 'Ẩn'; };
+paintMe();
 document.getElementById('modal').onclick = e=>{ if(e.target.id==='modal') closeModal(); };
 
 /* ====================== cấu hình menu ====================== */
