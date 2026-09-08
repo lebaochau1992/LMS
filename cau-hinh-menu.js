@@ -1,17 +1,6 @@
 /* Cấu hình menu chức năng — EGO LMS
-   Nguồn cấu hình duy nhất của ego-lms-index.html. Trang chủ nạp file này bằng thẻ script,
-   không dựng menu mặc định trong mã nguồn nữa.
-
-   Màn hình gắn vào một mục menu là file HTML nằm cùng thư mục với file này trên repo,
-   khai báo theo tên file, không dùng đường dẫn tuyệt đối.
-
-   source
-     path     file HTML cùng thư mục, tên file đặt ở thuộc tính path
-     builtin  màn hình mẫu dựng sẵn trong trang chủ, mã màn hình đặt ở thuộc tính target
-     bỏ trống chức năng chưa gắn màn hình
-
-   MENU_PAGES là danh sách file HTML đang có trong thư mục, dùng để gợi ý khi chọn màn hình
-   ở màn Cấu hình menu. Thêm file mới vào repo thì khai báo thêm một dòng ở đây.
+   Xuất từ màn Cấu hình menu ngày 8/9/2026.
+   Đặt cùng thư mục với ego-lms-index.html và các file màn hình.
 */
 window.MENU_PAGES = [
   "quan-ly-lop-hoc-demo.html",
@@ -75,7 +64,7 @@ window.MENU_CONFIG = [
       },
       {
         "id": "m3b",
-        "label": "Khóa học",
+        "label": "Biên soạn học phần",
         "icon": "file",
         "target": "khoa-hoc",
         "source": "builtin"
@@ -136,8 +125,8 @@ window.MENU_CONFIG = [
         "id": "m5a",
         "label": "Quản lý tài khoản",
         "icon": "users",
-        "source": "path",
-        "path": "tai-khoan.html"
+        "path": "tai-khoan.html",
+        "source": "path"
       },
       {
         "id": "m5b",
