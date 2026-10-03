@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EGO LMS Quản trị</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+html,body{height:100%}
+body{padding:0;overflow:hidden}
+.app{display:grid;grid-template-columns:252px 1fr;height:100%}
+.app.collapsed{grid-template-columns:64px 1fr}
+.side{background:var(--ems-surface);border-right:1px solid var(--ems-border);display:flex;flex-direction:column;min-height:0}
+.brand{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--ems-border);height:56px}
+.brand .logo{width:30px;height:30px;border-radius:8px;background:var(--ems-navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:10px;letter-spacing:.02em;flex:none}
+.brand b{font-size:14px;letter-spacing:-.01em;white-space:nowrap} .brand small{display:block;color:var(--ems-muted);font-size:11px;font-weight:500;white-space:nowrap}
+.side-search{padding:10px 12px}
+.side-search .inp{width:100%;font-size:13px}
+.nav{flex:1;overflow-y:auto;padding:4px 8px 16px}
+.nav .grp{margin-top:10px}
+.nav .grp-t{display:flex;align-items:center;width:100%;border:0;background:transparent;padding:6px 8px;font:800 11px var(--font);letter-spacing:.07em;text-transform:uppercase;color:var(--ems-faint);cursor:pointer;text-align:left}
+.nav .grp-t span{margin-left:auto;font-size:10px}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ems-text-2);font-weight:500;font-size:13px;text-decoration:none;white-space:nowrap}
+.nav a:hover{background:var(--ems-surface-2);color:var(--ems-text)}
+.nav a.on{background:var(--ems-navy-soft);color:var(--ems-navy);font-weight:600}
+.nav a svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav a .cnt{margin-left:auto;font-size:11px;background:var(--ems-danger);color:#fff;border-radius:99px;padding:0 6px;font-weight:700}
+.app.collapsed .brand b,.app.collapsed .brand small,.app.collapsed .side-search,.app.collapsed .grp-t,.app.collapsed .nav a .lbl,.app.collapsed .nav a .cnt,.app.collapsed .side-foot .lbl{display:none}
+.app.collapsed .nav a{justify-content:center}
+.side-foot{border-top:1px solid var(--ems-border);padding:8px}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.top{height:56px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--ems-surface);border-bottom:1px solid var(--ems-border);flex:none}
+.crumb{font-size:13px;color:var(--ems-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.crumb b{color:var(--ems-text);font-weight:700}
+.top .tools{margin-left:auto;display:flex;align-items:center;gap:6px}
+.userbtn{display:flex;align-items:center;gap:8px;border:1px solid transparent;background:transparent;border-radius:999px;padding:3px 10px 3px 3px;cursor:pointer;color:var(--ems-text);font:600 13px var(--font)}
+.userbtn:hover{background:var(--ems-surface-2)}
+.userbtn .avatar{background:var(--ems-navy);color:#fff}
+.frame{flex:1;min-height:0;position:relative;background:var(--ems-bg)}
+.frame iframe{border:0;width:100%;height:100%;display:block;background:var(--ems-bg)}
+.frame .msg{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center}
+.umenu{position:absolute;right:12px;top:52px;width:260px}
+.umenu .who{padding:10px 12px;border-bottom:1px solid var(--ems-border);margin-bottom:4px}
+.login{position:fixed;inset:0;background:var(--ems-bg);display:grid;place-items:center;z-index:100;padding:16px}
+.login .card{width:min(380px,100%);background:var(--ems-surface);border:1px solid var(--ems-border);border-radius:var(--r-card);padding:28px;display:flex;flex-direction:column;gap:14px}
+.cfg-item{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;padding:8px;border:1px solid var(--ems-border);border-radius:8px}
+.cfg-item .inp,.cfg-item .sel{font-size:12px;padding:5px 8px;width:100%}
+.cfg-grp{border:1px solid var(--ems-border-strong);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.status-ok{color:var(--ems-success)} .status-warn{color:var(--ems-warning)}
+.hamb{display:none}
+@media (max-width:860px){
+  .app,.app.collapsed{grid-template-columns:1fr}
+  .side{position:fixed;left:0;top:0;bottom:0;width:260px;z-index:40;transform:translateX(-100%);transition:transform .2s}
+  .app.mobile-open .side{transform:none;box-shadow:10px 0 30px rgba(2,6,23,.2)}
+  .app.collapsed .brand b,.app.collapsed .brand small,.app.collapsed .side-search,.app.collapsed .grp-t,.app.collapsed .nav a .lbl{display:initial}
+  .hamb{display:inline-flex}
+  .collapse-btn{display:none}
+  .top .hide-sm{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="side" id="side">
+    <div class="brand"><div class="logo">EGO</div><div><b>EGO LMS · Quản trị</b><small>Học viện Y Dược học cổ truyền VN</small></div></div>
+    <div class="side-search"><input class="inp" id="navSearch" placeholder="Tìm chức năng…" aria-label="Tìm chức năng"></div>
+    <nav class="nav" id="nav" aria-label="Menu chức năng"></nav>
+    <div class="side-foot"><button class="btn ghost" id="btnCfg" style="width:100%;justify-content:flex-start" title="Cấu hình menu chức năng"><span aria-hidden="true">⚙</span><span class="lbl">Cấu hình menu</span></button></div>
+  </aside>
+  <section class="main">
+    <header class="top">
+      <button class="icon-btn hamb" id="btnHamb" aria-label="Mở menu">☰</button>
+      <button class="icon-btn collapse-btn" id="btnCollapse" aria-label="Thu gọn menu" title="Thu gọn / mở rộng menu">☰</button>
+      <div class="crumb" id="crumb"></div>
+      <div class="tools">
+        <a class="btn sm hide-sm" href="cong-hoc-vien/index.html" target="_blank" rel="noopener" title="Mở Cổng học viên dùng chung dữ liệu với bản quản trị">Cổng học viên ↗</a>
+        <button class="btn sm ghost hide-sm" id="btnReset" title="Xóa mọi thay đổi và nạp lại dữ liệu mẫu">Khôi phục dữ liệu mẫu</button>
+        <button class="icon-btn" id="btnTheme" title="Đổi giao diện sáng / tối" aria-label="Đổi giao diện"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
+        <button class="userbtn" id="btnUser" aria-haspopup="true"><span class="avatar" id="uAvatar">LC</span><span class="hide-sm" id="uName">admin02</span> ▾</button>
+      </div>
+    </header>
+    <div class="frame" id="frame"><iframe id="view" title="Màn hình chức năng"></iframe></div>
+  </section>
+</div>
+
+<script src="cau-hinh-menu.js"></script>
+<script src="lms-core.js"></script>
+<script>
+(function(){
+'use strict';
+var U = LMS.ui, esc = U.esc;
+var DRAFT = 'egoLmsDemo.menuDraft', SESSION = 'egoLmsDemo.session', THEME = 'egoLmsDemo.theme', COLL = 'egoLmsDemo.collapsed';
+function get(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
+function set(k,v){ try{ if(v==null) localStorage.removeItem(k); else localStorage.setItem(k,v);}catch(e){} }
+
+var ICONS = {
+  dashboard:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  tree:'<rect x="9" y="3" width="6" height="4" rx="1"/><rect x="3" y="17" width="6" height="4" rx="1"/><rect x="15" y="17" width="6" height="4" rx="1"/><path d="M12 7v5M6 17v-3h12v3"/>',
+  book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>',
+  class:'<path d="M3 8l9-4 9 4-9 4z"/><path d="M7 10v5c0 1.5 2.5 3 5 3s5-1.5 5-3v-5"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  pulse:'<path d="M3 12h4l3-7 4 14 3-7h4"/>',
+  chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  report:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 17v-4M12 17v-7M15 17v-2"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  task:'<path d="M9 4h6v3H9z"/><path d="M15 5h3v16H6V5h3"/><path d="M9 13l2 2 4-4"/>',
+  survey:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  bank:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
+  paper:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 10h7M9 14h7M9 18h4"/>',
+  exam:'<rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M8 12l2.5 2.5L16 9"/>',
+  check:'<path d="M4 12l5 5L20 6"/>',
+  chart:'<path d="M4 20V4M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3"/>',
+  tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',
+  wallet:'<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M16 13h2M3 10h18"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2.5.7 4 2.8 4 6"/>',
+  teacher:'<circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',
+  key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+  org:'<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M5 16v-4h14v4"/>',
+  log:'<path d="M5 4h14v16H5z"/><path d="M9 8h6M9 12h6M9 16h6"/>',
+  alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+  dot:'<circle cx="12" cy="12" r="3"/>'
+};
+function icon(n){ return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(ICONS[n]||ICONS.dot)+'</svg>'; }
+
+/* ---------- cấu hình menu: nháp (localStorage) → file cau-hinh-menu.js ---------- */
+var menu, source;
+function loadMenu(){
+  var d = get(DRAFT);
+  if(d){ try{ menu = JSON.parse(d); source='draft'; return; }catch(e){} }
+  if(Array.isArray(window.MENU_CONFIG)){ menu = JSON.parse(JSON.stringify(window.MENU_CONFIG)); source='file'; return; }
+  menu = null; source = 'none';
+}
+function allItems(){ var a=[]; (menu||[]).forEach(function(g){ (g.items||[]).forEach(function(it){ a.push({g:g,it:it}); }); }); return a; }
+function findItem(id){ return allItems().find(function(x){ return x.it.id===id; }); }
+
+/* số việc cần xử lý hiện trên menu */
+function counts(){
+  var db = LMS.db, c = {};
+  var chuaDD = db.buoiHoc.filter(function(b){ var k=LMS.buoiStatus(b).key; return k==='chua-dd'||k==='cho-xn'; }).length; if(chuaDD) c['buoi-hoc']=chuaDD;
+  var cham = db.baiLam.filter(function(b){ return b.trangThai==='cho-cham'; }).length; if(cham) c['cham-bai']=cham; var bt = (db.baiTap||[]).reduce(function(a,b){ return a+(b.trangThai==='nhap'?0:LMS.btStats(b).choCham); },0); if(bt) c['bai-tap']=bt; var gs = (db.phienThi||[]).filter(function(p){ var k=LMS.byId('kyThi',p.ky); return k && LMS.kyThiStatus(k).key==='dang' && (p.trangThai==='khoa'||p.trangThai==='mat-ket-noi'||(p.suKien||[]).some(function(e){ return !e.xl && LMS.SK[e.loai] && LMS.SK[e.loai][1]>=2; })); }).length; if(gs) c['giam-sat-thi']=gs;
+  var hd = db.hoiDap.filter(function(h){ return LMS.hdChoTL(h) && LMS.daysBetween(h.ngay, LMS.TODAY)>=2; }).length; if(hd) c['hoi-dap']=hd;
+  return c;
+}
+
+var active = null, q = '';
+function renderNav(){
+  var nav = document.getElementById('nav');
+  if(!menu){ nav.innerHTML = '<div class="note warn" style="margin:8px">Chưa nạp được cấu hình menu. Kiểm tra file cau-hinh-menu.js cùng thư mục.</div>'; return; }
+  var cnt = counts(), h = '', nq = U.norm(q);
+  var closed = {}; try{ closed = JSON.parse(get('egoLmsDemo.navClosed')||'{}'); }catch(e){}
+  menu.forEach(function(g){
+    var items = (g.items||[]).filter(function(it){ return !it.hidden && (!nq || U.norm(it.label).indexOf(nq)>=0); });
+    if(!items.length) return;
+    var isClosed = closed[g.id] && !nq;
+    h += '<div class="grp"><button class="grp-t" data-g="'+esc(g.id)+'" aria-expanded="'+(!isClosed)+'">'+esc(g.label)+'<span>'+(isClosed?'▸':'▾')+'</span></button>';
+    if(!isClosed) items.forEach(function(it){
+      h += '<a href="#'+esc(it.id)+'" data-id="'+esc(it.id)+'" class="'+(it.id===active?'on':'')+'" title="'+esc(it.label)+'">'+icon(it.icon)+'<span class="lbl">'+U.hl(it.label,q)+'</span>'+(cnt[it.id]?'<span class="cnt">'+cnt[it.id]+'</span>':'')+'</a>';
+    });
+    h += '</div>';
+  });
+  nav.innerHTML = h || '<div class="muted small" style="padding:8px">Không có chức năng phù hợp</div>';
+  nav.querySelectorAll('.grp-t').forEach(function(b){ b.onclick=function(){ closed[b.dataset.g]=!closed[b.dataset.g]; set('egoLmsDemo.navClosed',JSON.stringify(closed)); renderNav(); }; });
+  nav.querySelectorAll('a[data-id]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); open(a.dataset.id); document.getElementById('app').classList.remove('mobile-open'); }; });
+}
+
+function open(id, keepHash){
+  var f = findItem(id) || allItems()[0]; if(!f) return;
+  active = f.it.id;
+  document.getElementById('crumb').innerHTML = esc(f.g.label)+' › <b>'+esc(f.it.label)+'</b>';
+  document.title = f.it.label + ' · EGO LMS';
+  var frame = document.getElementById('frame'), ifr = document.getElementById('view');
+  var old = frame.querySelector('.msg'); if(old) old.remove();
+  if(!f.it.path){ ifr.hidden = true; var m=document.createElement('div'); m.className='msg'; m.innerHTML='<div><h2>'+esc(f.it.label)+'</h2><p class="muted">Chức năng chưa gắn màn hình. Mở Cấu hình menu để chọn file HTML.</p></div>'; frame.appendChild(m); }
+  else { ifr.hidden = false; ifr.src = f.it.path; }
+  if(!keepHash){ try{ history.replaceState(null,'','#'+f.it.id); }catch(e){} }
+  renderNav();
+}
+
+/* ---------- điều hướng từ màn hình con ---------- */
+window.addEventListener('message', function(e){
+  var d = e.data||{};
+  if(d.type==='lms-nav'){ var target = allItems().find(function(x){ return x.it.path===d.page || x.it.id===d.page.replace('.html',''); }); if(target) open(target.it.id); }
+  if(d.type==='lms-data-changed'){ renderNav(); }
+});
+
+/* ---------- chủ đề ---------- */
+function applyTheme(t){ if(t) document.documentElement.setAttribute('data-theme',t); else document.documentElement.removeAttribute('data-theme'); var w=document.getElementById('view').contentWindow; if(w) w.postMessage({type:'lms-theme',theme:t},'*'); }
+document.getElementById('btnTheme').onclick = function(){ var cur = document.documentElement.getAttribute('data-theme'); var dark = cur ? cur==='dark' : matchMedia('(prefers-color-scheme: dark)').matches; var t = dark?'light':'dark'; set(THEME,t); applyTheme(t); };
+document.getElementById('view').addEventListener('load', function(){ var t=get(THEME); if(t) this.contentWindow.postMessage({type:'lms-theme',theme:t},'*'); });
+
+document.getElementById('btnCollapse').onclick = function(){ var a=document.getElementById('app'); a.classList.toggle('collapsed'); set(COLL, a.classList.contains('collapsed')?'1':null); };
+document.getElementById('btnHamb').onclick = function(){ document.getElementById('app').classList.toggle('mobile-open'); };
+document.getElementById('navSearch').oninput = function(){ q = this.value.trim(); renderNav(); };
+document.getElementById('btnReset').onclick = function(){
+  U.confirm({ title:'Khôi phục dữ liệu mẫu', message:'Mọi dữ liệu đã thêm, sửa, xóa trong bản demo sẽ bị xóa và nạp lại bộ dữ liệu mẫu ban đầu.', ok:'Khôi phục', danger:true }).then(function(ok){ if(!ok) return; LMS.reset(); U.toast('Đã nạp lại dữ liệu mẫu','ok'); document.getElementById('view').contentWindow.location.reload(); renderNav(); });
+};
+
+/* ---------- người dùng ---------- */
+function me(){ return LMS.db.meta.user; }
+function paintUser(){ document.getElementById('uName').textContent = me().ten; document.getElementById('uAvatar').textContent = U.initials(me().hoTen); }
+document.getElementById('btnUser').onclick = function(e){
+  e.stopPropagation();
+  var ex = document.querySelector('.umenu'); if(ex){ ex.remove(); return; }
+  var m = document.createElement('div'); m.className='menu umenu';
+  m.innerHTML = '<div class="who"><b>'+esc(me().hoTen)+'</b><div class="muted small">'+esc(me().email)+'</div></div><button data-a="info">Thông tin người dùng</button><button data-a="pw">Đổi mật khẩu</button><hr><button data-a="out" class="danger">Đăng xuất</button>';
+  document.body.appendChild(m);
+  m.onclick = function(ev){ var a = ev.target.dataset.a; if(!a) return; m.remove(); if(a==='info') userInfo(); if(a==='pw') changePw(); if(a==='out') logout(); };
+  setTimeout(function(){ document.addEventListener('mousedown', function h(ev){ if(!m.contains(ev.target)){ m.remove(); document.removeEventListener('mousedown',h);} }); },0);
+};
+function userInfo(){
+  var tk = LMS.db.taiKhoan.find(function(t){ return t.ten===me().ten; }) || {};
+  U.modal({ title:'Thông tin người dùng', body:
+    '<div class="form-grid"><div class="field"><label for="uf1">Tên đăng nhập</label><input class="inp" id="uf1" name="ten" value="'+esc(me().ten)+'"></div>'+
+    '<div class="field"><label for="uf2">Họ tên</label><input class="inp" id="uf2" name="hoTen" value="'+esc(me().hoTen)+'"></div>'+
+    '<div class="field full"><label for="uf3">Email</label><input class="inp" id="uf3" name="email" value="'+esc(me().email)+'"></div>'+
+    '<div class="field"><label>Phân loại tài khoản</label><input class="inp" readonly value="Nhân sự · Quản trị hệ thống"></div>'+
+    '<div class="field"><label>Đơn vị – phòng ban</label><input class="inp" readonly value="'+esc(LMS.donViTen(tk.donVi))+'"></div></div>',
+    foot:[{label:'Hủy'},{label:'Lưu',cls:'primary',onClick:function(api){ var v=U.formVals(api.body), ok=true;
+      U.fieldErr(api.body,'ten', /^[a-z0-9._]{3,}$/i.test(v.ten)?'':'Tối thiểu 3 ký tự, chỉ gồm chữ, số, dấu chấm, gạch dưới'); if(!/^[a-z0-9._]{3,}$/i.test(v.ten)) ok=false;
+      U.fieldErr(api.body,'hoTen', v.hoTen?'':'Nhập họ tên'); if(!v.hoTen) ok=false;
+      U.fieldErr(api.body,'email', /^\S+@\S+\.\S+$/.test(v.email)?'':'Email chưa đúng định dạng'); if(!/^\S+@\S+\.\S+$/.test(v.email)) ok=false;
+      if(!ok) return false;
+      var changedName = v.ten!==me().ten; Object.assign(me(), v); if(tk.id){ tk.ten=v.ten; tk.hoTen=v.hoTen; tk.email=v.email; }
+      LMS.commit('Sửa','Tài khoản','Cập nhật thông tin cá nhân'); paintUser(); U.toast(changedName?'Đã lưu. Tên đăng nhập mới áp dụng từ lần đăng nhập sau':'Đã lưu thông tin','ok'); }}]});
+}
+function pwForm(title, btn, onOk){
+  U.modal({ title:title, size:'sm', body:'<div class="field"><label for="pw1">Mật khẩu mới</label><input class="inp" type="password" id="pw1" name="p1"></div><div class="field"><label for="pw2">Xác nhận mật khẩu mới</label><input class="inp" type="password" id="pw2" name="p2"></div><label class="check"><input type="checkbox" id="pwShow"> Hiện mật khẩu</label>',
+    onOpen:function(api){ var b=api.body; b.querySelector('#pwShow').onchange=function(){ b.querySelectorAll('input[type=password],input[data-pw]').forEach(function(i){ i.dataset.pw=1; i.type=this.checked?'text':'password'; }.bind(this)); }; },
+    foot:[{label:'Hủy'},{label:btn,cls:'primary',onClick:function(api){ var v=U.formVals(api.body); if(!v.p1){ U.fieldErr(api.body,'p1','Nhập mật khẩu mới'); return false; } U.fieldErr(api.body,'p1',''); if(v.p1!==v.p2){ U.fieldErr(api.body,'p2','Hai mật khẩu chưa khớp'); return false; } onOk(); }}]});
+}
+function changePw(){ pwForm('Đổi mật khẩu','Đổi mật khẩu', function(){ LMS.commit('Đổi mật khẩu','Tài khoản',me().ten); U.toast('Đã đổi mật khẩu','ok'); }); }
+function logout(){ set(SESSION,'0'); showLogin(); }
+function showLogin(){
+  var l = document.createElement('div'); l.className='login'; l.id='login';
+  l.innerHTML = '<form class="card" id="loginForm"><div class="row"><div class="logo" style="width:40px;height:40px;border-radius:10px;background:var(--ems-navy);color:#fff;display:grid;place-items:center;font-weight:800">EGO</div><div><h1 style="font-size:18px">EGO LMS · Quản trị</h1><div class="muted small">Học viện Y Dược học cổ truyền Việt Nam</div></div></div>'+
+    '<div class="field"><label for="lg1">Tên đăng nhập</label><input class="inp" id="lg1" name="u" autocomplete="username" value="'+esc(me().ten)+'"></div><div class="field"><label for="lg2">Mật khẩu</label><input class="inp" id="lg2" type="password" name="p" autocomplete="current-password"></div><button class="btn primary" type="submit" style="justify-content:center">Đăng nhập</button><div class="muted small">Bản demo: nhập tên đăng nhập và mật khẩu bất kỳ.</div></form>';
+  document.body.appendChild(l);
+  l.querySelector('form').onsubmit = function(e){ e.preventDefault(); var v=U.formVals(this); if(!v.u||!v.p){ U.fieldErr(this, !v.u?'u':'p', 'Nhập đủ tên đăng nhập và mật khẩu'); return; } set(SESSION,'1'); l.remove(); };
+  setTimeout(function(){ l.querySelector('#lg2').focus(); },30);
+}
+
+/* ---------- cấu hình menu ---------- */
+document.getElementById('btnCfg').onclick = openCfg;
+function openCfg(){
+  var work = JSON.parse(JSON.stringify(menu||[]));
+  var pages = (window.MENU_PAGES||[]);
+  var dr = document.createElement('div'); dr.className='overlay'; dr.style.justifyContent='flex-end'; dr.style.padding='0';
+  var box = document.createElement('div'); box.className='drawer'; dr.appendChild(box); document.body.appendChild(dr);
+  function close(){ dr.remove(); }
+  dr.addEventListener('mousedown', function(e){ if(e.target===dr) close(); });
+  function status(){ var n=0,m=0; work.forEach(function(g){ (g.items||[]).forEach(function(it){ n++; if(it.path) m++; }); });
+    return (source==='draft'?'<span class="status-warn">● Đang chạy theo bản nháp trên trình duyệt</span>':'<span class="status-ok">● Đang chạy theo file cau-hinh-menu.js</span>')+' · '+n+' chức năng, '+m+' đã gắn màn hình'; }
+  function paint(){
+    var h = '<div class="modal-head"><h2>Cấu hình menu chức năng</h2><button class="icon-btn right" data-close aria-label="Đóng">✕</button></div><div class="modal-body" style="flex:1"><div class="small">'+status()+'</div>';
+    work.forEach(function(g,gi){
+      h += '<div class="cfg-grp"><div class="row"><input class="inp grow" data-g="'+gi+'" data-f="label" value="'+esc(g.label)+'" aria-label="Tên nhóm"><button class="icon-btn" data-gmove="'+gi+':-1" title="Lên">↑</button><button class="icon-btn" data-gmove="'+gi+':1" title="Xuống">↓</button><button class="icon-btn" data-gdel="'+gi+'" title="Xóa nhóm">✕</button></div>';
+      (g.items||[]).forEach(function(it,ii){
+        var known = !it.path || pages.indexOf(it.path)>=0;
+        h += '<div class="cfg-item"><input class="inp" data-g="'+gi+'" data-i="'+ii+'" data-f="label" value="'+esc(it.label)+'" aria-label="Tên chức năng">'+
+          '<div><input class="inp" list="pageList" data-g="'+gi+'" data-i="'+ii+'" data-f="path" value="'+esc(it.path||'')+'" placeholder="file .html cùng thư mục" aria-label="File màn hình"><div class="small '+(known?'status-ok':'status-warn')+'">'+(it.path?(known?'có trong thư mục':'chưa khai báo ở MENU_PAGES'):'chưa gắn màn hình')+'</div></div>'+
+          '<div class="row" style="gap:2px"><label class="check small" title="Ẩn khỏi menu"><input type="checkbox" data-g="'+gi+'" data-i="'+ii+'" data-f="hidden"'+(it.hidden?' checked':'')+'>Ẩn</label><button class="icon-btn" data-move="'+gi+':'+ii+':-1" title="Lên">↑</button><button class="icon-btn" data-move="'+gi+':'+ii+':1" title="Xuống">↓</button><button class="icon-btn" data-del="'+gi+':'+ii+'" title="Xóa">✕</button></div></div>';
+      });
+      h += '<button class="btn sm" data-add="'+gi+'">+ Thêm chức năng</button></div>';
+    });
+    h += '<button class="btn" data-addg>+ Thêm nhóm</button><datalist id="pageList">'+pages.map(function(p){return '<option value="'+esc(p)+'">';}).join('')+'</datalist></div>';
+    h += '<div class="modal-foot"><button class="btn" data-a="reload" title="Bỏ bản nháp, dùng lại cấu hình trong file">Đọc lại từ file</button><label class="btn" for="cfgImport">Nhập file</label><input type="file" id="cfgImport" accept=".js,.json" hidden><button class="btn" data-a="copy">Sao chép nội dung .js</button><button class="btn" data-a="export">Xuất file .js</button><button class="btn primary" data-a="draft">Lưu nháp</button></div>';
+    box.innerHTML = h;
+  }
+  function jsText(){ return '/* Cấu hình menu chức năng — EGO LMS · Cổng quản trị (xuất lúc '+LMS.fmtDT(new Date())+') */\nwindow.MENU_PAGES = '+JSON.stringify(pages,null,2)+';\n\nwindow.MENU_CONFIG = '+JSON.stringify(work,null,2)+';\n'; }
+  box.addEventListener('input', function(e){ var t=e.target, g=t.dataset.g, i=t.dataset.i, f=t.dataset.f; if(g==null||!f) return; var o = i!=null ? work[g].items[i] : work[g]; o[f] = t.type==='checkbox' ? t.checked : t.value; if(f==='path'){ var n=t.parentNode.querySelector('.small'); var known=pages.indexOf(t.value)>=0; n.className='small '+(known?'status-ok':'status-warn'); n.textContent = t.value?(known?'có trong thư mục':'chưa khai báo ở MENU_PAGES'):'chưa gắn màn hình'; } });
+  box.addEventListener('change', function(e){ var t=e.target; if(t.type==='checkbox'&&t.dataset.f){ work[t.dataset.g].items[t.dataset.i].hidden=t.checked; } if(t.id==='cfgImport'&&t.files[0]){ var r=new FileReader(); r.onload=function(){ try{ var txt=String(r.result), m=txt.match(/MENU_CONFIG\s*=\s*(\[[\s\S]*\])\s*;?/); var arr=JSON.parse(m?m[1]:txt); if(!Array.isArray(arr)) throw 0; work=arr; paint(); U.toast('Đã nhập cấu hình từ '+t.files[0].name+'. Bấm Lưu nháp để áp dụng.'); }catch(err){ U.toast('File không đúng định dạng cấu hình menu','bad'); } }; r.readAsText(t.files[0],'UTF-8'); } });
+  box.addEventListener('click', function(e){
+    var t=e.target.closest('button'); if(!t) return;
+    if(t.hasAttribute('data-close')) return close();
+    if(t.dataset.add!=null){ work[t.dataset.add].items.push({id:'m'+Date.now().toString(36),label:'Chức năng mới',path:'',icon:'dot'}); paint(); }
+    if(t.hasAttribute('data-addg')){ work.push({id:'g'+Date.now().toString(36),label:'Nhóm mới',items:[]}); paint(); }
+    if(t.dataset.del){ var p=t.dataset.del.split(':'); work[p[0]].items.splice(p[1],1); paint(); }
+    if(t.dataset.gdel!=null){ if(work[t.dataset.gdel].items.length){ U.toast('Nhóm còn chức năng, chuyển hoặc xóa chức năng trước','bad'); return; } work.splice(t.dataset.gdel,1); paint(); }
+    if(t.dataset.move){ var m=t.dataset.move.split(':').map(Number), arr=work[m[0]].items, j=m[1]+m[2]; if(j<0||j>=arr.length) return; var x=arr[m[1]]; arr[m[1]]=arr[j]; arr[j]=x; paint(); }
+    if(t.dataset.gmove){ var n=t.dataset.gmove.split(':').map(Number), k=n[0]+n[1]; if(k<0||k>=work.length) return; var y=work[n[0]]; work[n[0]]=work[k]; work[k]=y; paint(); }
+    var a=t.dataset.a;
+    if(a==='draft'){ set(DRAFT, JSON.stringify(work)); loadMenu(); renderNav(); paint(); U.toast('Đã lưu nháp trên trình duyệt này','ok'); }
+    if(a==='reload'){ set(DRAFT,null); loadMenu(); work=JSON.parse(JSON.stringify(menu||[])); renderNav(); paint(); U.toast('Đã đọc lại cấu hình từ file'); }
+    if(a==='copy'){ var txt=jsText(); (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){ U.toast('Đã sao chép nội dung cau-hinh-menu.js','ok'); }).catch(function(){ U.modal({title:'Nội dung cau-hinh-menu.js',size:'lg',body:'<textarea style="min-height:360px;font-family:var(--mono);font-size:12px" readonly>'+esc(txt)+'</textarea>'}); }); }
+    if(a==='export'){ try{ var blob=new Blob([jsText()],{type:'text/javascript'}); var url=URL.createObjectURL(blob); var ln=document.createElement('a'); ln.href=url; ln.download='cau-hinh-menu.js'; document.body.appendChild(ln); ln.click(); ln.remove(); setTimeout(function(){URL.revokeObjectURL(url);},1000); U.toast('Đã xuất cau-hinh-menu.js. Thay file trong thư mục rồi commit.'); }catch(err){ U.toast('Trình duyệt chặn tải file, dùng Sao chép nội dung .js','bad'); } }
+  });
+  paint();
+}
+
+/* ---------- khởi động ---------- */
+loadMenu();
+if(get(THEME)) applyTheme(get(THEME));
+if(get(COLL)) document.getElementById('app').classList.add('collapsed');
+paintUser();
+var start = (location.hash||'').replace('#','');
+open(findItem(start) ? start : (allItems()[0]||{it:{}}).it.id, false);
+if(get(SESSION)==='0') showLogin();
+})();
+</script>
+</body>
+</html>

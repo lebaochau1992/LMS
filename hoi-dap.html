@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hỏi đáp / Thảo luận · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.hd-wrap{display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;align-items:start}
+.lops{position:sticky;top:12px}
+.lops .panel-body{padding:8px;display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 150px);overflow:auto}
+.lop-it{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--ems-border);border-radius:var(--r-ctl);padding:9px 11px;background:var(--ems-surface);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.lop-it:hover{background:var(--ems-surface-2)}
+.lop-it.on{border-color:var(--ems-navy-line);background:var(--ems-navy-soft)}
+.lop-it .n{font-weight:600;font-size:13px}
+.lop-it .s{font-size:12px;color:var(--ems-muted)}
+.cnt-b{margin-left:auto;min-width:20px;height:20px;border-radius:99px;background:var(--ems-danger);color:#fff;font:700 11px var(--font);display:inline-flex;align-items:center;justify-content:center;padding:0 6px;flex:none}
+.cnt-b.warn{background:var(--ems-warning)}
+.th-head{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.th-head h2{margin:0}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lop-sel{display:none}
+.lops .panel-head .inp{width:100%}
+@media (max-width:900px){
+  .hd-wrap{grid-template-columns:1fr}
+  .lops{display:none}
+  .lop-sel{display:block}
+  .replies,.box{margin-left:6px}
+  .ph .t{margin-left:0}
+  .tools{width:100%}
+  .tools .seg{overflow-x:auto;max-width:100%;flex-wrap:nowrap}
+  .tools .seg button{white-space:nowrap}
+}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script src="lms-hoidap.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var app = document.getElementById('app');
+var H48 = 48 * 3600000;
+var st = { lop:'', loc:'all', q:'', bai:'', sort:'can-xu-ly', an:false, open:{}, box:null, hl:null, qLop:'' };
+var HD = LMS.hoiDapUI;
+function D(){ return LMS.db; }
+var hvTen=HD.hvTen, gvTen=HD.gvTen, tenNguoi=HD.tenNguoi, baiOf=HD.baiOf, cho=HD.cho, quaHan=HD.quaHan, reps=HD.reps, lastAt=HD.lastAt;
+function hien(t){ return !t.xoa && !t.an; }
+function lopsCo(){ var d=D(); return d.lop.filter(function(l){ return l.trangThai!=='huy' && (l.trangThai==='dang-hoc'||l.trangThai==='tuyen-sinh'||d.hoiDap.some(function(t){ return t.lop===l.id; })); }); }
+function topicsOf(lopId){ return D().hoiDap.filter(function(t){ return !lopId || t.lop===lopId; }); }
+function mention(txt){ return esc(txt).replace(/(^|\s)@([^\s:,]+(?:\s[^\s:,@]+){0,3}):/g,'$1<span class="mention">@$2</span>:'); }
+
+function filtered(){
+  var q=U.norm(st.q);
+  return topicsOf(st.lop).filter(function(t){
+    if(!st.an && (t.xoa||t.an)) return false;
+    if(st.bai && t.bai!==st.bai) return false;
+    if(st.loc==='chua' && !cho(t)) return false;
+    if(st.loc==='qua' && !quaHan(t)) return false;
+    if(st.loc==='xong' && !t.giaiQuyet) return false;
+    if(st.loc==='rieng' && !t.rieng) return false;
+    if(st.loc==='bl' && t.loai!=='binh-luan') return false;
+    if(q){ var b=baiOf(t); var txt=t.noiDung+' '+hvTen(t.hv)+' '+(b?b.ten:'')+' '+reps(t).map(function(r){ return r.noiDung+' '+tenNguoi(r); }).join(' '); if(U.norm(txt).indexOf(q)<0) return false; }
+    return true;
+  }).sort(function(a,b){
+    if(a.ghim!==b.ghim) return a.ghim?-1:1;
+    if(st.sort==='can-xu-ly'){ var x=quaHan(a)?2:cho(a)?1:0, y=quaHan(b)?2:cho(b)?1:0; if(x!==y) return y-x; if(x) return a.ngay<b.ngay?-1:1; }
+    var la=lastAt(a), lb=lastAt(b); return la<lb?1:-1;
+  });
+}
+
+/* ============ khung trang ============ */
+function render(){
+  var all=D().hoiDap.filter(hien), ch=all.filter(cho), qh=all.filter(quaHan), mo=all.filter(function(t){ return t.loai!=='binh-luan' && !t.giaiQuyet; }), ri=all.filter(function(t){ return t.rieng; });
+  var lops=lopsCo();
+  if(st.lop && !LMS.byId('lop',st.lop)) st.lop='';
+  app.innerHTML='<div class="page-head"><div><h1>Hỏi đáp / Thảo luận</h1><div class="sub">Chọn lớp để xem và trả lời câu hỏi của học viên · '+all.length+' chủ đề đang hiển thị</div></div><div class="actions"><button class="btn" id="bRef">↻ Làm mới</button><button class="btn" id="bCsv">Xuất Excel</button></div></div>'+
+    '<div class="kpis">'+
+      kpi('all','Câu hỏi đang mở',mo.length,'chưa đánh dấu đã giải quyết','')+
+      kpi('chua','Chờ trả lời',ch.length,ch.length?'chưa có phản hồi của giảng viên/quản trị':'đã phản hồi hết',ch.length?'warn':'ok')+
+      kpi('qua','Quá 48 giờ chưa trả lời',qh.length,qh.length?'cần nhắc giảng viên phụ trách':'không có',qh.length?'bad':'ok')+
+      kpi('rieng','Gửi riêng giảng viên',ri.length,'học viên khác không thấy','')+
+    '</div>'+
+    '<div class="hd-wrap"><div class="panel lops"><div class="panel-head"><input class="inp" id="qLop" placeholder="Tìm lớp" value="'+esc(st.qLop)+'" aria-label="Tìm lớp"></div><div class="panel-body" id="lopList"></div></div>'+
+    '<div class="stack" style="min-width:0"><select class="sel lop-sel" id="lopSel" aria-label="Chọn lớp">'+U.opts(lops,'id',function(l){ var n=topicsOf(l.id).filter(cho).length; return l.ma+' · '+l.ten+(n?' ('+n+' chờ)':''); },st.lop,'Tất cả lớp')+'</select><div class="panel"><div class="panel-body" id="main"></div></div></div></div>';
+  drawLops(); drawMain();
+  document.getElementById('bRef').onclick=function(){ render(); U.toast('Đã tải lại danh sách'); };
+  document.getElementById('bCsv').onclick=exportCsv;
+  document.getElementById('qLop').oninput=function(e){ st.qLop=e.target.value; drawLops(); };
+  document.getElementById('lopSel').onchange=function(e){ pickLop(e.target.value); };
+  app.querySelectorAll('[data-kpi]').forEach(function(k){ k.onclick=function(){ st.loc = k.dataset.kpi==='all' ? 'all' : (st.loc===k.dataset.kpi?'all':k.dataset.kpi); drawMain(); markKpi(); }; });
+  markKpi();
+}
+function kpi(key,label,val,sub,tone){ return '<div class="kpi clickable '+tone+'" data-kpi="'+key+'"><div class="k-label">'+label+'</div><div class="k-val">'+val+'</div><div class="k-sub">'+sub+'</div></div>'; }
+function markKpi(){ app.querySelectorAll('[data-kpi]').forEach(function(k){ k.classList.toggle('active', k.dataset.kpi===st.loc && st.loc!=='all'); }); }
+function pickLop(id){ st.lop=id; st.bai=''; st.box=null; drawLops(); drawMain(); var s=document.getElementById('lopSel'); if(s) s.value=id; }
+function drawLops(){
+  var nq=U.norm(st.qLop), lops=lopsCo().filter(function(l){ return !nq||U.norm(l.ma+' '+l.ten).indexOf(nq)>=0; });
+  var tot=D().hoiDap.filter(cho).length;
+  lops.sort(function(a,b){ var x=topicsOf(a.id).filter(cho).length, y=topicsOf(b.id).filter(cho).length; if(x!==y) return y-x; return a.ma<b.ma?1:-1; });
+  var h='<button class="lop-it'+(st.lop===''?' on':'')+'" data-lop=""><div><div class="n">Tất cả lớp</div><div class="s">'+D().hoiDap.filter(hien).length+' chủ đề</div></div>'+(tot?'<span class="cnt-b" title="Chờ trả lời">'+tot+'</span>':'')+'</button>';
+  h+=lops.map(function(l){ var ts=topicsOf(l.id).filter(hien), c=ts.filter(cho), q=c.filter(quaHan).length; return '<button class="lop-it'+(st.lop===l.id?' on':'')+'" data-lop="'+l.id+'"><div style="min-width:0"><div class="n">'+U.hl(l.ten,st.qLop)+'</div><div class="s">'+esc(l.ma)+' · '+esc(LMS.donViTen(l.khoa))+' · '+ts.length+' chủ đề</div></div>'+(c.length?'<span class="cnt-b'+(q?'':' warn')+'" title="'+c.length+' chờ trả lời'+(q?', '+q+' quá 48 giờ':'')+'">'+c.length+'</span>':'')+'</button>'; }).join('');
+  if(!lops.length) h+='<div class="empty">Không có lớp phù hợp</div>';
+  var host=document.getElementById('lopList'); host.innerHTML=h;
+  host.querySelectorAll('[data-lop]').forEach(function(b){ b.onclick=function(){ pickLop(b.dataset.lop); }; });
+}
+
+/* ============ nội dung lớp ============ */
+function drawMain(){
+  var host=document.getElementById('main'), l=st.lop?LMS.byId('lop',st.lop):null, hp=l&&LMS.hocPhanOfLop(l);
+  var ts=topicsOf(st.lop).filter(hien);
+  var cnt={all:ts.length,chua:ts.filter(cho).length,qua:ts.filter(quaHan).length,xong:ts.filter(function(t){return t.giaiQuyet;}).length,rieng:ts.filter(function(t){return t.rieng;}).length,bl:ts.filter(function(t){return t.loai==='binh-luan';}).length};
+  var LOC=[['all','Tất cả'],['chua','Chưa trả lời'],['qua','Quá 48 giờ'],['xong','Đã giải quyết'],['rieng','Riêng giảng viên'],['bl','Bình luận']];
+  var h='<div class="th-head"><div><h2>'+(l?esc(l.ten):'Tất cả lớp')+'</h2><div class="small muted">'+(l?esc(l.ma)+' · '+esc(LMS.donViTen(l.khoa))+' · Giảng viên: '+(l.giangVien.map(gvTen).join(', ')||'chưa phân công'):'Câu hỏi của mọi lớp, ưu tiên chủ đề cần xử lý')+'</div></div>'+
+    '<div class="right tools"><div class="seg">'+LOC.map(function(x){ return '<button data-loc="'+x[0]+'" class="'+(st.loc===x[0]?'on':'')+'">'+x[1]+(x[0]!=='all'&&cnt[x[0]]?' '+cnt[x[0]]:'')+'</button>'; }).join('')+'</div></div></div>'+
+    '<div class="filters" style="margin:10px 0 12px"><input class="inp" id="fq" placeholder="Tìm nội dung, học viên, bài giảng" value="'+esc(st.q)+'" aria-label="Tìm chủ đề">'+
+    '<select class="sel" id="fbai" aria-label="Bài giảng"'+(hp?'':' disabled title="Chọn lớp để lọc theo bài"')+'>'+U.opts(hp?hp.bai:[],'id','ten',st.bai,hp?'Tất cả bài giảng':'Chọn lớp để lọc bài')+'</select>'+
+    '<select class="sel" id="fsort" aria-label="Sắp xếp">'+U.opts([{v:'can-xu-ly',l:'Cần xử lý trước'},{v:'moi',l:'Hoạt động mới nhất'}],'v','l',st.sort)+'</select>'+
+    '<label class="check"><input type="checkbox" id="fan"'+(st.an?' checked':'')+'> Hiện chủ đề đã ẩn/xóa</label></div><div id="threads"></div>';
+  host.innerHTML=h;
+  host.querySelectorAll('[data-loc]').forEach(function(b){ b.onclick=function(){ st.loc=b.dataset.loc; drawMain(); markKpi(); }; });
+  document.getElementById('fq').oninput=function(e){ st.q=e.target.value.trim(); drawThreads(); };
+  document.getElementById('fbai').onchange=function(e){ st.bai=e.target.value; drawThreads(); };
+  document.getElementById('fsort').onchange=function(e){ st.sort=e.target.value; drawThreads(); };
+  document.getElementById('fan').onchange=function(e){ st.an=e.target.checked; drawThreads(); };
+  drawThreads();
+}
+function drawThreads(){
+  var host=document.getElementById('threads'), rows=filtered();
+  if(!rows.length){ host.innerHTML='<div class="empty">'+(topicsOf(st.lop).length?'Không có chủ đề phù hợp bộ lọc':'Lớp này chưa có câu hỏi nào.')+'</div>'; return; }
+  HD.render(host, rows, { st:st, hienLop:!st.lop, menu:true, onChange:refresh });
+  host.insertAdjacentHTML('beforeend','<div class="small muted" style="text-align:center;margin-top:10px">'+rows.length+' chủ đề</div>');
+}
+function refresh(){ render(); }
+function exportCsv(){ HD.taiCsv('hoi-dap'+(st.lop?'-'+HD.lopMa({lop:st.lop}):'')+'.csv', HD.csvRows(filtered())); }
+
+var p=LMS.param('hoi-dap.html');
+if(p && p.lop) st.lop=p.lop;
+if(p && p.hd){ var t0=LMS.byId('hoiDap',p.hd); if(t0){ st.lop=t0.lop; st.hl=t0.id; st.open[t0.id]=1; } }
+LMS.onChange(function(){ if(!st.box) render(); });
+render();
+})();
+</script>
+</body></html>

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thư viện tài nguyên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.lib{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.lib{grid-template-columns:minmax(0,1fr)}}
+.folders{padding:6px}
+.fold{display:flex;align-items:center;gap:6px;width:100%;border:0;background:transparent;padding:7px 8px;border-radius:var(--r-ctl);font:500 13px var(--font);color:var(--ems-text);cursor:pointer;text-align:left}
+.fold:hover{background:var(--ems-surface-2)}
+.fold.on{background:var(--ems-navy-soft);color:var(--ems-navy);font-weight:600}
+.fold .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fold .cnt{font-size:12px;color:var(--ems-muted);font-variant-numeric:tabular-nums}
+.fold .tw{width:14px;flex:none;color:var(--ems-muted);font-size:10px;text-align:center}
+.fold-sep{border-top:1px solid var(--ems-border);margin:6px 4px}
+.bulk{display:flex;gap:8px;align-items:center;padding:10px 16px;background:var(--ems-navy-soft);border-bottom:1px solid var(--ems-navy-line);font-size:13px;flex-wrap:wrap}
+.use-link{border:0;background:transparent;padding:0;font:600 13px var(--font);color:var(--ems-navy);cursor:pointer}
+.use-link:hover{text-decoration:underline}
+.fname{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-list{flex-shrink:0;max-height:300px;overflow-y:auto;border:1px solid var(--ems-border);border-radius:var(--r-ctl)}
+.pick-list label{display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--ems-border);font-size:13px;cursor:pointer}
+.pick-list label:last-child{border-bottom:0}
+.pick-list label:hover{background:var(--ems-surface-2)}
+.pick-list .muted{margin-left:auto;font-size:12px;white-space:nowrap}
+.dup-row{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--ems-border);border-radius:var(--r-ctl)}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<input type="file" id="upFile" multiple hidden accept="video/*,audio/*,image/*,application/pdf,.pdf,.mp4,.mp3,.png,.jpg,.jpeg">
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var UNF = 'Chưa phân thư mục';
+var LOAI_TONE = { 'Video': 'navy', 'PDF': 'info', 'Ảnh': 'ok', 'Audio': 'warn' };
+var st = { folder: '', q: '', loai: '', unused: false, dup: false, open: {}, sel: [] };
+var app = document.getElementById('app');
+var tbl, usageCache = {};
+
+function files(){ return LMS.db.thuVien; }
+function folderOf(f){ return f.thuMuc && f.thuMuc !== UNF ? f.thuMuc : UNF; }
+function fmtSize(kb){ if (kb == null) return '—'; if (kb >= 1048576) return (kb / 1048576).toFixed(2).replace('.', ',') + ' GB'; if (kb >= 1024) return (kb / 1024).toFixed(1).replace('.', ',') + ' MB'; return kb + ' KB'; }
+function usage(id){ if (!usageCache[id]) usageCache[id] = LMS.fileUsage(id); return usageCache[id]; }
+function hashGroups(){ var g = {}; files().forEach(function(f){ (g[f.hash] = g[f.hash] || []).push(f); }); return g; }
+function isDup(f, groups){ return (groups[f.hash] || []).length > 1; }
+function folderList(){ var s = {}; files().forEach(function(f){ var p = folderOf(f); if (p !== UNF) { var parts = p.split('/'), acc = []; parts.forEach(function(x){ acc.push(x.trim()); s[acc.join('/')] = 1; }); } }); return Object.keys(s).sort(function(a,b){ return a.localeCompare(b, 'vi'); }); }
+function inFolder(f, path){ if (!path) return true; var p = folderOf(f); if (path === UNF) return p === UNF; return p === path || p.indexOf(path + '/') === 0; }
+function loaiFromFile(file){
+  var t = file.type || '', n = file.name.toLowerCase();
+  if (/^video\//.test(t) || /\.(mp4|mov|webm|mkv)$/.test(n)) return 'Video';
+  if (/^audio\//.test(t) || /\.(mp3|wav|m4a|ogg)$/.test(n)) return 'Audio';
+  if (/^image\//.test(t) || /\.(png|jpe?g|gif|webp|svg)$/.test(n)) return 'Ảnh';
+  if (t === 'application/pdf' || /\.pdf$/.test(n)) return 'PDF';
+  return null;
+}
+
+/* ---------- khung trang ---------- */
+function shell(){
+  app.innerHTML =
+    '<div class="page-head"><div><h1>Thư viện tài nguyên</h1><div class="sub" id="sub"></div></div>' +
+    '<div class="actions"><button class="btn" id="bNewFolder">Tạo thư mục</button><button class="btn primary" id="bUp">Tải tệp lên</button></div></div>' +
+    '<div class="kpis" id="kpis"></div>' +
+    '<div class="lib"><div class="panel"><div class="panel-head"><h2>Thư mục</h2></div><div class="folders" id="tree"></div></div>' +
+    '<div class="panel"><div class="panel-head filters">' +
+      '<input class="inp" id="fQ" placeholder="Tìm theo tên tệp…">' +
+      '<select class="sel" id="fLoai"><option value="">Tất cả loại tệp</option><option>Video</option><option>PDF</option><option>Ảnh</option><option>Audio</option></select>' +
+      '<label class="check"><input type="checkbox" id="fUnused"> Chưa được sử dụng</label>' +
+      '<label class="check"><input type="checkbox" id="fDup"> Trùng nội dung</label>' +
+    '</div><div id="bulk"></div><div id="tbl"></div></div></div>';
+  document.getElementById('bUp').onclick = function(){ document.getElementById('upFile').click(); };
+  document.getElementById('bNewFolder').onclick = function(){ moveDialog(st.sel.slice(), true); };
+  document.getElementById('fQ').oninput = function(e){ st.q = e.target.value; tbl.render(true); };
+  document.getElementById('fLoai').onchange = function(e){ st.loai = e.target.value; tbl.render(true); };
+  document.getElementById('fUnused').onchange = function(e){ st.unused = e.target.checked; renderAll(); };
+  document.getElementById('fDup').onchange = function(e){ st.dup = e.target.checked; renderAll(); };
+  document.getElementById('upFile').onchange = onUpload;
+
+  var host = document.getElementById('tbl');
+  st.groups = hashGroups();
+  tbl = U.table(host, {
+    select: true, pageSize: 15, sort: 'ngay', dir: -1,
+    empty: 'Chưa có dữ liệu',
+    rows: filteredRows,
+    onSelect: function(ids){ st.sel = ids; renderBulk(); },
+    columns: [
+      { key: 'ten', label: 'Tên tệp', render: function(f){ return '<div class="t-main fname" title="' + esc(f.ten) + '">' + U.hl(f.ten, st.q) + '</div>' + (isDup(f, st.groups) ? '<div class="t-sub"><span class="badge warn">Trùng nội dung · ' + st.groups[f.hash].length + ' bản</span></div>' : ''); }, sortVal: function(f){ return U.norm(f.ten); } },
+      { key: 'loai', label: 'Loại', render: function(f){ return U.badge(f.loai, LOAI_TONE[f.loai]); } },
+      { key: 'kb', label: 'Dung lượng', cls: 'num', render: function(f){ return fmtSize(f.kb); } },
+      { key: 'thuMuc', label: 'Thư mục', render: function(f){ var p = folderOf(f); return '<span style="white-space:nowrap">' + (p === UNF ? '<span class="muted">' + UNF + '</span>' : esc(p)) + '</span>'; }, sortVal: function(f){ return folderOf(f); } },
+      { key: 'nguoiTai', label: 'Người tải' },
+      { key: 'ngay', label: 'Ngày tải', render: function(f){ return LMS.fmtDate(f.ngay); } },
+      { key: 'dung', label: 'Đang dùng ở', sortVal: function(f){ return usage(f.id).length; }, render: function(f){ var u = usage(f.id); if (!u.length) return '<span class="muted">Chưa sử dụng</span>'; var tip = u.map(function(x){ return x.hp.ten + ' › ' + x.bai.ten; }).join('\n'); return '<button class="use-link" data-use="' + esc(f.id) + '" title="' + esc(tip) + '">' + u.length + ' bài giảng</button>'; } },
+      { key: 'act', label: '', sortable: false, w: '40px', render: function(f){ return '<button class="icon-btn" data-more="' + esc(f.id) + '" aria-label="Thao tác">⋯</button>'; } }
+    ]
+  });
+  host.addEventListener('click', function(e){
+    var m = e.target.closest('[data-more]'); if (m) { rowMenu(m, LMS.byId('thuVien', m.dataset.more)); return; }
+    var u = e.target.closest('[data-use]'); if (u) usageDialog(LMS.byId('thuVien', u.dataset.use));
+  });
+}
+
+function filteredRows(){
+  var nq = U.norm(st.q.trim());
+  return files().filter(function(f){
+    if (!inFolder(f, st.folder)) return false;
+    if (st.loai && f.loai !== st.loai) return false;
+    if (st.unused && usage(f.id).length) return false;
+    if (st.dup && !isDup(f, st.groups)) return false;
+    if (nq && U.norm(f.ten).indexOf(nq) < 0) return false;
+    return true;
+  });
+}
+
+function renderAll(){
+  usageCache = {};
+  st.groups = hashGroups();
+  var all = files(), tot = 0, unused = 0, dupFiles = 0, dupWaste = 0;
+  all.forEach(function(f){ tot += f.kb || 0; if (!usage(f.id).length) unused++; });
+  Object.keys(st.groups).forEach(function(h){ var g = st.groups[h]; if (g.length > 1) { dupFiles += g.length; dupWaste += (g.length - 1) * (g[0].kb || 0); } });
+  document.getElementById('sub').textContent = all.length + ' tệp · ' + fmtSize(tot);
+  var k = document.getElementById('kpis');
+  k.innerHTML =
+    '<div class="kpi"><div class="k-label">Tổng số tệp</div><div class="k-val">' + all.length + '</div><div class="k-sub">' + folderList().length + ' thư mục</div></div>' +
+    '<div class="kpi"><div class="k-label">Dung lượng</div><div class="k-val">' + fmtSize(tot) + '</div><div class="k-sub">Video chiếm ' + (tot ? Math.round(all.filter(function(f){ return f.loai === 'Video'; }).reduce(function(s,f){ return s + f.kb; }, 0) / tot * 100) : 0) + '%</div></div>' +
+    '<div class="kpi clickable warn' + (st.unused ? ' active' : '') + '" data-k="unused"><div class="k-label">Chưa được sử dụng</div><div class="k-val">' + unused + '</div><div class="k-sub">Không gắn vào bài giảng nào</div></div>' +
+    '<div class="kpi clickable bad' + (st.dup ? ' active' : '') + '" data-k="dup"><div class="k-label">Trùng nội dung</div><div class="k-val">' + dupFiles + '</div><div class="k-sub">' + (dupWaste ? 'Có thể giải phóng ' + fmtSize(dupWaste) : 'Không có tệp trùng') + '</div></div>';
+  k.querySelectorAll('[data-k]').forEach(function(el){ el.onclick = function(){ var key = el.dataset.k; st[key] = !st[key]; document.getElementById(key === 'unused' ? 'fUnused' : 'fDup').checked = st[key]; renderAll(); }; });
+  renderTree();
+  tbl.render(true);
+  renderBulk();
+}
+
+function renderTree(){
+  var all = files(), paths = folderList();
+  var own = {}; all.forEach(function(f){ var p = folderOf(f); own[p] = (own[p] || 0) + 1; });
+  function total(p){ return all.filter(function(f){ return inFolder(f, p); }).length; }
+  var h = '<button class="fold' + (st.folder === '' ? ' on' : '') + '" data-f=""><span class="tw"></span><span class="fn">Tất cả tệp</span><span class="cnt">' + all.length + '</span></button><div class="fold-sep"></div>';
+  function kids(parent){ return paths.filter(function(p){ var i = p.lastIndexOf('/'); return (i < 0 ? '' : p.slice(0, i)) === parent; }); }
+  function node(p, depth){
+    var ch = kids(p), open = st.open[p] !== false, name = p.split('/').pop();
+    h += '<button class="fold' + (st.folder === p ? ' on' : '') + '" data-f="' + esc(p) + '" style="padding-left:' + (8 + depth * 14) + 'px"><span class="tw"' + (ch.length ? ' data-tw="' + esc(p) + '"' : '') + '>' + (ch.length ? (open ? '▾' : '▸') : '') + '</span><span class="fn" title="' + esc(p) + '">' + esc(name) + '</span><span class="cnt">' + total(p) + '</span></button>';
+    if (open) ch.forEach(function(c){ node(c, depth + 1); });
+  }
+  kids('').forEach(function(p){ node(p, 0); });
+  if (!paths.length) h += '<div class="muted small" style="padding:8px">Chưa có thư mục</div>';
+  h += '<div class="fold-sep"></div><button class="fold' + (st.folder === UNF ? ' on' : '') + '" data-f="' + UNF + '"><span class="tw"></span><span class="fn">' + UNF + '</span><span class="cnt">' + (own[UNF] || 0) + '</span></button>';
+  var t = document.getElementById('tree'); t.innerHTML = h;
+  t.querySelectorAll('[data-f]').forEach(function(b){ b.onclick = function(e){ var tw = e.target.closest('[data-tw]'); if (tw) { st.open[tw.dataset.tw] = st.open[tw.dataset.tw] === false; renderTree(); return; } st.folder = b.dataset.f; renderTree(); tbl.render(true); }; });
+}
+
+function renderBulk(){
+  var b = document.getElementById('bulk');
+  var ids = st.sel.filter(function(id){ return LMS.byId('thuVien', id); });
+  if (!ids.length) { b.innerHTML = ''; return; }
+  b.innerHTML = '<div class="bulk"><b>Đã chọn ' + ids.length + ' tệp</b><button class="btn sm" id="bbMove">Di chuyển thư mục</button><button class="btn sm danger" id="bbDel">Xóa</button><button class="btn sm ghost right" id="bbClr">Bỏ chọn</button></div>';
+  document.getElementById('bbMove').onclick = function(){ moveDialog(ids, false); };
+  document.getElementById('bbDel').onclick = function(){ bulkDelete(ids); };
+  document.getElementById('bbClr').onclick = function(){ tbl.clearSel(); };
+}
+
+/* ---------- thao tác theo dòng ---------- */
+function rowMenu(anchor, f){
+  if (!f) return;
+  var dup = isDup(f, st.groups);
+  U.menu(anchor, [
+    { label: 'Đổi tên', onClick: function(){ renameDialog(f); } },
+    { label: 'Di chuyển thư mục', onClick: function(){ moveDialog([f.id], false); } },
+    { label: 'Xem nơi đang dùng', onClick: function(){ usageDialog(f); } },
+    dup ? { label: 'Giữ 1 bản (xử lý trùng)', onClick: function(){ dedupDialog(f.hash); } } : null,
+    '-',
+    { label: 'Xóa tệp', danger: true, onClick: function(){ deleteOne(f); } }
+  ]);
+}
+
+function usageDialog(f){
+  var u = LMS.fileUsage(f.id);
+  var body = '<dl class="kv"><dt>Tệp</dt><dd><b>' + esc(f.ten) + '</b></dd><dt>Loại · dung lượng</dt><dd>' + esc(f.loai) + ' · ' + fmtSize(f.kb) + '</dd><dt>Thư mục</dt><dd>' + esc(folderOf(f)) + '</dd></dl>';
+  if (!u.length) body += '<div class="note">Tệp chưa được gắn vào bài giảng nào.</div>';
+  else body += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Học phần</th><th>Bài giảng</th><th>Vai trò</th><th></th></tr></thead><tbody>' + u.map(function(x){ return '<tr><td>' + esc(x.hp.ten) + '<div class="t-sub">' + esc(x.hp.ma) + '</div></td><td>' + esc(x.bai.ten) + '</td><td>' + (x.bai.video === f.id ? 'Video bài giảng' : (x.bai.dinhKem || []).indexOf(f.id) >= 0 ? 'Tài liệu đính kèm' : 'Khối nội dung ' + ({ 'Ảnh': 'ảnh', 'Audio': 'âm thanh', 'PDF': 'PDF', 'Video': 'video' }[f.loai] || '')) + '</td><td><button class="btn sm" data-go="' + esc(x.hp.id) + '" data-bai="' + esc(x.bai.id) + '">Mở bài giảng</button></td></tr>'; }).join('') + '</tbody></table></div>';
+  var m = U.modal({ title: 'Nơi đang sử dụng tệp', size: 'lg', body: body });
+  m.body.querySelectorAll('[data-go]').forEach(function(b){ b.onclick = function(){ m.close(); LMS.go('hoc-phan.html', { hocPhan: b.dataset.go, tab: 'bai', bai: b.dataset.bai }); }; });
+}
+
+function renameDialog(f){
+  var dot = f.ten.lastIndexOf('.'), ext = dot > 0 ? f.ten.slice(dot) : '', base = dot > 0 ? f.ten.slice(0, dot) : f.ten;
+  U.modal({ title: 'Đổi tên tệp', size: 'sm',
+    body: '<div class="field"><label>Tên tệp <span class="req">*</span></label><div class="row" style="flex-wrap:nowrap"><input class="inp grow" name="ten" value="' + esc(base) + '"><span class="muted">' + esc(ext) + '</span></div></div>',
+    foot: [{ label: 'Hủy' }, { label: 'Lưu', cls: 'primary', onClick: function(api){
+      var v = api.body.querySelector('[name=ten]').value.trim();
+      if (!v) { U.fieldErr(api.body, 'ten', 'Nhập tên tệp'); return false; }
+      var nt = v + ext;
+      if (files().some(function(x){ return x.id !== f.id && folderOf(x) === folderOf(f) && x.ten.toLowerCase() === nt.toLowerCase(); })) { U.fieldErr(api.body, 'ten', 'Thư mục đã có tệp cùng tên'); return false; }
+      var old = f.ten; if (old === nt) return;
+      f.ten = nt; LMS.commit('Đổi tên', 'Tệp tài nguyên', old + ' → ' + nt, { ten: old }, { ten: nt });
+      U.toast('Đã đổi tên tệp', 'ok'); renderAll();
+    } }] });
+}
+
+function moveDialog(ids, createMode){
+  var fl = folderList();
+  var pre = {}; ids.forEach(function(id){ pre[id] = true; });
+  var body = '<div class="form-grid">' +
+    '<div class="field full"><label>Thư mục đích <span class="req">*</span></label><select class="sel" name="dich">' + (createMode ? '' : U.opts(fl, null, null, '', null) + '<option value="' + UNF + '">' + UNF + '</option>') + '<option value="__new"' + (createMode ? ' selected' : '') + '>+ Thư mục mới…</option></select></div>' +
+    '<div class="field full" data-newbox><label>Tên thư mục mới <span class="req">*</span></label><input class="inp" name="moi" placeholder="VD: Châm cứu 1/Hình minh họa"><div class="hint">Dùng dấu “/” để tạo thư mục con.</div></div>' +
+    '</div>' +
+    '<div class="field"><label>Tệp đưa vào thư mục (<span data-cnt>' + ids.length + '</span> đã chọn)</label><input class="inp" data-q placeholder="Lọc tệp…"><div class="pick-list" data-list></div></div>';
+  var m = U.modal({ title: createMode ? 'Tạo thư mục' : 'Di chuyển tệp', body: body, size: 'lg',
+    foot: [{ label: 'Hủy' }, { label: createMode ? 'Tạo và di chuyển' : 'Di chuyển', cls: 'primary', onClick: function(api){
+      var v = U.formVals(api.body), dest = v.dich === '__new' ? v.moi.split('/').map(function(s){ return s.trim(); }).filter(Boolean).join('/') : v.dich;
+      if (v.dich === '__new' && !dest) { U.fieldErr(api.body, 'moi', 'Nhập tên thư mục'); return false; }
+      if (dest === UNF && v.dich === '__new') { U.fieldErr(api.body, 'moi', 'Tên thư mục không hợp lệ'); return false; }
+      var chosen = Object.keys(pre).filter(function(k){ return pre[k]; });
+      if (!chosen.length) { U.toast('Chọn ít nhất 1 tệp', 'bad'); return false; }
+      var n = 0; chosen.forEach(function(id){ var f = LMS.byId('thuVien', id); if (f && folderOf(f) !== dest) { f.thuMuc = dest; n++; } });
+      if (!n) { U.toast('Các tệp đã nằm trong thư mục này'); return; }
+      LMS.commit(createMode ? 'Tạo thư mục' : 'Di chuyển', 'Tệp tài nguyên', n + ' tệp → ' + dest);
+      U.toast('Đã chuyển ' + n + ' tệp vào “' + dest + '”', 'ok');
+      tbl.clearSel(); st.folder = dest; renderAll();
+    } }] });
+  var list = m.body.querySelector('[data-list]'), qEl = m.body.querySelector('[data-q]'), sel = m.body.querySelector('[name=dich]'), nb = m.body.querySelector('[data-newbox]');
+  function drawList(){
+    var nq = U.norm(qEl.value.trim());
+    var rows = files().filter(function(f){ return pre[f.id] || !nq || U.norm(f.ten).indexOf(nq) >= 0; }).sort(function(a,b){ return (pre[b.id] ? 1 : 0) - (pre[a.id] ? 1 : 0); }).slice(0, 200);
+    list.innerHTML = rows.map(function(f){ return '<label><input type="checkbox" data-id="' + esc(f.id) + '"' + (pre[f.id] ? ' checked' : '') + '><span>' + esc(f.ten) + '</span><span class="muted">' + esc(folderOf(f)) + '</span></label>'; }).join('') || '<div class="empty">Không có tệp phù hợp</div>';
+    list.querySelectorAll('[data-id]').forEach(function(cb){ cb.onchange = function(){ pre[cb.dataset.id] = cb.checked; m.body.querySelector('[data-cnt]').textContent = Object.keys(pre).filter(function(k){ return pre[k]; }).length; }; });
+  }
+  function toggleNew(){ nb.style.display = sel.value === '__new' ? '' : 'none'; }
+  qEl.oninput = drawList; sel.onchange = toggleNew; toggleNew(); drawList();
+}
+
+function deleteOne(f){
+  var refs = LMS.refsOf('file', f.id);
+  if (refs.length) { U.blocked('Không thể xóa “' + f.ten + '”', refs, 'Gỡ tệp khỏi các bài giảng ở màn Học phần (hoặc thay bằng tệp khác) trước khi xóa.'); return; }
+  U.confirm({ title: 'Xóa tệp', html: 'Xóa tệp <b>' + esc(f.ten) + '</b> (' + fmtSize(f.kb) + ') khỏi thư viện?', ok: 'Xóa', danger: true }).then(function(ok){
+    if (!ok) return;
+    LMS.db.thuVien = files().filter(function(x){ return x.id !== f.id; });
+    LMS.commit('Xóa', 'Tệp tài nguyên', f.ten, f, null);
+    U.toast('Đã xóa tệp', 'ok'); renderAll();
+  });
+}
+
+function bulkDelete(ids){
+  var fs = ids.map(function(id){ return LMS.byId('thuVien', id); }).filter(Boolean);
+  var used = fs.filter(function(f){ return LMS.refsOf('file', f.id).length; }), free = fs.filter(function(f){ return used.indexOf(f) < 0; });
+  if (!free.length) { U.blocked('Không thể xóa các tệp đã chọn', used.map(function(f){ return f.ten + ' — ' + LMS.refsOf('file', f.id).length + ' bài giảng'; }), 'Gỡ tệp khỏi bài giảng trước khi xóa.'); return; }
+  var html = 'Xóa <b>' + free.length + '</b> tệp chưa được sử dụng?' + (used.length ? '<div class="note warn" style="margin-top:10px">' + used.length + ' tệp đang gắn vào bài giảng sẽ được giữ lại.</div>' : '');
+  U.confirm({ title: 'Xóa tệp', html: html, ok: 'Xóa ' + free.length + ' tệp', danger: true }).then(function(ok){
+    if (!ok) return;
+    var del = {}; free.forEach(function(f){ del[f.id] = 1; });
+    LMS.db.thuVien = files().filter(function(x){ return !del[x.id]; });
+    LMS.commit('Xóa', 'Tệp tài nguyên', free.length + ' tệp');
+    U.toast('Đã xóa ' + free.length + ' tệp', 'ok'); tbl.clearSel(); renderAll();
+  });
+}
+
+function dedupDialog(hash){
+  var g = files().filter(function(f){ return f.hash === hash; });
+  if (g.length < 2) return;
+  var keep = (g.find(function(f){ return LMS.fileUsage(f.id).length; }) || g.slice().sort(function(a,b){ return a.ngay < b.ngay ? -1 : 1; })[0]).id;
+  var body = '<div class="muted small">Các tệp dưới đây có cùng nội dung. Chọn bản giữ lại; các bản còn lại chưa dùng sẽ bị xóa.</div><div class="stack" style="gap:8px">' + g.map(function(f){ var u = LMS.fileUsage(f.id).length; return '<label class="dup-row"><input type="radio" name="keep" value="' + esc(f.id) + '"' + (f.id === keep ? ' checked' : '') + '><div class="grow"><div class="t-main">' + esc(f.ten) + '</div><div class="t-sub muted small">' + esc(folderOf(f)) + ' · ' + fmtSize(f.kb) + ' · ' + LMS.fmtDate(f.ngay) + '</div></div>' + (u ? U.badge(u + ' bài giảng', 'navy') : U.badge('Chưa dùng')) + '</label>'; }).join('') + '</div>';
+  U.modal({ title: 'Giữ 1 bản', body: body, foot: [{ label: 'Hủy' }, { label: 'Giữ bản đã chọn', cls: 'primary', onClick: function(api){
+    var k = api.body.querySelector('[name=keep]:checked').value;
+    var rm = g.filter(function(f){ return f.id !== k && !LMS.fileUsage(f.id).length; }), stay = g.filter(function(f){ return f.id !== k && LMS.fileUsage(f.id).length; });
+    var del = {}; rm.forEach(function(f){ del[f.id] = 1; });
+    LMS.db.thuVien = files().filter(function(x){ return !del[x.id]; });
+    LMS.commit('Xử lý trùng', 'Tệp tài nguyên', 'Giữ ' + LMS.byId('thuVien', k).ten + ', xóa ' + rm.length + ' bản trùng');
+    U.toast('Đã xóa ' + rm.length + ' bản trùng' + (stay.length ? '; ' + stay.length + ' bản đang dùng được giữ lại' : ''), 'ok');
+    tbl.clearSel(); renderAll();
+  } }] });
+}
+
+/* ---------- tải lên ---------- */
+function onUpload(e){
+  var list = Array.prototype.slice.call(e.target.files || []); e.target.value = '';
+  if (!list.length) return;
+  var bad = [], items = [];
+  list.forEach(function(file){
+    var loai = loaiFromFile(file); if (!loai) { bad.push(file.name); return; }
+    var kb = Math.max(1, Math.round(file.size / 1024));
+    var same = files().find(function(f){ return f.ten.toLowerCase() === file.name.toLowerCase() && f.kb === kb; });
+    items.push({ file: file, loai: loai, kb: kb, dup: same || null });
+  });
+  if (bad.length) U.toast('Bỏ qua ' + bad.length + ' tệp không đúng định dạng (chỉ nhận video, PDF, ảnh, âm thanh)', 'bad');
+  if (!items.length) return;
+  var dest = st.folder || UNF;
+  var dups = items.filter(function(i){ return i.dup; });
+  if (!dups.length) { doUpload(items, dest); return; }
+  var body = '<div class="note warn">' + dups.length + ' tệp trùng tên và dung lượng với tệp đã có trong thư viện:</div><ul style="margin:0;padding-left:18px">' + dups.map(function(i){ return '<li><b>' + esc(i.file.name) + '</b> — đã có tại “' + esc(folderOf(i.dup)) + '”, tải ngày ' + LMS.fmtDate(i.dup.ngay) + '</li>'; }).join('') + '</ul>';
+  U.modal({ title: 'Phát hiện tệp trùng', body: body, size: 'sm', foot: [
+    { label: 'Hủy' },
+    { label: 'Vẫn tải lên', onClick: function(){ doUpload(items, dest); } },
+    { label: 'Bỏ qua tệp trùng', cls: 'primary', onClick: function(){ var rest = items.filter(function(i){ return !i.dup; }); if (rest.length) doUpload(rest, dest); else U.toast('Không có tệp mới để tải lên'); } }
+  ] });
+}
+function doUpload(items, dest){
+  var u = LMS.db.meta.user.ten;
+  items.forEach(function(i){
+    LMS.db.thuVien.push({ id: LMS.nextId('f'), ten: i.file.name, loai: i.loai, thuMuc: dest, kb: i.kb, hash: i.dup ? i.dup.hash : 'u' + i.kb + '-' + U.norm(i.file.name), ngay: LMS.iso(new Date()), nguoiTai: u });
+  });
+  LMS.commit('Tải lên', 'Tệp tài nguyên', items.length + ' tệp → ' + dest);
+  U.toast('Đã tải lên ' + items.length + ' tệp vào “' + dest + '”', 'ok');
+  renderAll();
+}
+
+shell();
+renderAll();
+LMS.onChange(renderAll);
+})();
+</script>
+</body></html>

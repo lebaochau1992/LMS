@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nhóm quyền · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.filters .sel{flex:0 1 200px}
+.mx-wrap{overflow:auto;max-height:52vh;border:1px solid var(--ems-border);border-radius:var(--r-ctl)}
+table.mx{width:100%;border-collapse:collapse;font-size:13px}
+.mx th,.mx td{padding:7px 10px;border-bottom:1px solid var(--ems-border)}
+.mx thead th{position:sticky;top:0;background:var(--ems-surface-2);color:var(--ems-text-2);font-size:12px;font-weight:600;z-index:1;text-align:center}
+.mx thead th:first-child{text-align:left}
+.mx td.c{text-align:center;width:64px}
+.mx tr.grp td{background:var(--ems-navy-soft);font-weight:700;color:var(--ems-navy)}
+.mx tr.it td:first-child{padding-left:22px}
+.mx tr.it:hover td{background:var(--ems-surface-2)}
+.mx input{width:16px;height:16px;cursor:pointer;accent-color:var(--ems-navy)}
+.mx-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ems-muted)}
+.pane[hidden]{display:none}
+.tbl .t-desc{color:var(--ems-text-2);max-width:340px}
+@media (max-width:560px){.filters .sel{flex:1 1 100%}}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="cau-hinh-menu.js"></script>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var PHAM = { 'toan-bo': 'Toàn Học viện', 'don-vi': 'Theo đơn vị', 'lop-phan-cong': 'Lớp được phân công', 'ca-nhan': 'Cá nhân' };
+var PHAM_TONE = { 'toan-bo': 'navy', 'don-vi': 'info', 'lop-phan-cong': 'ok', 'ca-nhan': '' };
+var ACTS = [['xem', 'Xem'], ['them', 'Thêm'], ['sua', 'Sửa'], ['xoa', 'Xóa'], ['xuat', 'Xuất']];
+var ACT_KEYS = ACTS.map(function (a) { return a[0]; });
+var ACT_LABEL = {}; ACTS.forEach(function (a) { ACT_LABEL[a[0]] = a[1]; });
+var ALIAS = { 'bao-cao': 'bao-cao-dao-tao' };
+var LOAI = { nv: 'Nhân sự', gv: 'Giảng viên', hv: 'Học viên' };
+
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('[data-go]'); if (!a) return;
+  e.preventDefault(); LMS.go(a.dataset.go, a.dataset.p ? JSON.parse(a.dataset.p) : null);
+});
+
+/* danh mục màn hình lấy từ cấu hình menu */
+function menuGroups() {
+  if (Array.isArray(window.MENU_CONFIG) && window.MENU_CONFIG.length) {
+    return window.MENU_CONFIG.map(function (g) { return { id: g.id, label: g.label, items: (g.items || []).map(function (i) { return { id: i.id, label: i.label }; }) }; }).filter(function (g) { return g.items.length; });
+  }
+  var ids = {}; LMS.db.nhomQuyen.forEach(function (n) { if (Array.isArray(n.quyen)) n.quyen.forEach(function (x) { ids[ALIAS[x] || x] = 1; }); else if (n.quyen && typeof n.quyen === 'object') Object.keys(n.quyen).forEach(function (x) { ids[x] = 1; }); });
+  return [{ id: 'g-all', label: 'Chức năng', items: Object.keys(ids).map(function (x) { return { id: x, label: x }; }) }];
+}
+function allItems() { var a = []; menuGroups().forEach(function (g) { g.items.forEach(function (i) { a.push(i); }); }); return a; }
+function itemLabel(id) { var it = allItems().find(function (i) { return i.id === id; }); return it ? it.label : id; }
+
+/* chuẩn hóa quyền: chấp nhận 'all', mảng id (toàn quyền màn đó) hoặc {menuId:[hành động]} */
+function permOf(nq) {
+  var m = {}, q = nq.quyen;
+  if (q === 'all') { allItems().forEach(function (i) { m[i.id] = ACT_KEYS.slice(); }); return m; }
+  if (Array.isArray(q)) { q.forEach(function (x) { m[ALIAS[x] || x] = ACT_KEYS.slice(); }); return m; }
+  if (q && typeof q === 'object') Object.keys(q).forEach(function (k) { if (Array.isArray(q[k]) && q[k].length) m[k] = q[k].filter(function (a) { return ACT_KEYS.indexOf(a) >= 0; }); });
+  return m;
+}
+function soManHinh(nq) { var m = permOf(nq); return allItems().filter(function (i) { return m[i.id] && m[i.id].length; }).length; }
+function laToanQuyen(nq) { var m = permOf(nq); return allItems().every(function (i) { return m[i.id] && m[i.id].length === ACT_KEYS.length; }); }
+function taiKhoanCua(id) { return LMS.db.taiKhoan.filter(function (t) { return t.nhom.indexOf(id) >= 0; }); }
+
+var F = { q: '', pham: '' };
+var app = document.getElementById('app');
+app.innerHTML =
+  '<div class="page-head"><div><h1>Nhóm quyền</h1><div class="sub" id="sub"></div></div><div class="actions"><button class="btn" id="btnTk">Tài khoản</button><button class="btn primary" id="btnAdd">+ Thêm nhóm quyền</button></div></div>' +
+  '<div class="panel"><div class="panel-head filters"><input class="inp" id="fQ" placeholder="Tìm mã, tên nhóm, mô tả"><select class="sel" id="fPham"></select></div><div id="tbl"></div></div>';
+var $ = function (id) { return document.getElementById(id); };
+$('fQ').oninput = function () { F.q = this.value.trim(); tbl.render(true); };
+$('fPham').onchange = function () { F.pham = this.value; tbl.render(true); };
+$('btnAdd').onclick = function () { openDetail(null); };
+$('btnTk').onclick = function () { LMS.go('tai-khoan.html'); };
+
+function rows() {
+  return LMS.db.nhomQuyen.filter(function (n) {
+    if (F.pham && n.pham !== F.pham) return false;
+    if (F.q && U.norm(n.ma + ' ' + n.ten + ' ' + (n.moTa || '')).indexOf(U.norm(F.q)) < 0) return false;
+    return true;
+  });
+}
+var tbl = U.table($('tbl'), {
+  rows: rows, pageSize: 20, empty: 'Chưa có dữ liệu',
+  onRowClick: function (n) { openDetail(n); },
+  columns: [
+    { key: 'ma', label: 'Mã nhóm', render: function (n) { return '<span class="mono">' + U.hl(n.ma, F.q) + '</span>'; } },
+    { key: 'ten', label: 'Tên nhóm', render: function (n) { return '<div class="t-main">' + U.hl(n.ten, F.q) + '</div>'; } },
+    { key: 'moTa', label: 'Mô tả', sortable: false, render: function (n) { return '<div class="t-desc">' + (n.moTa ? U.hl(n.moTa, F.q) : '<span class="muted">—</span>') + '</div>'; } },
+    { key: 'pham', label: 'Phạm vi dữ liệu', render: function (n) { return U.badge(PHAM[n.pham] || '—', PHAM_TONE[n.pham]); }, sortVal: function (n) { return PHAM[n.pham]; } },
+    { key: 'soMH', label: 'Màn hình được quyền', cls: 'num', sortVal: soManHinh, render: function (n) { var s = soManHinh(n), tot = allItems().length; return laToanQuyen(n) ? U.badge('Toàn quyền · ' + tot + '/' + tot, 'navy') : (s ? '<span class="num">' + s + ' / ' + tot + '</span>' : '<span class="muted">Chưa phân quyền</span>'); } },
+    { key: 'soTK', label: 'Số tài khoản', cls: 'num', sortVal: function (n) { return taiKhoanCua(n.id).length; }, render: function (n) { var k = taiKhoanCua(n.id).length; return k ? '<a href="#" data-go="tai-khoan.html" data-p="' + esc(JSON.stringify({ nhom: n.id })) + '">' + k + '</a>' : '<span class="muted">0</span>'; } },
+    { key: 'act', label: '', sortable: false, w: '44px', render: function (n) { return '<button class="icon-btn" data-act="' + esc(n.id) + '" aria-label="Thao tác">⋯</button>'; } }
+  ],
+  after: function (host) {
+    host.querySelectorAll('[data-act]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); rowMenu(b, LMS.byId('nhomQuyen', b.dataset.act)); }; });
+  }
+});
+
+function rowMenu(anchor, n) {
+  U.menu(anchor, [
+    { label: 'Xem / sửa phân quyền', onClick: function () { openDetail(n); } },
+    { label: 'Sao chép nhóm', onClick: function () { saoChep(n); } },
+    { label: 'Xem tài khoản thuộc nhóm', onClick: function () { LMS.go('tai-khoan.html', { nhom: n.id }); } },
+    '-',
+    { label: 'Xóa nhóm', danger: true, onClick: function () { xoa(n); } }
+  ]);
+}
+
+function saoChep(n) {
+  var base = n.ma + '-SAO', ma = base, k = 2;
+  while (LMS.db.nhomQuyen.some(function (x) { return x.ma === ma; })) ma = base + k++;
+  openDetail(null, { ma: ma, ten: n.ten + ' (bản sao)', moTa: n.moTa, pham: n.pham, quyen: permOf(n) });
+}
+
+function xoa(n) {
+  var refs = LMS.refsOf('nhomQuyen', n.id);
+  if (refs.length) { U.blocked('Không thể xóa nhóm ' + n.ten, refs.map(function (r) { return 'Tài khoản ' + r; }), 'Chuyển các tài khoản sang nhóm khác trước khi xóa.'); return; }
+  U.confirm({ title: 'Xóa nhóm quyền', html: 'Xóa nhóm <b>' + esc(n.ten) + '</b> (' + esc(n.ma) + ')? Thao tác không hoàn tác được.', ok: 'Xóa', danger: true }).then(function (ok) {
+    if (!ok) return;
+    var db = LMS.db; db.nhomQuyen = db.nhomQuyen.filter(function (x) { return x.id !== n.id; });
+    LMS.commit('Xóa', 'Nhóm quyền', n.ma + ' · ' + n.ten, { 'Mã': n.ma, 'Tên': n.ten, 'Phạm vi': PHAM[n.pham] }, null);
+    U.toast('Đã xóa nhóm ' + n.ten, 'ok'); render();
+  });
+}
+
+/* ---------- chi tiết / sửa ---------- */
+function openDetail(n, preset) {
+  var db = LMS.db, isNew = !n;
+  var d = n || preset || { ma: '', ten: '', moTa: '', pham: 'toan-bo', quyen: {} };
+  var perm = {}; var src = permOf(d); Object.keys(src).forEach(function (k) { perm[k] = src[k].slice(); });
+  var groups = menuGroups();
+  var tks = n ? taiKhoanCua(n.id) : [];
+
+  var body = document.createElement('div'); body.className = 'stack';
+  body.style.gap = '0';
+  body.innerHTML = '<div class="tabs" style="margin:-18px -18px 14px"><button class="tab on" data-t="info">Thông tin chung</button><button class="tab" data-t="mx">Phân quyền chức năng</button>' + (isNew ? '' : '<button class="tab" data-t="tk">Tài khoản thuộc nhóm (' + tks.length + ')</button>') + '</div>' +
+    '<div class="pane" data-p="info"><div class="form-grid">' +
+      '<div class="field"><label>Mã nhóm <span class="req">*</span></label><input class="inp mono" name="ma" value="' + esc(d.ma) + '" placeholder="vd: GRP-THUVIEN"></div>' +
+      '<div class="field"><label>Tên nhóm <span class="req">*</span></label><input class="inp" name="ten" value="' + esc(d.ten) + '"></div>' +
+      '<div class="field"><label>Phạm vi dữ liệu <span class="req">*</span></label><select class="sel" name="pham">' + U.opts(Object.keys(PHAM).map(function (k) { return { v: k, l: PHAM[k] }; }), 'v', 'l', d.pham) + '</select></div>' +
+      '<div class="field"><label>Số tài khoản</label><input class="inp" readonly value="' + tks.length + '"></div>' +
+      '<div class="field full"><label>Mô tả</label><textarea name="moTa" rows="2">' + esc(d.moTa || '') + '</textarea></div>' +
+    '</div></div>' +
+    '<div class="pane" data-p="mx" hidden><div class="mx-foot" style="margin-bottom:8px"><span id="mxSum"></span><span class="right"></span><button type="button" class="btn sm" data-bulk="xem">Chỉ xem tất cả</button><button type="button" class="btn sm" data-bulk="all">Toàn quyền</button><button type="button" class="btn sm ghost" data-bulk="none">Bỏ hết</button></div><div class="mx-wrap" id="mx"></div></div>' +
+    (isNew ? '' : '<div class="pane" data-p="tk" hidden><div id="tkList"></div></div>');
+
+  /* ma trận */
+  var mxHtml = '<table class="mx"><thead><tr><th>Màn hình</th>' + ACTS.map(function (a) { return '<th>' + a[1] + '</th>'; }).join('') + '<th>Tất cả</th></tr></thead><tbody>';
+  groups.forEach(function (g) {
+    mxHtml += '<tr class="grp"><td>' + esc(g.label) + '</td>' + ACT_KEYS.concat(['all']).map(function (a) { return '<td class="c"><input type="checkbox" data-g="' + esc(g.id) + '" data-a="' + a + '" aria-label="' + esc(g.label) + ' · ' + (ACT_LABEL[a] || 'Tất cả') + '"></td>'; }).join('') + '</tr>';
+    g.items.forEach(function (it) {
+      mxHtml += '<tr class="it"><td>' + esc(it.label) + '</td>' + ACT_KEYS.concat(['all']).map(function (a) { return '<td class="c"><input type="checkbox" data-m="' + esc(it.id) + '" data-a="' + a + '" aria-label="' + esc(it.label) + ' · ' + (ACT_LABEL[a] || 'Tất cả') + '"></td>'; }).join('') + '</tr>';
+    });
+  });
+  mxHtml += '</tbody></table>';
+  body.querySelector('#mx').innerHTML = mxHtml;
+
+  function setItem(id, a, on) {
+    var cur = perm[id] ? perm[id].slice() : [];
+    if (a === 'all') cur = on ? ACT_KEYS.slice() : [];
+    else if (on) { if (cur.indexOf(a) < 0) cur.push(a); if (a !== 'xem' && cur.indexOf('xem') < 0) cur.push('xem'); }
+    else { cur = a === 'xem' ? [] : cur.filter(function (x) { return x !== a; }); }
+    cur = ACT_KEYS.filter(function (k) { return cur.indexOf(k) >= 0; });
+    if (cur.length) perm[id] = cur; else delete perm[id];
+  }
+  function has(id, a) { var c = perm[id] || []; return a === 'all' ? c.length === ACT_KEYS.length : c.indexOf(a) >= 0; }
+  function sync() {
+    body.querySelectorAll('#mx [data-m]').forEach(function (cb) { cb.checked = has(cb.dataset.m, cb.dataset.a); });
+    body.querySelectorAll('#mx [data-g]').forEach(function (cb) {
+      var g = groups.find(function (x) { return x.id === cb.dataset.g; });
+      var k = g.items.filter(function (it) { return has(it.id, cb.dataset.a); }).length;
+      cb.checked = k === g.items.length; cb.indeterminate = k > 0 && k < g.items.length;
+    });
+    var s = allItems().filter(function (i) { return perm[i.id] && perm[i.id].length; }).length;
+    body.querySelector('#mxSum').textContent = s + ' / ' + allItems().length + ' màn hình được quyền';
+  }
+  body.querySelector('#mx').addEventListener('change', function (e) {
+    var cb = e.target; if (!cb.dataset.a) return;
+    if (cb.dataset.m) setItem(cb.dataset.m, cb.dataset.a, cb.checked);
+    else if (cb.dataset.g) { var g = groups.find(function (x) { return x.id === cb.dataset.g; }); g.items.forEach(function (it) { setItem(it.id, cb.dataset.a, cb.checked); }); }
+    sync();
+  });
+  body.querySelectorAll('[data-bulk]').forEach(function (b) {
+    b.onclick = function () {
+      var k = b.dataset.bulk;
+      allItems().forEach(function (it) { if (k === 'none') delete perm[it.id]; else perm[it.id] = k === 'all' ? ACT_KEYS.slice() : ['xem']; });
+      sync();
+    };
+  });
+  sync();
+
+  /* tài khoản thuộc nhóm */
+  if (!isNew) {
+    var host = body.querySelector('#tkList');
+    if (!tks.length) host.innerHTML = '<div class="empty">Chưa có tài khoản nào thuộc nhóm</div>';
+    else {
+      host.innerHTML = '<div class="row" style="margin-bottom:8px"><span class="muted small">' + tks.length + ' tài khoản</span><button class="btn sm right" data-go="tai-khoan.html" data-p="' + esc(JSON.stringify({ nhom: n.id })) + '">Mở trong màn Tài khoản</button></div><div id="tkTbl"></div>';
+      U.table(host.querySelector('#tkTbl'), {
+        rows: tks, pageSize: 8, columns: [
+          { key: 'ten', label: 'Tên đăng nhập', render: function (t) { return '<span class="mono">' + esc(t.ten) + '</span>'; } },
+          { key: 'hoTen', label: 'Họ tên', render: function (t) { return '<div class="t-main">' + esc(t.hoTen) + '</div><div class="t-sub">' + esc(t.email) + '</div>'; } },
+          { key: 'loai', label: 'Phân loại', render: function (t) { return esc(LOAI[t.loai] || ''); } },
+          { key: 'donVi', label: 'Đơn vị', render: function (t) { return t.donVi ? esc(LMS.donViTen(t.donVi)) : '<span class="muted">—</span>'; } },
+          { key: 'trangThai', label: 'Trạng thái', render: function (t) { return t.trangThai === 'ngung' ? U.badge('Ngừng hoạt động') : U.badge('Đang hoạt động', 'ok'); } }
+        ]
+      });
+    }
+  }
+
+  body.querySelectorAll('[data-t]').forEach(function (b) {
+    b.onclick = function () {
+      body.querySelectorAll('[data-t]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      body.querySelectorAll('.pane').forEach(function (p) { p.hidden = p.dataset.p !== b.dataset.t; });
+    };
+  });
+  function showTab(t) { body.querySelector('[data-t="' + t + '"]').click(); }
+
+  U.modal({
+    title: isNew ? (preset ? 'Sao chép nhóm quyền' : 'Thêm nhóm quyền') : 'Nhóm quyền · ' + n.ten, size: 'lg', body: body,
+    foot: (isNew ? [] : [{ label: 'Xóa nhóm', cls: 'danger', onClick: function (api) { api.close(); xoa(n); return false; } }]).concat([
+      { label: 'Hủy', close: true },
+      { label: isNew ? 'Tạo nhóm' : 'Lưu thay đổi', cls: 'primary', onClick: function () {
+        var v = U.formVals(body.querySelector('[data-p="info"]')), ok = true;
+        v.ma = v.ma.toUpperCase();
+        if (!/^[A-Z0-9_-]{2,}$/.test(v.ma)) { U.fieldErr(body, 'ma', 'Tối thiểu 2 ký tự, gồm chữ in hoa, số, "-" hoặc "_"'); ok = false; }
+        else if (db.nhomQuyen.some(function (x) { return x !== n && x.ma === v.ma; })) { U.fieldErr(body, 'ma', 'Mã nhóm đã tồn tại'); ok = false; }
+        else U.fieldErr(body, 'ma', '');
+        if (!v.ten) { U.fieldErr(body, 'ten', 'Nhập tên nhóm'); ok = false; }
+        else if (db.nhomQuyen.some(function (x) { return x !== n && U.norm(x.ten) === U.norm(v.ten); })) { U.fieldErr(body, 'ten', 'Tên nhóm đã tồn tại'); ok = false; }
+        else U.fieldErr(body, 'ten', '');
+        if (!ok) { showTab('info'); return false; }
+        var me = db.meta.user.ten;
+        if (n && n.id === 'nq1' && tks.some(function (t) { return t.ten === me; }) && !allItems().every(function (i) { return perm[i.id] && perm[i.id].length === ACT_KEYS.length; })) {
+          U.toast('Nhóm có tài khoản đang đăng nhập, không thể thu hẹp quyền quản trị', 'bad'); showTab('mx'); return false;
+        }
+        var q = {}; allItems().forEach(function (i) { if (perm[i.id] && perm[i.id].length) q[i.id] = perm[i.id].slice(); });
+        if (isNew) {
+          var nq = { id: LMS.nextId('nq'), ma: v.ma, ten: v.ten, moTa: v.moTa, pham: v.pham, quyen: q };
+          db.nhomQuyen.push(nq);
+          LMS.commit('Tạo', 'Nhóm quyền', nq.ma + ' · ' + nq.ten + ' · ' + Object.keys(q).length + ' màn hình', null, { 'Mã': nq.ma, 'Tên': nq.ten, 'Phạm vi': PHAM[nq.pham], 'Số màn hình được quyền': Object.keys(q).length });
+          U.toast('Đã tạo nhóm ' + nq.ten, 'ok');
+        } else {
+          var old = permOf(n), truoc = {}, sau = {}, doiQuyen = 0;
+          [['ma', 'Mã'], ['ten', 'Tên'], ['moTa', 'Mô tả']].forEach(function (f) { if ((n[f[0]] || '') !== v[f[0]]) { truoc[f[1]] = n[f[0]] || '—'; sau[f[1]] = v[f[0]] || '—'; } });
+          if (n.pham !== v.pham) { truoc['Phạm vi'] = PHAM[n.pham]; sau['Phạm vi'] = PHAM[v.pham]; }
+          allItems().forEach(function (i) {
+            var a = (old[i.id] || []).join(), b = (q[i.id] || []).join();
+            if (a !== b) { doiQuyen++; truoc[i.label] = (old[i.id] || []).map(function (x) { return ACT_LABEL[x]; }).join(', ') || '—'; sau[i.label] = (q[i.id] || []).map(function (x) { return ACT_LABEL[x]; }).join(', ') || '—'; }
+          });
+          var legacy = !(n.quyen && typeof n.quyen === 'object' && !Array.isArray(n.quyen));
+          if (!Object.keys(truoc).length && !legacy) { U.toast('Không có thay đổi'); return; }
+          n.ma = v.ma; n.ten = v.ten; n.moTa = v.moTa; n.pham = v.pham; n.quyen = q;
+          LMS.commit('Sửa', 'Nhóm quyền', n.ten + (doiQuyen ? ' · cập nhật quyền ' + doiQuyen + ' màn hình' : ' · cập nhật thông tin'), truoc, sau);
+          U.toast('Đã lưu nhóm ' + n.ten, 'ok');
+        }
+        render();
+      } }
+    ])
+  });
+}
+
+function render() {
+  var db = LMS.db;
+  $('sub').textContent = db.nhomQuyen.length + ' nhóm quyền · ' + allItems().length + ' màn hình chức năng';
+  $('fPham').innerHTML = U.opts(Object.keys(PHAM).map(function (k) { return { v: k, l: PHAM[k] }; }), 'v', 'l', F.pham, 'Tất cả phạm vi');
+  tbl.render();
+}
+LMS.onChange(render);
+render();
+var p = LMS.param('nhom-quyen.html');
+if (p && p.nhom) { var n0 = LMS.byId('nhomQuyen', p.nhom); if (n0) openDetail(n0); }
+})();
+</script>
+</body></html>

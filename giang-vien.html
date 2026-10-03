@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giảng viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.tag.link{cursor:pointer;color:var(--ems-navy);border-color:var(--ems-navy-line);background:var(--ems-navy-soft)}
+.tag.link:hover{text-decoration:underline}
+.tag.link.ts{color:var(--ems-text-2);background:var(--ems-surface-2);border-color:var(--ems-border)}
+.gv-head{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.gv-head .avatar{width:48px;height:48px;font-size:16px}
+.gv-head .nm{font-size:16px;font-weight:700}
+.modal .tabs{padding-inline:0;margin-top:-4px}
+.pw{display:flex;gap:6px}
+.pw .inp{flex:1;font-family:var(--mono)}
+.q-item{border:1px solid var(--ems-border);border-radius:var(--r-card);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.q-item .q-txt{font-weight:500}
+.cred{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;padding:12px 14px;border:1px solid var(--ems-border);border-radius:var(--r-ctl);background:var(--ems-surface-2);font-size:13px}
+.cred dt{color:var(--ems-muted)} .cred dd{margin:0;font-family:var(--mono)}
+tr.off td{color:var(--ems-muted)}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U=LMS.ui, esc=U.esc;
+var MO={'dang-hoc':1,'tuyen-sinh':1,'ke-hoach':1};
+var st={q:'',dv:'',tk:'',tt:'',pt:''};
+var app=document.getElementById('app'), tbl;
+
+function TODAYISO(){ return LMS.iso(LMS.TODAY); }
+function tkOf(g){ return g.taiKhoan?LMS.byId('taiKhoan',g.taiKhoan):null; }
+function lopCua(id){ return LMS.db.lop.filter(function(l){ return (l.giangVien||[]).indexOf(id)>=0; }); }
+function lopMo(id){ return lopCua(id).filter(function(l){ return MO[l.trangThai]; }); }
+function buoiThang(id){ var y=LMS.TODAY.getFullYear(), m=LMS.TODAY.getMonth(); return LMS.db.buoiHoc.filter(function(b){ if(b.gv!==id||b.huy) return false; var d=LMS.parse(b.ngay); return d.getFullYear()===y&&d.getMonth()===m; }); }
+function hoiDapCho(id){ var ls={}; lopCua(id).forEach(function(l){ ls[l.id]=1; }); return LMS.db.hoiDap.filter(function(q){ return ls[q.lop]&&LMS.hdChoTL(q); }).sort(function(a,b){ return a.ngay<b.ngay?-1:1; }); }
+function tenGV(g){ return g.hoTen; }
+function nextMa(){ var m=0; LMS.db.giangVien.forEach(function(g){ var n=+String(g.ma).replace(/\D/g,''); if(n>m) m=n; }); return 'GV'+String(m+1).padStart(4,'0'); }
+function genPw(){
+  var L='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ', D='23456789', A=L+D, out=[], r=new Uint32Array(10);
+  try{ crypto.getRandomValues(r); }catch(e){ for(var i=0;i<10;i++) r[i]=Math.floor(Math.random()*1e9); }
+  out.push(L.charAt(r[0]%L.length).toUpperCase(), D.charAt(r[1]%D.length), L.charAt(r[2]%L.length).toLowerCase());
+  for(var j=3;j<10;j++) out.push(A.charAt(r[j]%A.length));
+  return out.join('');
+}
+function copyText(txt){
+  function fallback(){ try{ var ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); var ok=document.execCommand('copy'); ta.remove(); U.toast(ok?'Đã sao chép thông tin đăng nhập':'Không sao chép được, hãy sao chép thủ công',ok?'ok':'bad'); }catch(e){ U.toast('Không sao chép được, hãy sao chép thủ công','bad'); } }
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ U.toast('Đã sao chép thông tin đăng nhập','ok'); },fallback); return; } }catch(e){}
+  fallback();
+}
+function tkCell(g){
+  var t=tkOf(g);
+  if(!t) return U.badge('Không đăng nhập được','bad')+'<div class="t-sub">Chưa có tài khoản</div>';
+  return '<span class="mono">'+esc(t.ten)+'</span>'+(t.trangThai==='ngung'?' '+U.badge('Ngừng','bad'):'')+'<div class="t-sub">'+(t.lanCuoi?'Đăng nhập '+LMS.fmtDate(new Date(t.lanCuoi)):'Chưa đăng nhập')+'</div>';
+}
+function lopTags(ls){ return ls.map(function(l){ return '<span class="tag link'+(l.trangThai!=='dang-hoc'?' ts':'')+'" data-lop="'+l.id+'" title="'+esc(l.ten+' · '+LMS.TT_LOP[l.trangThai][0])+'">'+esc(l.ma)+'</span>'; }).join(''); }
+
+function shell(){
+  app.innerHTML=
+   '<div class="page-head"><div><h1>Giảng viên</h1><div class="sub" id="sub"></div></div>'+
+   '<div class="actions"><button class="btn" id="goLop">Phân công ở Lớp học</button><button class="btn primary" id="add">+ Thêm giảng viên</button></div></div>'+
+   '<div class="kpis" id="kpis"></div>'+
+   '<div class="panel"><div class="panel-head filters">'+
+     '<input class="inp" id="q" placeholder="Tìm họ tên, mã GV, email, SĐT">'+
+     '<select class="sel" id="fDv"></select><select class="sel" id="fTk"></select><select class="sel" id="fTt"></select>'+
+     '<button class="btn ghost sm" id="clr">Xóa lọc</button>'+
+   '</div><div id="tbl"></div></div>';
+  document.getElementById('add').onclick=function(){ edit(null); };
+  document.getElementById('goLop').onclick=function(){ LMS.go('lop-hoc.html'); };
+  document.getElementById('q').oninput=function(e){ st.q=e.target.value.trim(); refresh(); };
+  document.getElementById('fDv').onchange=function(e){ st.dv=e.target.value; refresh(); };
+  document.getElementById('fTk').onchange=function(e){ st.tk=e.target.value; render(); };
+  document.getElementById('fTt').onchange=function(e){ st.tt=e.target.value; refresh(); };
+  document.getElementById('clr').onclick=function(){ st={q:'',dv:'',tk:'',tt:'',pt:''}; document.getElementById('q').value=''; render(); };
+  tbl=U.table(document.getElementById('tbl'),{
+    pageSize:15, sort:'ma', dir:1, empty:'Không có giảng viên phù hợp',
+    rows:rows, onRowClick:function(g){ chiTiet(g.id); },
+    columns:[
+      {key:'ma',label:'Mã GV',render:function(g){ return '<span class="mono">'+U.hl(g.ma,st.q)+'</span>'; }},
+      {key:'hoTen',label:'Họ và tên',sortVal:function(g){ return g.hoTen.split(' ').pop()+' '+g.hoTen; },render:function(g){ return '<div class="person"><span class="avatar">'+esc(U.initials(g.hoTen))+'</span><div class="t-main" style="white-space:nowrap">'+U.hl(g.hoTen,st.q)+'</div></div>'; }},
+      {key:'donVi',label:'Đơn vị',sortVal:function(g){ return LMS.donViTen(g.donVi); },render:function(g){ return esc(LMS.donViTen(g.donVi)); }},
+      {key:'email',label:'Email',render:function(g){ return '<span class="small">'+U.hl(g.email||'',st.q)+'</span>'; }},
+      {key:'sdt',label:'SĐT',render:function(g){ return '<span class="mono">'+U.hl(g.sdt||'',st.q)+'</span>'; }},
+      {key:'_lop',label:'Lớp đang phụ trách',sortVal:function(g){ return lopMo(g.id).length; },render:function(g){ var ls=lopMo(g.id); return ls.length?lopTags(ls):'<span class="muted small">—</span>'; }},
+      {key:'_buoi',label:'Buổi dạy tháng này',cls:'num',sortVal:function(g){ return buoiThang(g.id).length; },render:function(g){ var bs=buoiThang(g.id); if(!bs.length) return '<span class="muted">0</span>'; var xong=bs.filter(function(b){ return LMS.parse(b.ngay)<LMS.TODAY; }).length; return '<b>'+bs.length+'</b><div class="t-sub">'+xong+' đã dạy</div>'; }},
+      {key:'_tk',label:'Tài khoản',sortVal:function(g){ return g.taiKhoan?1:0; },render:tkCell},
+      {key:'trangThai',label:'Trạng thái',render:function(g){ return g.trangThai==='ngung'?U.badge('Ngừng hoạt động',''):U.badge('Hoạt động','ok'); }},
+      {key:'_a',label:'',sortable:false,render:function(g){ return '<button class="icon-btn" data-m="'+g.id+'" aria-label="Thao tác">⋯</button>'; }}
+    ],
+    after:function(host){
+      host.querySelectorAll('[data-lop]').forEach(function(t){ t.onclick=function(e){ e.stopPropagation(); LMS.go('lop-hoc.html',{lop:t.dataset.lop}); }; });
+      host.querySelectorAll('[data-m]').forEach(function(b){ b.onclick=function(e){ e.stopPropagation(); rowMenu(b,LMS.byId('giangVien',b.dataset.m)); }; });
+    }
+  });
+}
+
+function rows(){
+  var nq=U.norm(st.q);
+  return LMS.db.giangVien.filter(function(g){
+    if(nq&&U.norm(g.hoTen+' '+g.ma+' '+(g.email||'')+' '+(g.sdt||'')+'').indexOf(nq)<0) return false;
+    if(st.dv&&g.donVi!==st.dv) return false;
+    if(st.tk==='co'&&!g.taiKhoan) return false;
+    if(st.tk==='chua'&&g.taiKhoan) return false;
+    if(st.tt&&g.trangThai!==st.tt) return false;
+    if(st.pt&&!lopMo(g.id).length) return false;
+    return true;
+  });
+}
+
+function render(){
+  var db=LMS.db, all=db.giangVien;
+  var hd=all.filter(function(g){ return g.trangThai!=='ngung'; });
+  var pt=all.filter(function(g){ return lopMo(g.id).length; });
+  var noTk=all.filter(function(g){ return !g.taiKhoan&&g.trangThai!=='ngung'; });
+  var noTkPc=noTk.filter(function(g){ return lopMo(g.id).length; });
+  var anyF=st.q||st.dv||st.tk||st.tt||st.pt;
+  document.getElementById('kpis').innerHTML=
+    '<div class="kpi clickable'+(!anyF?' active':'')+'" data-k="all"><div class="k-label">Giảng viên</div><div class="k-val">'+all.length+'</div><div class="k-sub">'+hd.length+' đang hoạt động</div></div>'+
+    '<div class="kpi clickable'+(st.pt?' active':'')+'" data-k="pt"><div class="k-label">Đang phụ trách lớp</div><div class="k-val">'+pt.length+'</div><div class="k-sub">'+db.lop.filter(function(l){ return MO[l.trangThai]; }).length+' lớp đang mở</div></div>'+
+    '<div class="kpi '+(noTkPc.length?'bad ':noTk.length?'warn ':'')+'clickable'+(st.tk==='chua'?' active':'')+'" data-k="tk"><div class="k-label">Chưa có tài khoản</div><div class="k-val">'+noTk.length+'</div><div class="k-sub">'+(noTkPc.length?noTkPc.length+' người đang được phân công lớp: '+esc(noTkPc.map(function(g){ return g.hoTen; }).join(', ')):(noTk.length?'Không ai đang phụ trách lớp mở':'Tất cả đã có tài khoản'))+'</div></div>';
+  document.querySelectorAll('#kpis [data-k]').forEach(function(k){ k.onclick=function(){ st={q:'',dv:'',tk:'',tt:'',pt:''}; document.getElementById('q').value=''; if(k.dataset.k==='pt') st.pt='1'; if(k.dataset.k==='tk'){ st.tk='chua'; } render(); }; });
+  var dvs=db.donVi.filter(function(d){ return db.giangVien.some(function(g){ return g.donVi===d.id; }); });
+  document.getElementById('fDv').innerHTML=U.opts(dvs,'id','ten',st.dv,'Tất cả đơn vị');
+  document.getElementById('fTk').innerHTML=U.opts([{v:'co',l:'Đã có tài khoản'},{v:'chua',l:'Chưa có tài khoản'}],'v','l',st.tk,'Tài khoản');
+  document.getElementById('fTt').innerHTML=U.opts([{v:'hoat-dong',l:'Hoạt động'},{v:'ngung',l:'Ngừng hoạt động'}],'v','l',st.tt,'Trạng thái');
+  refresh();
+}
+function refresh(){ var n=rows().length; document.getElementById('sub').textContent=LMS.db.giangVien.length+' giảng viên'+(n!==LMS.db.giangVien.length?' · đang lọc '+n:''); tbl.render(true); }
+
+function rowMenu(btn,g){
+  var off=g.trangThai==='ngung';
+  U.menu(btn,[
+    {label:'Xem chi tiết',onClick:function(){ chiTiet(g.id); }},
+    {label:'Chỉnh sửa',onClick:function(){ edit(g); }},
+    !g.taiKhoan?{label:'Cấp tài khoản',disabled:off,title:'Giảng viên đã ngừng hoạt động',onClick:function(){ capTK(g); }}:null,
+    {label:'Lịch dạy 14 ngày tới',onClick:function(){ chiTiet(g.id,'lich'); }},
+    '-',
+    off?{label:'Kích hoạt lại',onClick:function(){ kichHoat(g); }}:{label:'Ngừng hoạt động',danger:true,onClick:function(){ ngung(g); }}
+  ]);
+}
+
+function edit(g){
+  var isNew=!g, db=LMS.db, x=g||{};
+  var khoa=db.donVi.filter(function(d){ return d.laKhoa; }), khac=db.donVi.filter(function(d){ return !d.laKhoa; });
+  var dvOpts='<option value="">— Chọn đơn vị —</option><optgroup label="Khoa">'+U.opts(khoa,'id','ten',x.donVi)+'</optgroup><optgroup label="Phòng, ban">'+U.opts(khac,'id','ten',x.donVi)+'</optgroup>';
+  var body='<div class="form-grid">'+
+    '<div class="field full"><label>Mã giảng viên</label><input class="inp mono" readonly value="'+esc(isNew?nextMa():g.ma)+'"></div>'+
+    '<div class="field full"><label>Họ và tên <span class="req">*</span></label><input class="inp" name="hoTen" maxlength="80" value="'+esc(x.hoTen||'')+'"></div>'+
+    '<div class="field"><label>Email <span class="req">*</span></label><input class="inp" type="email" name="email" maxlength="120" value="'+esc(x.email||'')+'" placeholder="ten@vutm.edu.vn"></div>'+
+    '<div class="field"><label>Số điện thoại <span class="req">*</span></label><input class="inp mono" name="sdt" inputmode="numeric" maxlength="10" value="'+esc(x.sdt||'')+'"></div>'+
+    '<div class="field full"><label>Đơn vị <span class="req">*</span></label><select class="sel" name="donVi">'+dvOpts+'</select></div>'+
+    '</div>'+(g&&g.taiKhoan?'<div class="note info small">Họ tên, email, đơn vị được đồng bộ sang tài khoản đăng nhập.</div>':'');
+  U.modal({title:isNew?'Thêm giảng viên':'Sửa thông tin · '+g.ma,body:body,
+    onOpen:function(api){ var s=api.body.querySelector('[name=sdt]'); s.oninput=function(){ s.value=s.value.replace(/\D/g,'').slice(0,10); }; setTimeout(function(){ api.body.querySelector('[name=hoTen]').focus(); },40); },
+    foot:[{label:'Hủy',close:true},{label:isNew?'Thêm giảng viên':'Lưu thay đổi',cls:'primary',onClick:function(api){
+      var r=api.body, v=U.formVals(r), ok=true;
+      ['hoTen','email','sdt','donVi'].forEach(function(n){ U.fieldErr(r,n,''); });
+      v.hoTen=v.hoTen.replace(/\s+/g,' ');
+      if(v.hoTen.length<2||/\d/.test(v.hoTen)){ U.fieldErr(r,'hoTen','Nhập họ và tên hợp lệ'); ok=false; }
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)){ U.fieldErr(r,'email','Email không đúng định dạng'); ok=false; }
+      else { var d=LMS.db.giangVien.filter(function(o){ return o.email&&o.email.toLowerCase()===v.email.toLowerCase()&&(!g||o.id!==g.id); })[0]; if(d){ U.fieldErr(r,'email','Email đã dùng cho '+d.ma+' · '+d.hoTen); ok=false; } }
+      if(!/^0\d{9}$/.test(v.sdt)){ U.fieldErr(r,'sdt','Số điện thoại gồm 10 chữ số, bắt đầu bằng 0'); ok=false; }
+      if(!v.donVi){ U.fieldErr(r,'donVi','Chọn đơn vị'); ok=false; }
+      if(!ok) return false;
+      var data={hoTen:v.hoTen,email:v.email,sdt:v.sdt,donVi:v.donVi};
+      if(isNew){
+        var n={id:LMS.nextId('gv'),ma:nextMa(),taiKhoan:null,trangThai:'hoat-dong'}; Object.keys(data).forEach(function(k){ n[k]=data[k]; });
+        LMS.db.giangVien.push(n);
+        LMS.commit('Tạo','Giảng viên',n.ma+' · '+tenGV(n),null,data);
+        U.toast('Đã thêm giảng viên '+n.hoTen+'. Cấp tài khoản để giảng viên đăng nhập được.','ok');
+      } else {
+        var truoc={}; Object.keys(data).forEach(function(k){ truoc[k]=g[k]; g[k]=data[k]; });
+        var t=tkOf(g); if(t){ t.hoTen=g.hoTen; t.email=g.email; t.donVi=g.donVi; }
+        LMS.commit('Sửa','Giảng viên',g.ma+' · '+tenGV(g),truoc,data);
+        U.toast('Đã lưu thông tin '+g.ma,'ok');
+      }
+      render();
+    }}]
+  });
+}
+
+function capTK(g){
+  if(g.taiKhoan){ U.toast('Giảng viên đã có tài khoản','bad'); return; }
+  var ten=String(g.email||'').split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g,'');
+  var body='<div class="muted">'+esc(tenGV(g))+' · <span class="mono">'+esc(g.ma)+'</span> · '+esc(LMS.donViTen(g.donVi))+'</div>'+
+    '<div class="form-grid">'+
+    '<div class="field"><label>Tên đăng nhập <span class="req">*</span></label><input class="inp mono" name="ten" maxlength="40" value="'+esc(ten)+'"></div>'+
+    '<div class="field"><label>Email nhận thông báo</label><input class="inp" readonly value="'+esc(g.email||'')+'"></div>'+
+    '<div class="field full"><label>Mật khẩu ban đầu <span class="req">*</span></label><div class="pw"><input class="inp" type="password" name="pw" value="'+genPw()+'" autocomplete="new-password"><button class="btn" type="button" id="pwShow">Hiện</button><button class="btn" type="button" id="pwGen">Sinh lại</button></div><div class="hint">Tối thiểu 8 ký tự, gồm chữ và số. Đổi ở lần đăng nhập đầu.</div></div>'+
+    '<div class="field"><label>Nhóm quyền</label><input class="inp" readonly value="Giảng viên (GRP-GV)"></div>'+
+    '<div class="field"><label>Phạm vi dữ liệu</label><input class="inp" readonly value="Lớp được phân công"></div>'+
+    '</div>';
+  U.modal({title:'Cấp tài khoản giảng viên',body:body,
+    onOpen:function(api){ var pw=api.body.querySelector('[name=pw]'), sh=api.body.querySelector('#pwShow');
+      sh.onclick=function(){ var t=pw.type==='password'; pw.type=t?'text':'password'; sh.textContent=t?'Ẩn':'Hiện'; };
+      api.body.querySelector('#pwGen').onclick=function(){ pw.value=genPw(); }; },
+    foot:[{label:'Hủy',close:true},{label:'Cấp tài khoản',cls:'primary',onClick:function(api){
+      var r=api.body, v={ten:r.querySelector('[name=ten]').value.trim().toLowerCase(),pw:r.querySelector('[name=pw]').value}, ok=true;
+      U.fieldErr(r,'ten',''); U.fieldErr(r,'pw','');
+      if(!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(v.ten)){ U.fieldErr(r,'ten','3–40 ký tự: chữ thường không dấu, số, ".", "_", "-"'); ok=false; }
+      else if(LMS.db.taiKhoan.some(function(t){ return t.ten.toLowerCase()===v.ten; })){ U.fieldErr(r,'ten','Tên đăng nhập đã tồn tại'); ok=false; }
+      if(!(v.pw.length>=8&&/[A-Za-z]/.test(v.pw)&&/\d/.test(v.pw))){ U.fieldErr(r,'pw','Mật khẩu tối thiểu 8 ký tự, gồm cả chữ và số'); ok=false; }
+      if(!ok) return false;
+      var tk={id:LMS.nextId('tkg'),ten:v.ten,hoTen:g.hoTen,email:g.email,loai:'gv',nhom:['nq4'],donVi:g.donVi,trangThai:'hoat-dong',lanCuoi:null,doiMatKhau:true,ngayCap:new Date().toISOString()};
+      LMS.db.taiKhoan.push(tk); g.taiKhoan=tk.id;
+      LMS.commit('Cấp tài khoản','Giảng viên',g.ma+' · '+g.hoTen+' · '+tk.ten,null,{taiKhoan:tk.ten,nhom:'Giảng viên'});
+      render();
+      setTimeout(function(){
+        U.modal({title:'Đã cấp tài khoản',size:'sm',body:'<div class="note ok">Tài khoản đã liên kết với '+esc(tenGV(g))+'. Mật khẩu chỉ hiển thị một lần tại đây.</div><dl class="cred"><dt>Họ tên</dt><dd style="font-family:var(--font)">'+esc(tenGV(g))+'</dd><dt>Tên đăng nhập</dt><dd>'+esc(tk.ten)+'</dd><dt>Mật khẩu ban đầu</dt><dd>'+esc(v.pw)+'</dd><dt>Nhóm quyền</dt><dd style="font-family:var(--font)">Giảng viên</dd></dl>',
+          foot:[{label:'Sao chép',cls:'primary',onClick:function(){ copyText('Họ tên: '+tenGV(g)+'\nTên đăng nhập: '+tk.ten+'\nMật khẩu ban đầu: '+v.pw); return false; }},{label:'Đóng',close:true}]});
+        U.toast('Đã cấp tài khoản '+tk.ten,'ok');
+      },0);
+    }}]
+  });
+}
+
+function ngung(g){
+  var dang=lopCua(g.id).filter(function(l){ return l.trangThai==='dang-hoc'; });
+  if(dang.length){ U.blocked('Không thể ngừng hoạt động '+g.hoTen,dang.map(function(l){ return 'Lớp '+l.ma+' · '+l.ten+' (đang học)'; }),'Đổi giảng viên phụ trách tại màn Lớp học, sau đó thực hiện lại.'); return; }
+  var khac=lopCua(g.id).filter(function(l){ return l.trangThai==='tuyen-sinh'||l.trangThai==='ke-hoach'; }), t=tkOf(g);
+  var html='Ngừng hoạt động giảng viên <b>'+esc(tenGV(g))+'</b>?<ul style="margin:8px 0 0;padding-left:18px">'+
+    (t?'<li>Tài khoản <span class="mono">'+esc(t.ten)+'</span> chuyển Ngừng, không đăng nhập được.</li>':'')+
+    '<li>Không chọn được giảng viên này khi phân công lớp mới.</li>'+
+    (khac.length?'<li>Vẫn đang được phân công '+khac.length+' lớp chưa khai giảng: '+khac.map(function(l){ return esc(l.ma); }).join(', ')+' – cần đổi giảng viên ở Lớp học.</li>':'')+
+    '<li>Lịch sử giảng dạy, điểm danh, trả lời hỏi đáp được giữ nguyên.</li></ul>';
+  U.confirm({title:'Ngừng hoạt động giảng viên',html:html,ok:'Ngừng hoạt động',danger:true}).then(function(y){
+    if(!y) return;
+    g.trangThai='ngung'; if(t) t.trangThai='ngung';
+    LMS.commit('Ngừng hoạt động','Giảng viên',g.ma+' · '+g.hoTen,{trangThai:'hoat-dong'},{trangThai:'ngung'});
+    U.toast('Đã ngừng hoạt động '+g.hoTen+(t?', khóa tài khoản '+t.ten:''),'ok'); render();
+  });
+}
+function kichHoat(g){
+  var t=tkOf(g);
+  U.confirm({title:'Kích hoạt lại giảng viên',html:'Kích hoạt lại <b>'+esc(tenGV(g))+'</b>'+(t?' và tài khoản <span class="mono">'+esc(t.ten)+'</span>':'')+'?',ok:'Kích hoạt lại'}).then(function(y){
+    if(!y) return; g.trangThai='hoat-dong'; if(t) t.trangThai='hoat-dong';
+    LMS.commit('Kích hoạt','Giảng viên',g.ma+' · '+g.hoTen,{trangThai:'ngung'},{trangThai:'hoat-dong'});
+    U.toast('Đã kích hoạt lại '+g.hoTen,'ok'); render();
+  });
+}
+
+function chiTiet(id,tab){
+  var g=LMS.byId('giangVien',id); if(!g) return;
+  var S={tab:tab||'tt'};
+  var root=document.createElement('div'); root.className='stack';
+  var api=U.modal({title:'Giảng viên · '+g.ma,size:'lg',body:root,noFocus:true,foot:[{label:'Chỉnh sửa',onClick:function(){ setTimeout(function(){ edit(g); },0); }},{label:'Đóng',cls:'primary',close:true}]});
+  function draw(){
+    var ls=lopCua(g.id), mo=ls.filter(function(l){ return MO[l.trangThai]; });
+    var from=LMS.TODAY, to=LMS.addDays(LMS.TODAY,13);
+    var lich=LMS.db.buoiHoc.filter(function(b){ var d=LMS.parse(b.ngay); return b.gv===g.id&&d>=from&&d<=to; }).sort(function(a,b){ return (a.ngay+a.gio)<(b.ngay+b.gio)?-1:1; });
+    var hd=hoiDapCho(g.id), t=tkOf(g);
+    root.innerHTML='<div class="gv-head"><span class="avatar">'+esc(U.initials(g.hoTen))+'</span><div><div class="nm">'+esc(tenGV(g))+'</div><div class="muted small"><span class="mono">'+esc(g.ma)+'</span> · '+esc(LMS.donViTen(g.donVi))+'</div></div><div class="row right">'+(g.trangThai==='ngung'?U.badge('Ngừng hoạt động',''):U.badge('Hoạt động','ok'))+(t?U.badge('Tài khoản '+t.ten,t.trangThai==='ngung'?'bad':'ok'):U.badge('Không đăng nhập được','bad'))+'</div></div>'+
+      '<div class="tabs"><button class="tab'+(S.tab==='tt'?' on':'')+'" data-t="tt">Thông tin</button><button class="tab'+(S.tab==='lop'?' on':'')+'" data-t="lop">Lớp phụ trách ('+ls.length+')</button><button class="tab'+(S.tab==='lich'?' on':'')+'" data-t="lich">Lịch dạy 14 ngày tới ('+lich.length+')</button><button class="tab'+(S.tab==='hd'?' on':'')+'" data-t="hd">Hỏi đáp chờ trả lời ('+hd.length+')</button></div><div id="c"></div>';
+    root.querySelectorAll('[data-t]').forEach(function(b){ b.onclick=function(){ S.tab=b.dataset.t; draw(); }; });
+    var c=root.querySelector('#c');
+    if(S.tab==='tt'){
+      var bt=buoiThang(g.id);
+      c.innerHTML='<dl class="kv"><dt>Mã giảng viên</dt><dd class="mono">'+esc(g.ma)+'</dd><dt>Email</dt><dd>'+esc(g.email||'—')+'</dd><dt>Số điện thoại</dt><dd class="mono">'+esc(g.sdt||'—')+'</dd><dt>Đơn vị</dt><dd>'+esc(LMS.donViTen(g.donVi))+'</dd>'+
+        '<dt>Lớp đang phụ trách</dt><dd>'+(mo.length?lopTags(mo):'—')+'</dd><dt>Buổi dạy tháng này</dt><dd>'+bt.length+' buổi</dd>'+
+        '<dt>Tài khoản</dt><dd>'+(t?'<span class="mono">'+esc(t.ten)+'</span> · '+(t.trangThai==='ngung'?'Ngừng':'Hoạt động')+' · '+(t.lanCuoi?'đăng nhập '+LMS.fmtDT(t.lanCuoi):'chưa đăng nhập'):'<span style="color:var(--ems-danger)">Chưa có tài khoản – không đăng nhập được để điểm danh, trả lời hỏi đáp</span>')+'</dd></dl>'+
+        (!t&&g.trangThai!=='ngung'?'<div class="row"><button class="btn primary sm" id="cap">Cấp tài khoản</button></div>':'');
+      var cb=c.querySelector('#cap'); if(cb) cb.onclick=function(){ api.close(); capTK(g); };
+    } else if(S.tab==='lop'){
+      if(!ls.length){ c.innerHTML='<div class="empty">Chưa được phân công lớp nào</div>'; }
+      else c.innerHTML='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lớp</th><th>Học phần</th><th>Thời gian</th><th class="num">Sĩ số</th><th>Trạng thái</th><th></th></tr></thead><tbody>'+
+        ls.slice().sort(function(a,b){ return a.batDau<b.batDau?1:-1; }).map(function(l){ var hp=LMS.hocPhanOfLop(l), tt=LMS.TT_LOP[l.trangThai]||[l.trangThai,''], tg=LMS.trangThaiThoiGian(l);
+          return '<tr><td><div class="t-main">'+esc(l.ma)+'</div><div class="t-sub">'+esc(l.ten)+'</div></td><td>'+esc(hp?hp.ten:'—')+'</td><td class="small">'+LMS.fmtDate(l.batDau)+' – '+LMS.fmtDate(l.ketThuc)+'<div class="t-sub">'+esc(tg.label)+'</div></td><td class="num">'+LMS.soHV(l.id)+'/'+l.sucChua+'</td><td>'+U.badge(tt[0],tt[1])+(l.giangVien.length>1?'<div class="t-sub">Đồng phụ trách</div>':'')+'</td><td class="c"><button class="btn sm" data-lop="'+l.id+'">Mở lớp</button></td></tr>'; }).join('')+'</tbody></table></div>';
+    } else if(S.tab==='lich'){
+      if(!lich.length){ c.innerHTML='<div class="empty">Không có buổi dạy từ '+LMS.fmtDate(from)+' đến '+LMS.fmtDate(to)+'</div>'; }
+      else c.innerHTML='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Ngày</th><th>Giờ</th><th>Lớp</th><th>Buổi</th><th>Hình thức · Phòng</th><th>Trạng thái</th></tr></thead><tbody>'+
+        lich.map(function(b){ var d=LMS.parse(b.ngay), l=LMS.byId('lop',b.lop), s=LMS.buoiStatus(b);
+          return '<tr><td><b>'+LMS.THU[d.getDay()]+'</b> '+LMS.fmtDate(b.ngay)+'</td><td class="mono">'+esc(b.gio)+'–'+esc(b.den)+'</td><td>'+(l?'<span class="tag link" data-lop="'+l.id+'">'+esc(l.ma)+'</span>':'—')+'</td><td>'+esc(b.ten)+'</td><td>'+esc(b.hinhThuc)+'<div class="t-sub">'+esc(b.phong)+'</div></td><td>'+U.badge(s.label,s.tone)+(s.sub?'<div class="t-sub">'+esc(s.sub)+'</div>':'')+'</td></tr>'; }).join('')+'</tbody></table></div>'+
+        '<div class="row"><button class="btn sm right" id="goBuoi">Mở Lịch buổi học</button></div>';
+      var gb=c.querySelector('#goBuoi'); if(gb) gb.onclick=function(){ api.close(); LMS.go('buoi-hoc.html',{gv:g.id}); };
+    } else {
+      if(!hd.length){ c.innerHTML='<div class="empty">Không có câu hỏi chờ trả lời</div>'; }
+      else c.innerHTML=hd.map(function(q){ var l=LMS.byId('lop',q.lop), h=LMS.byId('hocVien',q.hv), n=LMS.daysBetween(q.ngay,LMS.TODAY), hp=l&&LMS.hocPhanOfLop(l), bai=hp&&hp.bai.filter(function(b){ return b.id===q.bai; })[0];
+        return '<div class="q-item"><div class="q-txt">'+esc(q.noiDung)+'</div><div class="row small muted"><span>'+esc(h?h.hoTen:'—')+'</span>·<span class="tag">'+esc(l?l.ma:'')+'</span>'+(bai?'<span>'+esc(bai.ten)+'</span>':'')+'·<span>'+LMS.fmtDT(q.ngay)+'</span>'+(q.rieng?U.badge('Câu hỏi riêng',''):'')+'<span class="right">'+U.badge(n>0?'Chờ '+n+' ngày':'Hôm nay',n>=3?'bad':n>=1?'warn':'info')+'</span></div><div class="row"><button class="btn sm right" data-hd="'+q.id+'">Mở Hỏi đáp</button></div></div>'; }).join('');
+    }
+    c.querySelectorAll('[data-lop]').forEach(function(b){ b.onclick=function(){ api.close(); LMS.go('lop-hoc.html',{lop:b.dataset.lop}); }; });
+    c.querySelectorAll('[data-hd]').forEach(function(b){ b.onclick=function(){ api.close(); LMS.go('hoi-dap.html',{hd:b.dataset.hd}); }; });
+  }
+  draw();
+}
+
+shell(); render();
+LMS.onChange(render);
+var p=LMS.param('giang-vien.html'); if(p&&p.gv&&LMS.byId('giangVien',p.gv)) chiTiet(p.gv,p.tab);
+})();
+</script>
+</body></html>

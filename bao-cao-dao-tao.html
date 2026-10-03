@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Báo cáo đào tạo · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.lnk{background:none;border:0;padding:0;font:inherit;color:var(--ems-navy);cursor:pointer;font-weight:600;text-align:left}
+.lnk:hover{text-decoration:underline}
+.chart-box{min-height:200px}
+textarea.csv{font-family:var(--mono);font-size:12px;min-height:260px;white-space:pre}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc, T = LMS.TODAY;
+var app = document.getElementById('app');
+var st = { khoa: '', tt: 'dang-hoc,ket-thuc' };
+var tbl = null, cache = [];
+function D(){ return LMS.db; }
+var TT_OPTS = [{ v: 'dang-hoc,ket-thuc', l: 'Đang học và đã kết thúc' }, { v: 'dang-hoc', l: 'Đang học' }, { v: 'ket-thuc', l: 'Đã kết thúc' }, { v: 'tuyen-sinh', l: 'Đang tuyển sinh' }, { v: 'ke-hoach', l: 'Lên kế hoạch' }, { v: 'all', l: 'Tất cả trạng thái' }];
+function pct(a, b){ return b ? Math.round(a / b * 100) : null; }
+
+function data(){
+  var tts = st.tt === 'all' ? null : st.tt.split(',');
+  return D().lop.filter(function(l){
+    if (l.trangThai === 'huy' && st.tt !== 'all') return false;
+    if (st.khoa && l.khoa !== st.khoa) return false;
+    if (tts && tts.indexOf(l.trangThai) < 0) return false;
+    return !!LMS.hocPhanOfLop(l);
+  }).map(function(l){ return LMS.lopStats(l.id); });
+}
+
+function render(){
+  var db = D(); cache = data();
+  var ids = {}; cache.forEach(function(s){ ids[s.lop.id] = 1; });
+  var hv = {}; db.ghiDanh.forEach(function(g){ if (ids[g.lop] && g.trangThai === 'dang-hoc') hv[g.hv] = 1; });
+  var nHV = Object.keys(hv).length, luot = cache.reduce(function(a, s){ return a + s.dangHoc; }, 0);
+  var daDay = cache.reduce(function(a, s){ return a + s.buoiDaDay; }, 0), chuaDD = cache.reduce(function(a, s){ return a + s.buoiChuaDD + s.buoiChoXN; }, 0);
+  /* chuyên cần chung = tổng lượt có mặt / tổng lượt điểm danh của các lớp áp dụng (bình quân gia quyền theo lượt), không lấy trung bình cộng tỷ lệ các lớp */
+  var ccList = cache.filter(function(s){ return s.chuyenCan != null; }), apDung = cache.filter(function(s){ return s.apDungDD; }), tuHoc = cache.length - apDung.length;
+  var luotCo = ccList.reduce(function(a, s){ return a + s.coMat; }, 0), luotTong = ccList.reduce(function(a, s){ return a + s.luotDD; }, 0);
+  var ccTB = luotTong ? Math.round(luotCo / luotTong * 100) : null;
+  var hvDuoi = ccList.reduce(function(a, s){ return a + s.hvDuoiNguong; }, 0);
+  var coDiem = cache.reduce(function(a, s){ return a + s.coDiem; }, 0), dat = cache.reduce(function(a, s){ return a + s.dat; }, 0);
+  var tlDat = pct(dat, coDiem);
+  var khoas = db.donVi.filter(function(d){ return d.laKhoa; });
+
+  app.innerHTML =
+    '<div class="page-head"><div><h1>Báo cáo đào tạo</h1><div class="sub">Số liệu tính đến ' + LMS.fmtDate(T) + ' · ' + cache.length + ' lớp trong phạm vi lọc</div></div>' +
+    '<div class="actions"><button class="btn" id="btnGS">Giám sát lớp</button><button class="btn primary" id="btnCSV"' + (cache.length ? '' : ' disabled') + '>Xuất CSV</button></div></div>' +
+    '<div class="panel"><div class="panel-head filters">' +
+      '<select class="sel" id="fkhoa">' + U.opts(khoas, 'id', 'ten', st.khoa, 'Tất cả khoa') + '</select>' +
+      '<select class="sel" id="ftt">' + U.opts(TT_OPTS, 'v', 'l', st.tt) + '</select>' +
+    '</div></div>' +
+    '<div class="kpis">' +
+      kpi('Lớp học', cache.length, cache.filter(function(s){ return s.lop.trangThai === 'dang-hoc'; }).length + ' đang học', '') +
+      kpi('Học viên đang học', nHV, luot + ' lượt ghi danh', '') +
+      kpi('Buổi đã dạy', daDay, chuaDD ? chuaDD + ' buổi chưa chốt điểm danh' : 'đã chốt điểm danh đầy đủ', chuaDD ? 'warn' : 'ok') +
+      kpi('Chuyên cần chung', ccTB == null ? 'Chưa có dữ liệu' : ccTB + '%', ccTB == null ? (tuHoc ? tuHoc + ' lớp tự học không áp dụng' : '') : luotCo + '/' + luotTong + ' lượt có mặt · ' + hvDuoi + ' HV dưới ' + LMS.CC_CANH_BAO + '%', ccTB != null && ccTB < LMS.CC_CANH_BAO ? 'warn' : '') +
+      kpi('Tỷ lệ đạt', tlDat == null ? 'Chưa có dữ liệu' : tlDat + '%', coDiem ? dat + '/' + coDiem + ' HV có điểm tổng kết' : 'chưa có HV đủ điểm tổng kết', tlDat != null && tlDat < 70 ? 'warn' : '') +
+    '</div>' +
+    '<div class="grid g2"><div class="panel"><div class="panel-head"><h2>Chuyên cần theo lớp</h2><span class="right small muted">ngưỡng ' + LMS.CC_CANH_BAO + '%</span></div><div class="panel-body chart-box" id="chCC"></div><div class="panel-body small muted" style="padding-top:0">Tỷ lệ có mặt = lượt có mặt / lượt điểm danh của các buổi đã chốt, chỉ tính học viên còn theo học. Vắng có phép vẫn tính là vắng. Chỉ áp dụng lớp trực tuyến có giảng viên' + (tuHoc ? '; ' + tuHoc + ' lớp tự học không có điểm danh' : '') + '. Lớp dưới 3 buổi đã chốt ghi "ít dữ liệu".</div></div>' +
+    '<div class="panel"><div class="panel-head"><h2>Tiến độ học tập theo khoa</h2><span class="right small muted">bình quân theo sĩ số</span></div><div class="panel-body chart-box" id="chKhoa"></div></div></div>' +
+    '<div class="panel"><div class="panel-head"><h2>Chi tiết theo lớp</h2></div><div id="tbl"></div></div>';
+
+  var withCC = cache.filter(function(s){ return s.chuyenCan != null; });
+  var elCC = document.getElementById('chCC');
+  withCC.sort(function(a, b){ return a.chuyenCan - b.chuyenCan; });
+  if (withCC.length) U.barChart(elCC, { labels: withCC.map(function(s){ return s.lop.ma + (s.buoiDaChot < 3 ? '*' : ''); }), values: withCC.map(function(s){ return s.chuyenCan; }), unit: '%', max: 100, refLine: LMS.CC_CANH_BAO, refLabel: '', colors: withCC.map(function(s){ return s.buoiDaChot < 3 ? 'var(--ems-chart-3)' : s.chuyenCan < LMS.CC_CANH_BAO ? 'var(--ems-warning)' : 'var(--ems-chart-1)'; }), title: 'Chuyên cần theo lớp' });
+  else elCC.innerHTML = '<div class="empty">Chưa có dữ liệu điểm danh</div>';
+
+  var byK = {};
+  cache.forEach(function(s){ if (s.tienDo == null || !s.dangHoc) return; var k = byK[s.lop.khoa] || (byK[s.lop.khoa] = { sum: 0, n: 0, lop: 0 }); k.sum += s.tienDo * s.dangHoc; k.n += s.dangHoc; k.lop++; });
+  var items = Object.keys(byK).map(function(k){ var v = Math.round(byK[k].sum / byK[k].n); return { label: LMS.donViTen(k), value: v, text: v + '% · ' + byK[k].lop + ' lớp', tone: v >= 70 ? 'ok' : v >= 40 ? '' : 'warn' }; }).sort(function(a, b){ return b.value - a.value; });
+  var elK = document.getElementById('chKhoa');
+  if (items.length) U.hbars(elK, items, { max: 100, unit: '%' }); else elK.innerHTML = '<div class="empty">Chưa có dữ liệu tiến độ</div>';
+
+  tbl = U.table(document.getElementById('tbl'), {
+    rows: cache, pageSize: 20, sort: 'lop', empty: 'Không có lớp phù hợp',
+    columns: [
+      { key: 'lop', label: 'Lớp', sortVal: function(s){ return s.lop.ma; }, render: function(s){ return '<button class="lnk mono" data-lop="' + esc(s.lop.id) + '">' + esc(s.lop.ma) + '</button><div class="t-sub">' + esc(s.lop.ten) + '</div>'; } },
+      { key: 'khoa', label: 'Khoa', sortVal: function(s){ return LMS.donViTen(s.lop.khoa); }, render: function(s){ return esc(LMS.donViTen(s.lop.khoa)); } },
+      { key: 'tt', label: 'Trạng thái', sortVal: function(s){ return s.lop.trangThai; }, render: function(s){ var t = LMS.TT_LOP[s.lop.trangThai] || ['—', '']; return U.badge(t[0], t[1]); } },
+      { key: 'siSo', label: 'Sĩ số', cls: 'num', sortVal: function(s){ return s.dangHoc; }, render: function(s){ return s.dangHoc; } },
+      { key: 'td', label: 'Tiến độ', sortVal: function(s){ return s.tienDo; }, render: function(s){ return s.tienDo == null ? '<span class="muted small">Chưa có dữ liệu</span>' : U.prog(s.tienDo); } },
+      { key: 'cc', label: 'Chuyên cần', cls: 'num', sortVal: function(s){ return s.chuyenCan; }, render: function(s){ if (!s.apDungDD) return '<span class="muted small">Không áp dụng</span>'; if (s.chuyenCan == null) return '<span class="muted small">Chưa có buổi đã chốt</span>'; return '<b style="color:' + (s.chuyenCan < LMS.CC_NGUY_CO ? 'var(--ems-danger)' : s.chuyenCan < LMS.CC_CANH_BAO ? 'var(--ems-warning)' : 'inherit') + '">' + s.chuyenCan + '%</b>' + (s.buoiDaChot < 3 ? ' <span class="badge">ít dữ liệu</span>' : '') + '<div class="t-sub">vắng KP ' + s.vangKhongPhep + ' · phép ' + s.vangPhep + ' lượt</div>'; } },
+      { key: 'duoi', label: 'HV dưới ' + LMS.CC_CANH_BAO + '%', cls: 'num', sortVal: function(s){ return s.apDungDD ? s.hvDuoiNguong : -1; }, render: function(s){ return !s.apDungDD ? '<span class="muted small">—</span>' : s.hvDuoiNguong ? '<b style="color:var(--ems-danger)">' + s.hvDuoiNguong + '</b>' : '0'; } },
+      { key: 'buoi', label: 'Buổi đã dạy', cls: 'num', sortVal: function(s){ return s.buoiDaDay; }, render: function(s){ if (!s.apDungDD) return '<span class="muted small">Tự học</span>'; return s.buoiDaDay + '/' + s.buoiTong + (s.buoiChuaDD + s.buoiChoXN ? '<div class="t-sub" style="color:var(--ems-warning)">' + (s.buoiChuaDD + s.buoiChoXN) + ' chưa chốt</div>' : ''); } },
+      { key: 'coDiem', label: 'Có điểm', cls: 'num', sortVal: function(s){ return s.coDiem; }, render: function(s){ return s.coDiem; } },
+      { key: 'dat', label: 'Đạt', cls: 'num', sortVal: function(s){ return s.dat; }, render: function(s){ return s.dat; } },
+      { key: 'tl', label: 'Tỷ lệ đạt', cls: 'num', sortVal: function(s){ return pct(s.dat, s.coDiem); }, render: function(s){ var v = pct(s.dat, s.coDiem); return v == null ? '<span class="muted small">—</span>' : '<b>' + v + '%</b>'; } }
+    ],
+    after: function(host){ host.querySelectorAll('[data-lop]').forEach(function(b){ b.onclick = function(){ LMS.go('lop-hoc.html', { lop: b.dataset.lop }); }; }); }
+  });
+
+  document.getElementById('fkhoa').onchange = function(e){ st.khoa = e.target.value; render(); };
+  document.getElementById('ftt').onchange = function(e){ st.tt = e.target.value; render(); };
+  document.getElementById('btnCSV').onclick = exportCSV;
+  document.getElementById('btnGS').onclick = function(){ LMS.go('giam-sat-lop.html'); };
+}
+function kpi(label, val, sub, tone){ var nd = typeof val === 'string' && /Chưa/.test(val); return '<div class="kpi ' + tone + '"><div class="k-label">' + label + '</div><div class="k-val"' + (nd ? ' style="font-size:16px;color:var(--ems-muted);padding-top:6px"' : '') + '>' + esc(val) + '</div><div class="k-sub">' + esc(sub) + '</div></div>'; }
+
+function csvCell(v){ v = v == null ? '' : String(v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function buildCSV(){
+  var head = ['Mã lớp', 'Tên lớp', 'Khoa', 'Học phần', 'Hình thức', 'Trạng thái', 'Bắt đầu', 'Kết thúc', 'Sĩ số', 'Tiến độ (%)', 'Kế hoạch (%)', 'Chuyên cần (%)', 'Lượt điểm danh', 'Có mặt', 'Vắng có phép', 'Vắng không phép', 'HV chuyên cần dưới ' + LMS.CC_CANH_BAO + '%', 'Buổi đã dạy', 'Buổi đã chốt', 'Tổng buổi', 'Có điểm tổng kết', 'Đạt', 'Tỷ lệ đạt (%)'];
+  var lines = [head.map(csvCell).join(',')];
+  cache.slice().sort(function(a, b){ return a.lop.ma < b.lop.ma ? -1 : 1; }).forEach(function(s){
+    var l = s.lop, t = LMS.TT_LOP[l.trangThai] || [''];
+    lines.push([l.ma, l.ten, LMS.donViTen(l.khoa), s.hp ? s.hp.ma + ' ' + s.hp.ten : '', s.apDungDD ? 'Trực tuyến có giảng viên' : 'Tự học trực tuyến', t[0], LMS.fmtDate(l.batDau), LMS.fmtDate(l.ketThuc), s.dangHoc, s.tienDo, s.keHoach, s.apDungDD ? s.chuyenCan : 'Không áp dụng', s.luotDD, s.coMat, s.vangPhep, s.vangKhongPhep, s.apDungDD ? s.hvDuoiNguong : '', s.buoiDaDay, s.buoiDaChot, s.buoiTong, s.coDiem, s.dat, pct(s.dat, s.coDiem)].map(csvCell).join(','));
+  });
+  return lines.join('\r\n');
+}
+function exportCSV(){
+  var csv = buildCSV(), fn = 'bao-cao-dao-tao_' + LMS.iso(T).replace(/-/g, '') + '.csv', ok = false;
+  try {
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = fn; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1000);
+    ok = true;
+  } catch (e) { ok = false; }
+  LMS.commit('Xuất báo cáo', 'Báo cáo đào tạo', fn + ' · ' + cache.length + ' lớp');
+  if (ok) U.toast('Đã xuất ' + fn, 'ok');
+  else showCSV(csv, fn);
+}
+function showCSV(csv, fn){
+  U.modal({
+    title: 'Nội dung CSV', size: 'lg',
+    body: '<div class="note warn">Trình duyệt không cho phép tải tệp. Sao chép nội dung bên dưới và lưu thành ' + esc(fn) + '.</div><textarea class="csv" readonly>' + esc(csv) + '</textarea>',
+    foot: [{ label: 'Đóng', close: true }, { label: 'Sao chép', cls: 'primary', close: false, onClick: function(api){
+      var ta = api.body.querySelector('textarea'); ta.focus(); ta.select();
+      try { if (navigator.clipboard) navigator.clipboard.writeText(csv).then(function(){ U.toast('Đã sao chép', 'ok'); }, function(){ document.execCommand('copy'); U.toast('Đã sao chép', 'ok'); }); else { document.execCommand('copy'); U.toast('Đã sao chép', 'ok'); } } catch (e) { U.toast('Nhấn Ctrl+C để sao chép', ''); }
+      return false;
+    } }]
+  });
+}
+
+LMS.onChange(render);
+render();
+})();
+</script>
+</body></html>

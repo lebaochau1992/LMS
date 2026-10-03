@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khảo sát · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.qed{flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+.qrow{border:1px solid var(--ems-border);border-radius:var(--r-ctl);padding:10px 12px;display:grid;grid-template-columns:28px minmax(0,1fr) 170px 32px;gap:8px;align-items:start;background:var(--ems-surface)}
+.qrow .qn{font-weight:700;color:var(--ems-muted);padding-top:7px;font-variant-numeric:tabular-nums}
+.qrow .qopt{grid-column:2/4}
+@media (max-width:560px){.qrow{grid-template-columns:24px minmax(0,1fr) 32px}.qrow .sel{grid-column:2/3}.qrow .qopt{grid-column:2/3}}
+.res-q{flex-shrink:0;border:1px solid var(--ems-border);border-radius:var(--r-ctl);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.res-q .qh{display:flex;gap:8px;align-items:baseline}
+.res-q .qh b{flex:1}
+.cmt{border-left:3px solid var(--ems-navy-line);padding:4px 10px;font-size:13px;color:var(--ems-text-2)}
+.score{font-weight:700;font-variant-numeric:tabular-nums}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var TT = { 'dang-mo': ['Đang mở', 'ok'], 'da-dong': ['Đã đóng', ''], 'nhap': ['Nháp', 'warn'] };
+var LOAI = { 'thang': 'Thang 1–5', 'lua-chon': 'Một lựa chọn', 'nhieu': 'Nhiều lựa chọn', 'tu-luan': 'Tự luận' };
+var MAU = [
+  ['Mục tiêu học phần được giới thiệu rõ ràng ngay từ đầu', 'thang'],
+  ['Nội dung bài giảng phù hợp với chuẩn đầu ra', 'thang'],
+  ['Giảng viên truyền đạt dễ hiểu, có ví dụ lâm sàng', 'thang'],
+  ['Tài liệu, video bài giảng đầy đủ và dễ truy cập', 'thang'],
+  ['Thời lượng các buổi học hợp lý', 'thang'],
+  ['Hình thức kiểm tra, đánh giá phản ánh đúng năng lực', 'thang'],
+  ['Giảng viên phản hồi câu hỏi kịp thời trên diễn đàn', 'thang'],
+  ['Cổng học trực tuyến hoạt động ổn định', 'thang'],
+  ['Mức độ hài lòng chung với học phần', 'thang'],
+  ['Hình thức học anh/chị mong muốn cho học phần tiếp theo', 'lua-chon', ['Trực tuyến hoàn toàn', 'Kết hợp trực tuyến và trực tiếp', 'Trực tiếp tại Học viện']],
+  ['Điều anh/chị thấy hữu ích nhất trong học phần', 'tu-luan'],
+  ['Đề xuất cải tiến cho học phần', 'tu-luan']
+];
+var NX = [
+  'Phần video minh họa kỹ thuật châm rất rõ, mong có thêm video thực hành trên mô hình.',
+  'Nên bổ sung thêm câu hỏi ôn tập cuối mỗi bài để tự kiểm tra.',
+  'Giảng viên nhiệt tình, trả lời câu hỏi trên diễn đàn nhanh.',
+  'Một số video tải chậm vào buổi tối, đề nghị kiểm tra lại đường truyền.',
+  'Tài liệu PDF nên có mục lục để tra cứu nhanh hơn.',
+  'Lịch học buổi sáng thứ Ba hơi sớm với học viên ở xa.',
+  'Mong có thêm ca lâm sàng thực tế để thảo luận nhóm.',
+  'Đề kiểm tra giữa kỳ bám sát nội dung đã học.',
+  'Hình ảnh giải phẫu trong slide cần độ phân giải cao hơn.',
+  'Nên mở thêm buổi hỏi đáp trực tuyến trước kỳ thi.'
+];
+var st = { q: '', tt: '', lop: '' };
+var app = document.getElementById('app'), tbl;
+
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hashStr(s){ var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function list(){ return LMS.db.khaoSat; }
+function tongHV(){ return LMS.db.hocVien.filter(function(h){ return h.trangThai === 'hoat-dong'; }).length; }
+function guiDi(k){ if (k.trangThai === 'nhap') return null; return k.lop ? LMS.soHV(k.lop) : tongHV(); }
+function phanHoi(k){ var g = guiDi(k); if (g == null) return 0; return Math.min(k.phanHoi || 0, g); }
+function tyLe(k){ var g = guiDi(k); return g ? Math.round(phanHoi(k) / g * 100) : null; }
+function cauHoiOf(k){
+  if (Array.isArray(k.cauHoi)) return k.cauHoi;
+  var n = +k.cauHoi || 8, out = [];
+  var thang = MAU.filter(function(m){ return m[1] === 'thang'; }), other = MAU.filter(function(m){ return m[1] !== 'thang'; });
+  var take = thang.slice(0, Math.max(1, n - other.length)).concat(other).slice(0, n);
+  take.forEach(function(m, i){ out.push({ id: k.id + 'c' + (i + 1), noiDung: m[0], loai: m[1], luaChon: m[2] ? m[2].slice() : [] }); });
+  return out;
+}
+function doiTuong(k){ return k.lop ? LMS.name('lop', k.lop) : 'Toàn bộ học viên'; }
+
+/* phân bố điểm mô phỏng, ổn định theo id khảo sát + câu hỏi */
+function phanBo(k, q, qi, n){
+  var R = rng(hashStr(k.id + ':' + qi)), m = (k.diemTB || 3.8) + (R() - .5) * .7;
+  var w = [1, 2, 3, 4, 5].map(function(s){ return Math.exp(-Math.pow(s - m, 2) / 1.3); });
+  var sw = w.reduce(function(a, b){ return a + b; }, 0);
+  var raw = w.map(function(x){ return x / sw * n; }), cnt = raw.map(Math.floor), left = n - cnt.reduce(function(a, b){ return a + b; }, 0);
+  raw.map(function(x, i){ return [x - cnt[i], i]; }).sort(function(a, b){ return b[0] - a[0]; }).slice(0, left).forEach(function(p){ cnt[p[1]]++; });
+  return cnt;
+}
+function phanBoLC(k, q, qi, n){
+  var R = rng(hashStr(k.id + ':lc:' + qi)), w = q.luaChon.map(function(){ return .3 + R(); }), sw = w.reduce(function(a, b){ return a + b; }, 0);
+  var cnt = w.map(function(x){ return Math.floor(x / sw * n); }), left = n - cnt.reduce(function(a, b){ return a + b; }, 0);
+  for (var i = 0; i < left; i++) cnt[i % cnt.length]++;
+  return cnt;
+}
+
+function shell(){
+  app.innerHTML =
+    '<div class="page-head"><div><h1>Khảo sát</h1><div class="sub" id="sub"></div></div><div class="actions"><button class="btn primary" id="bAdd">Tạo khảo sát</button></div></div>' +
+    '<div class="kpis" id="kpis"></div>' +
+    '<div class="panel"><div class="panel-head filters"><input class="inp" id="fQ" placeholder="Tìm theo tên khảo sát…"><select class="sel" id="fTT"><option value="">Tất cả trạng thái</option><option value="dang-mo">Đang mở</option><option value="da-dong">Đã đóng</option><option value="nhap">Nháp</option></select><select class="sel" id="fLop"></select></div><div id="tbl"></div></div>';
+  document.getElementById('bAdd').onclick = function(){ editDialog(null); };
+  document.getElementById('fQ').oninput = function(e){ st.q = e.target.value; tbl.render(true); };
+  document.getElementById('fTT').onchange = function(e){ st.tt = e.target.value; tbl.render(true); };
+  document.getElementById('fLop').onchange = function(e){ st.lop = e.target.value; tbl.render(true); };
+  var host = document.getElementById('tbl');
+  tbl = U.table(host, {
+    empty: 'Chưa có dữ liệu', rows: rows, onRowClick: function(k){ if (k.trangThai === 'nhap') editDialog(k); else resultDialog(k); },
+    columns: [
+      { key: 'ten', label: 'Khảo sát', render: function(k){ return '<div class="t-main">' + U.hl(k.ten, st.q) + '</div><div class="t-sub">' + cauHoiOf(k).length + ' câu hỏi</div>'; }, sortVal: function(k){ return U.norm(k.ten); } },
+      { key: 'lop', label: 'Đối tượng', render: function(k){ return k.lop ? '<a href="#" data-lop="' + esc(k.lop) + '">' + esc(doiTuong(k)) + '</a>' : '<span>Toàn bộ học viên</span>'; }, sortVal: function(k){ return doiTuong(k); } },
+      { key: 'gui', label: 'Đã gửi', cls: 'num', sortVal: guiDi, render: function(k){ var g = guiDi(k); return g == null ? '<span class="muted">—</span>' : g; } },
+      { key: 'ph', label: 'Phản hồi', cls: 'num', sortVal: phanHoi, render: function(k){ return k.trangThai === 'nhap' ? '<span class="muted">—</span>' : phanHoi(k); } },
+      { key: 'tl', label: 'Tỷ lệ phản hồi', w: '160px', sortVal: tyLe, render: function(k){ var p = tyLe(k); return p == null ? '<span class="muted">Chưa có dữ liệu</span>' : U.prog(p, p >= 60 ? 'ok' : p >= 40 ? '' : 'warn'); } },
+      { key: 'diemTB', label: 'Điểm TB', cls: 'num', render: function(k){ return phanHoi(k) && k.diemTB != null ? '<span class="score">' + k.diemTB.toFixed(1).replace('.', ',') + '</span><span class="muted">/5</span>' : '<span class="muted">—</span>'; } },
+      { key: 'trangThai', label: 'Trạng thái', render: function(k){ return U.badge(TT[k.trangThai][0], TT[k.trangThai][1]); } },
+      { key: 'act', label: '', sortable: false, w: '40px', render: function(k){ return '<button class="icon-btn" data-more="' + esc(k.id) + '" aria-label="Thao tác">⋯</button>'; } }
+    ]
+  });
+  host.addEventListener('click', function(e){
+    var a = e.target.closest('[data-lop]'); if (a) { e.preventDefault(); LMS.go('lop-hoc.html', { lop: a.dataset.lop }); return; }
+    var m = e.target.closest('[data-more]'); if (m) rowMenu(m, LMS.byId('khaoSat', m.dataset.more));
+  });
+}
+function rows(){
+  var nq = U.norm(st.q.trim());
+  return list().filter(function(k){
+    if (st.tt && k.trangThai !== st.tt) return false;
+    if (st.lop === '__all' && k.lop) return false;
+    if (st.lop && st.lop !== '__all' && k.lop !== st.lop) return false;
+    return !nq || U.norm(k.ten).indexOf(nq) >= 0;
+  });
+}
+function render(){
+  var ks = list(), mo = ks.filter(function(k){ return k.trangThai === 'dang-mo'; }).length;
+  var gs = 0, ph = 0, sd = 0, sn = 0;
+  ks.forEach(function(k){ var g = guiDi(k); if (g) { gs += g; ph += phanHoi(k); } if (phanHoi(k) && k.diemTB != null) { sd += k.diemTB * phanHoi(k); sn += phanHoi(k); } });
+  document.getElementById('sub').textContent = ks.length + ' khảo sát · ' + mo + ' đang mở';
+  document.getElementById('kpis').innerHTML =
+    '<div class="kpi"><div class="k-label">Đang mở</div><div class="k-val">' + mo + '</div><div class="k-sub">' + ks.filter(function(k){ return k.trangThai === 'nhap'; }).length + ' bản nháp</div></div>' +
+    '<div class="kpi"><div class="k-label">Phiếu đã gửi</div><div class="k-val">' + gs + '</div><div class="k-sub">Theo sĩ số lớp / học viên hoạt động</div></div>' +
+    '<div class="kpi"><div class="k-label">Tỷ lệ phản hồi</div><div class="k-val">' + (gs ? Math.round(ph / gs * 100) + '%' : '—') + '</div><div class="k-sub">' + ph + ' phiếu phản hồi</div></div>' +
+    '<div class="kpi"><div class="k-label">Điểm hài lòng TB</div><div class="k-val">' + (sn ? (sd / sn).toFixed(2).replace('.', ',') : '—') + '<span class="muted small">/5</span></div><div class="k-sub">Bình quân theo số phản hồi</div></div>';
+  var lops = LMS.db.lop.filter(function(l){ return list().some(function(k){ return k.lop === l.id; }); });
+  var f = document.getElementById('fLop');
+  f.innerHTML = '<option value="">Tất cả đối tượng</option><option value="__all"' + (st.lop === '__all' ? ' selected' : '') + '>Toàn bộ học viên</option>' + U.opts(lops, 'id', 'ten', st.lop);
+  tbl.render();
+}
+
+function rowMenu(anchor, k){
+  if (!k) return;
+  var ph = phanHoi(k);
+  U.menu(anchor, [
+    { label: 'Xem kết quả', disabled: k.trangThai === 'nhap', title: 'Khảo sát chưa gửi', onClick: function(){ resultDialog(k); } },
+    { label: 'Sửa', onClick: function(){ editDialog(k); } },
+    k.trangThai === 'nhap' ? { label: 'Gửi và mở khảo sát', onClick: function(){ setTT(k, 'dang-mo'); } } : null,
+    k.trangThai === 'dang-mo' ? { label: 'Đóng khảo sát', onClick: function(){ setTT(k, 'da-dong'); } } : null,
+    k.trangThai === 'da-dong' ? { label: 'Mở lại khảo sát', onClick: function(){ setTT(k, 'dang-mo'); } } : null,
+    { label: 'Sao chép', onClick: function(){ copy(k); } },
+    '-',
+    { label: 'Xóa', danger: true, onClick: function(){
+      if (ph) { U.blocked('Không thể xóa khảo sát', [ph + ' phiếu phản hồi đã thu'], 'Đóng khảo sát để ngừng nhận phản hồi; dữ liệu được giữ lại cho báo cáo.'); return; }
+      U.confirm({ title: 'Xóa khảo sát', html: 'Xóa khảo sát <b>' + esc(k.ten) + '</b>?', ok: 'Xóa', danger: true }).then(function(ok){ if (!ok) return; LMS.db.khaoSat = list().filter(function(x){ return x.id !== k.id; }); LMS.commit('Xóa', 'Khảo sát', k.ten, k, null); U.toast('Đã xóa khảo sát', 'ok'); render(); });
+    } }
+  ]);
+}
+function setTT(k, tt){
+  var old = k.trangThai;
+  if (tt === 'dang-mo' && !cauHoiOf(k).length) { U.toast('Khảo sát chưa có câu hỏi', 'bad'); return; }
+  k.trangThai = tt; if (tt === 'dang-mo' && !k.ngayGui) k.ngayGui = LMS.iso(new Date());
+  LMS.commit(tt === 'dang-mo' ? 'Mở khảo sát' : 'Đóng khảo sát', 'Khảo sát', k.ten, { trangThai: old }, { trangThai: tt });
+  U.toast(tt === 'dang-mo' ? 'Đã gửi khảo sát tới ' + guiDi(k) + ' học viên' : 'Đã đóng khảo sát', 'ok'); render();
+}
+function copy(k){
+  var n = { id: LMS.nextId('ks'), ten: k.ten + ' (bản sao)', lop: k.lop, guiDi: 0, phanHoi: 0, diemTB: null, trangThai: 'nhap', cauHoi: cauHoiOf(k).map(function(q, i){ return { id: 'c' + Date.now().toString(36) + i, noiDung: q.noiDung, loai: q.loai, luaChon: (q.luaChon || []).slice() }; }) };
+  list().unshift(n); LMS.commit('Sao chép', 'Khảo sát', k.ten + ' → ' + n.ten);
+  U.toast('Đã tạo bản sao ở trạng thái Nháp', 'ok'); render();
+}
+
+/* ---------- tạo / sửa ---------- */
+function editDialog(k){
+  if (k && k.lop && Array.isArray(k.phieu)) { LMS.go('lop-hoc.html', { lop: k.lop, tab: 'ks' }); return; }
+  var locked = k && phanHoi(k) > 0;
+  var qs = (k ? cauHoiOf(k) : MAU.slice(0, 5).concat([MAU[11]]).map(function(m, i){ return { id: 'n' + i, noiDung: m[0], loai: m[1], luaChon: m[2] ? m[2].slice() : [] }; })).map(function(q){ return { id: q.id, noiDung: q.noiDung, loai: q.loai, luaChon: (q.luaChon || []).slice() }; });
+  var lops = LMS.db.lop.filter(function(l){ return l.trangThai !== 'huy' && LMS.soHV(l.id) > 0; });
+  var body = '<div class="form-grid">' +
+    '<div class="field full"><label>Tên khảo sát <span class="req">*</span></label><input class="inp" name="ten" value="' + esc(k ? k.ten : '') + '" placeholder="VD: Đánh giá học phần Giải phẫu 1 - K26"></div>' +
+    '<div class="field"><label>Đối tượng khảo sát <span class="req">*</span></label><div class="seg" data-seg><button type="button" data-v="lop">Theo lớp</button><button type="button" data-v="all">Toàn bộ học viên</button></div></div>' +
+    '<div class="field" data-lopbox><label>Lớp học <span class="req">*</span></label><select class="sel" name="lop"' + (locked ? ' disabled' : '') + '>' + U.opts(lops, 'id', function(l){ return l.ma + ' · ' + l.ten; }, k && k.lop, '— Chọn lớp —') + '</select></div>' +
+    '<div class="full note info" data-gui></div>' +
+    '</div>' +
+    '<div class="row"><h3 class="grow">Câu hỏi (<span data-qc></span>)</h3>' + (locked ? '' : '<button type="button" class="btn sm" data-addq>+ Thêm câu hỏi</button>') + '</div>' +
+    (locked ? '<div class="note warn">Khảo sát đã có phản hồi nên không thể sửa câu hỏi và đối tượng. Dùng “Sao chép” để tạo phiên bản mới.</div>' : '') +
+    '<div class="qed" data-qed></div>';
+  var mode = k ? (k.lop ? 'lop' : 'all') : 'lop';
+  var foot = [{ label: 'Hủy' }];
+  if (!k || k.trangThai === 'nhap') foot.push({ label: 'Lưu nháp', onClick: function(api){ return save(api, 'nhap'); } }, { label: 'Lưu và gửi', cls: 'primary', onClick: function(api){ return save(api, 'dang-mo'); } });
+  else foot.push({ label: 'Lưu', cls: 'primary', onClick: function(api){ return save(api, k.trangThai); } });
+  var m = U.modal({ title: k ? 'Sửa khảo sát' : 'Tạo khảo sát', size: 'lg', body: body, foot: foot });
+  var B = m.body, qed = B.querySelector('[data-qed]');
+  function upGui(){
+    var n = mode === 'all' ? tongHV() : (B.querySelector('[name=lop]').value ? LMS.soHV(B.querySelector('[name=lop]').value) : null);
+    B.querySelector('[data-gui]').innerHTML = n == null ? 'Chọn lớp để xác định số phiếu gửi đi.' : 'Khi gửi, phiếu khảo sát được gửi tới <b>' + n + '</b> học viên' + (mode === 'all' ? ' đang hoạt động' : ' của lớp') + '.';
+  }
+  function setMode(v){ if (locked) v = mode; mode = v; B.querySelectorAll('[data-seg] button').forEach(function(b){ b.classList.toggle('on', b.dataset.v === v); }); B.querySelector('[data-lopbox]').style.display = v === 'lop' ? '' : 'none'; upGui(); }
+  function drawQ(){
+    B.querySelector('[data-qc]').textContent = qs.length;
+    qed.innerHTML = qs.map(function(q, i){
+      return '<div class="qrow" data-i="' + i + '"><span class="qn">' + (i + 1) + '.</span><input class="inp" data-f="noiDung" value="' + esc(q.noiDung) + '" placeholder="Nội dung câu hỏi"' + (locked ? ' disabled' : '') + '><select class="sel" data-f="loai"' + (locked ? ' disabled' : '') + '>' + U.opts(Object.keys(LOAI).map(function(x){ return { v: x, l: LOAI[x] }; }), 'v', 'l', q.loai) + '</select>' +
+        (locked ? '<span></span>' : '<button type="button" class="icon-btn" data-del title="Xóa câu hỏi" aria-label="Xóa câu hỏi">✕</button>') +
+        (q.loai === 'lua-chon' ? '<div class="qopt"><input class="inp" style="width:100%" data-f="luaChon" value="' + esc(q.luaChon.join('; ')) + '" placeholder="Các lựa chọn, phân tách bằng dấu ;"' + (locked ? ' disabled' : '') + '></div>' : '') + '</div>';
+    }).join('') || '<div class="empty">Chưa có câu hỏi</div>';
+    qed.querySelectorAll('.qrow').forEach(function(r){
+      var q = qs[+r.dataset.i];
+      r.querySelector('[data-f=noiDung]').oninput = function(e){ q.noiDung = e.target.value; };
+      r.querySelector('[data-f=loai]').onchange = function(e){ q.loai = e.target.value; if (q.loai === 'lua-chon' && !q.luaChon.length) q.luaChon = ['Có', 'Không']; drawQ(); };
+      var lc = r.querySelector('[data-f=luaChon]'); if (lc) lc.oninput = function(e){ q.luaChon = e.target.value.split(';').map(function(s){ return s.trim(); }).filter(Boolean); };
+      var d = r.querySelector('[data-del]'); if (d) d.onclick = function(){ qs.splice(+r.dataset.i, 1); drawQ(); };
+    });
+  }
+  B.querySelectorAll('[data-seg] button').forEach(function(b){ b.onclick = function(){ setMode(b.dataset.v); }; });
+  B.querySelector('[name=lop]').onchange = upGui;
+  var add = B.querySelector('[data-addq]'); if (add) add.onclick = function(){ qs.push({ id: 'n' + Date.now().toString(36), noiDung: '', loai: 'thang', luaChon: [] }); drawQ(); var ins = qed.querySelectorAll('[data-f=noiDung]'); ins[ins.length - 1].focus(); };
+  setMode(mode); drawQ();
+
+  function save(api, tt){
+    var v = U.formVals(B), ok = true;
+    U.fieldErr(B, 'ten', ''); U.fieldErr(B, 'lop', '');
+    if (!v.ten) { U.fieldErr(B, 'ten', 'Nhập tên khảo sát'); ok = false; }
+    else if (list().some(function(x){ return x !== k && U.norm(x.ten) === U.norm(v.ten); })) { U.fieldErr(B, 'ten', 'Tên khảo sát đã tồn tại'); ok = false; }
+    var lop = mode === 'lop' ? (locked ? k.lop : v.lop) : null;
+    if (mode === 'lop' && !lop) { U.fieldErr(B, 'lop', 'Chọn lớp'); ok = false; }
+    if (!qs.length) { U.toast('Khảo sát cần ít nhất 1 câu hỏi', 'bad'); ok = false; }
+    var bad = qs.findIndex(function(q){ return !q.noiDung.trim() || (q.loai === 'lua-chon' && q.luaChon.length < 2); });
+    if (bad >= 0) { U.toast('Câu ' + (bad + 1) + ': ' + (!qs[bad].noiDung.trim() ? 'chưa nhập nội dung' : 'cần ít nhất 2 lựa chọn'), 'bad'); ok = false; }
+    if (!ok) return false;
+    var sent = tt === 'dang-mo' && (!k || k.trangThai !== 'dang-mo');
+    var data = { ten: v.ten, lop: lop, cauHoi: qs.map(function(q){ return { id: q.id, noiDung: q.noiDung.trim(), loai: q.loai, luaChon: q.loai === 'lua-chon' ? q.luaChon : [] }; }) };
+    if (k) {
+      var before = { ten: k.ten, lop: k.lop, trangThai: k.trangThai };
+      k.ten = data.ten; if (!locked) { k.lop = data.lop; k.cauHoi = data.cauHoi; }
+      if (k.trangThai !== tt) { k.trangThai = tt; if (tt === 'dang-mo') k.ngayGui = LMS.iso(new Date()); }
+      LMS.commit('Sửa', 'Khảo sát', k.ten, before, { ten: k.ten, lop: k.lop, trangThai: k.trangThai });
+    } else {
+      var n = { id: LMS.nextId('ks'), ten: data.ten, lop: data.lop, guiDi: 0, phanHoi: 0, diemTB: null, trangThai: tt, cauHoi: data.cauHoi, ngayGui: tt === 'dang-mo' ? LMS.iso(new Date()) : null };
+      list().unshift(n);
+      LMS.commit('Tạo', 'Khảo sát', n.ten + (tt === 'dang-mo' ? ' · đã gửi' : ' · nháp'));
+    }
+    U.toast(sent ? 'Đã lưu và gửi khảo sát tới ' + (data.lop ? LMS.soHV(data.lop) : tongHV()) + ' học viên' : 'Đã lưu khảo sát', 'ok');
+    render();
+  }
+}
+
+/* ---------- kết quả ---------- */
+function resultDialog(k){
+  if (k.lop && Array.isArray(k.phieu)) { LMS.go('lop-hoc.html', { lop: k.lop, tab: 'ks', ks: k.id }); return; }
+  var g = guiDi(k), n = phanHoi(k), qs = cauHoiOf(k), tl = tyLe(k);
+  var head = '<div class="kpis"><div class="kpi"><div class="k-label">Đã gửi</div><div class="k-val">' + (g || 0) + '</div><div class="k-sub">' + esc(doiTuong(k)) + '</div></div><div class="kpi"><div class="k-label">Phản hồi</div><div class="k-val">' + n + '</div><div class="k-sub">' + (tl == null ? 'Chưa có dữ liệu' : 'Tỷ lệ ' + tl + '%') + '</div></div><div class="kpi"><div class="k-label">Điểm TB</div><div class="k-val">' + (n && k.diemTB != null ? k.diemTB.toFixed(1).replace('.', ',') : '—') + '<span class="muted small">/5</span></div><div class="k-sub">' + U.badge(TT[k.trangThai][0], TT[k.trangThai][1]) + '</div></div></div>';
+  var body = head;
+  if (!n) body += '<div class="empty">Chưa có phản hồi</div>';
+  else qs.forEach(function(q, i){
+    var h = '<div class="res-q"><div class="qh"><span class="muted">' + (i + 1) + '.</span><b>' + esc(q.noiDung) + '</b>' + U.badge(LOAI[q.loai]) + '</div>';
+    if (q.loai === 'thang') {
+      var c = phanBo(k, q, i, n), avg = c.reduce(function(s, x, j){ return s + x * (j + 1); }, 0) / n;
+      h += '<div class="row small"><span class="muted">Điểm TB câu:</span><b class="num">' + avg.toFixed(2).replace('.', ',') + '/5</b><span class="muted right">Đồng ý (4–5): ' + Math.round((c[3] + c[4]) / n * 100) + '%</span></div><div data-hb="' + i + '"></div>';
+      h += '</div>'; body += h; q._c = c;
+    } else if (q.loai === 'lua-chon') {
+      q._c = phanBoLC(k, q, i, n); h += '<div data-hb="' + i + '"></div></div>'; body += h;
+    } else {
+      var R = rng(hashStr(k.id + ':tl:' + i)), pool = NX.slice(), pick = [];
+      for (var j = 0; j < 3 && pool.length; j++) pick.push(pool.splice(Math.floor(R() * pool.length), 1)[0]);
+      h += '<div class="muted small">' + Math.round(n * (.35 + R() * .25)) + ' ý kiến · trích một số nhận xét</div>' + pick.map(function(t){ return '<div class="cmt">' + esc(t) + '</div>'; }).join('') + '</div>';
+      body += h;
+    }
+  });
+  var m = U.modal({ title: k.ten, size: 'lg', body: body, foot: [{ label: 'Đóng' }].concat(k.trangThai === 'dang-mo' ? [{ label: 'Đóng khảo sát', cls: 'primary', onClick: function(){ setTT(k, 'da-dong'); } }] : []) });
+  qs.forEach(function(q, i){
+    var el = m.body.querySelector('[data-hb="' + i + '"]'); if (!el) return;
+    if (q.loai === 'thang') U.hbars(el, [5, 4, 3, 2, 1].map(function(s){ var v = q._c[s - 1]; return { label: s + ' điểm', value: v, text: v + ' (' + Math.round(v / n * 100) + '%)', tone: s >= 4 ? 'ok' : s === 3 ? '' : 'warn' }; }), { max: n });
+    else U.hbars(el, q.luaChon.map(function(o, j){ var v = q._c[j]; return { label: o, value: v, text: v + ' (' + Math.round(v / n * 100) + '%)' }; }), { max: n });
+    delete q._c;
+  });
+}
+
+shell(); render();
+LMS.onChange(render);
+})();
+</script>
+</body></html>

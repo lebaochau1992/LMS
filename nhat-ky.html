@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nhật ký hoạt động · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.filters .sel{flex:0 1 190px}
+.tbl td.t-time{white-space:nowrap}
+.tbl .t-sum{max-width:420px}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px}
+.cmp th,.cmp td{padding:8px 10px;border-bottom:1px solid var(--ems-border);text-align:left;vertical-align:top}
+.cmp th{background:var(--ems-surface-2);color:var(--ems-text-2);font-size:12px;font-weight:600}
+.cmp td:first-child{color:var(--ems-text-2);font-weight:600;width:28%}
+.cmp tr.chg td.v-old{background:var(--ems-danger-bg)}
+.cmp tr.chg td.v-new{background:var(--ems-success-bg)}
+.cmp td{word-break:break-word}
+@media (max-width:560px){.filters .sel{flex:1 1 100%}}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var F = { user: '', hd: '', dt: '', range: 'all', q: '' };
+var p = LMS.param('nhat-ky.html');
+if (p) { if (p.user) F.user = p.user; if (p.doiTuong) F.dt = p.doiTuong; if (p.q) F.q = p.q; }
+
+var KEY_LABEL = { ma: 'Mã', ten: 'Tên', hoTen: 'Họ tên', email: 'Email', sdt: 'Số điện thoại', trangThai: 'Trạng thái', loai: 'Phân loại', nhom: 'Nhóm quyền', donVi: 'Đơn vị', cha: 'Cấp trên', laKhoa: 'Khoa chuyên môn', pham: 'Phạm vi dữ liệu', quyen: 'Quyền', moTa: 'Mô tả', batDau: 'Ngày bắt đầu', ketThuc: 'Ngày kết thúc', soTien: 'Số tiền', diem: 'Điểm', ghiChu: 'Ghi chú' };
+
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function fmtDTs(s) { if (!s) return '—'; var d = new Date(s); if (isNaN(d)) return '—'; return LMS.fmtDate(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+function tone(h) {
+  h = h || '';
+  if (/Xóa|Hủy|Thu hồi/i.test(h)) return 'bad';
+  if (/Ngừng|Khóa|Từ chối|Hoàn tiền/i.test(h)) return 'warn';
+  if (/Tạo|Thêm|Cấp tài khoản|Kích hoạt|Xác nhận|Công bố|Xuất bản|Duyệt/i.test(h)) return 'ok';
+  if (/Sửa|Cập nhật|Đổi|Cấp lại|Chuyển/i.test(h)) return 'info';
+  return 'navy';
+}
+function acc(ten) { return LMS.db.taiKhoan.find(function (t) { return t.ten === ten; }) || null; }
+function hoTen(ten) { var a = acc(ten); return a ? a.hoTen : ''; }
+function val(v) {
+  if (v == null || v === '') return '—';
+  if (typeof v === 'boolean') return v ? 'Có' : 'Không';
+  if (Array.isArray(v)) return v.length ? v.map(val).join(', ') : '—';
+  if (typeof v === 'object') { try { return JSON.stringify(v); } catch (e) { return String(v); } }
+  return String(v);
+}
+function since() {
+  if (F.range === 'all') return null;
+  var n = F.range === 'today' ? 0 : F.range === '7' ? 6 : 29;
+  return LMS.addDays(LMS.TODAY, -n).getTime();
+}
+function rows() {
+  var s = since(), q = U.norm(F.q);
+  return LMS.db.nhatKy.filter(function (l) {
+    if (F.user && l.user !== F.user) return false;
+    if (F.hd && l.hanhDong !== F.hd) return false;
+    if (F.dt && l.doiTuong !== F.dt) return false;
+    if (s != null && new Date(l.t).getTime() < s) return false;
+    if (q && U.norm([l.user, hoTen(l.user), l.hanhDong, l.doiTuong, l.tomTat].join(' ')).indexOf(q) < 0) return false;
+    return true;
+  });
+}
+function distinct(key) { var o = {}; LMS.db.nhatKy.forEach(function (l) { if (l[key]) o[l[key]] = 1; }); return Object.keys(o).sort(function (a, b) { return a.localeCompare(b, 'vi'); }); }
+
+var app = document.getElementById('app');
+app.innerHTML =
+  '<div class="page-head"><div><h1>Nhật ký hoạt động</h1><div class="sub" id="sub"></div></div><div class="actions"><button class="btn" id="btnCsv">Xuất CSV</button></div></div>' +
+  '<div class="kpis" id="kpis"></div>' +
+  '<div class="panel"><div class="panel-head filters">' +
+    '<input class="inp" id="fQ" placeholder="Tìm người thực hiện, đối tượng, nội dung">' +
+    '<select class="sel" id="fUser"></select><select class="sel" id="fHd"></select><select class="sel" id="fDt"></select>' +
+    '<div class="seg" id="fRange"><button data-r="today">Hôm nay</button><button data-r="7">7 ngày</button><button data-r="30">30 ngày</button><button data-r="all">Tất cả</button></div>' +
+    '<button class="btn ghost sm" id="fClear">Xóa lọc</button>' +
+  '</div><div id="tbl"></div></div>';
+var $ = function (id) { return document.getElementById(id); };
+$('fQ').value = F.q;
+$('fQ').oninput = function () { F.q = this.value.trim(); refresh(true); };
+[['fUser', 'user'], ['fHd', 'hd'], ['fDt', 'dt']].forEach(function (x) { $(x[0]).onchange = function () { F[x[1]] = this.value; refresh(true); }; });
+$('fRange').querySelectorAll('[data-r]').forEach(function (b) { b.onclick = function () { F.range = b.dataset.r; refresh(true); }; });
+$('fClear').onclick = function () { F = { user: '', hd: '', dt: '', range: 'all', q: '' }; $('fQ').value = ''; render(); };
+$('btnCsv').onclick = exportCsv;
+
+var tbl = U.table($('tbl'), {
+  rows: rows, pageSize: 20, sort: 't', dir: -1, empty: 'Chưa có dữ liệu phù hợp',
+  onRowClick: function (l) { detail(l); },
+  columns: [
+    { key: 't', label: 'Thời điểm', cls: 't-time', render: function (l) { return '<span class="num">' + fmtDTs(l.t) + '</span>'; } },
+    { key: 'user', label: 'Người thực hiện', render: function (l) { var h = hoTen(l.user); return '<div class="t-main mono">' + U.hl(l.user, F.q) + '</div>' + (h ? '<div class="t-sub">' + U.hl(h, F.q) + '</div>' : '<div class="t-sub">Tài khoản không còn tồn tại</div>'); } },
+    { key: 'hanhDong', label: 'Hành động', render: function (l) { return U.badge(l.hanhDong, tone(l.hanhDong)); } },
+    { key: 'doiTuong', label: 'Đối tượng', render: function (l) { return U.hl(l.doiTuong, F.q); } },
+    { key: 'tomTat', label: 'Tóm tắt', sortable: false, render: function (l) { return '<div class="t-sum">' + U.hl(l.tomTat, F.q) + '</div>'; } },
+    { key: 'x', label: '', sortable: false, w: '110px', render: function (l) { return '<button class="btn sm" data-view="' + esc(l.id) + '">Xem chi tiết</button>'; } }
+  ],
+  after: function (host) {
+    host.querySelectorAll('[data-view]').forEach(function (b) { b.onclick = function () { var l = LMS.db.nhatKy.find(function (x) { return x.id === b.dataset.view; }); if (l) detail(l); }; });
+  }
+});
+
+function compareHtml(a, b) {
+  var isObj = function (x) { return x && typeof x === 'object' && !Array.isArray(x); };
+  if (a == null && b == null) return '<div class="empty">Không có dữ liệu so sánh</div>';
+  var keys = [];
+  if (isObj(a) || isObj(b)) {
+    [a, b].forEach(function (o) { if (isObj(o)) Object.keys(o).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
+  } else {
+    a = { 'Giá trị': a }; b = { 'Giá trị': b }; keys = ['Giá trị'];
+  }
+  var nChg = 0;
+  var body = keys.map(function (k) {
+    var va = isObj(a) ? a[k] : undefined, vb = isObj(b) ? b[k] : undefined;
+    var sa = val(va), sb = val(vb), chg = sa !== sb; if (chg) nChg++;
+    return '<tr' + (chg ? ' class="chg"' : '') + '><td>' + esc(KEY_LABEL[k] || k) + '</td><td class="v-old">' + esc(a == null ? '—' : sa) + '</td><td class="v-new">' + esc(b == null ? '—' : sb) + '</td></tr>';
+  }).join('');
+  return '<div class="small muted">' + keys.length + ' trường · ' + nChg + ' trường thay đổi</div><div class="tbl-wrap"><table class="cmp"><thead><tr><th>Trường</th><th>Trước</th><th>Sau</th></tr></thead><tbody>' + body + '</tbody></table></div>';
+}
+function detail(l) {
+  var h = hoTen(l.user);
+  var body = '<dl class="kv"><dt>Thời điểm</dt><dd class="num">' + fmtDTs(l.t) + '</dd>' +
+    '<dt>Người thực hiện</dt><dd><span class="mono">' + esc(l.user) + '</span>' + (h ? ' · ' + esc(h) : '') + '</dd>' +
+    '<dt>Hành động</dt><dd>' + U.badge(l.hanhDong, tone(l.hanhDong)) + '</dd>' +
+    '<dt>Đối tượng</dt><dd>' + esc(l.doiTuong) + '</dd>' +
+    '<dt>Tóm tắt</dt><dd>' + esc(l.tomTat) + '</dd></dl><hr class="sep">' +
+    '<h3>Dữ liệu trước / sau</h3>' + compareHtml(l.truoc, l.sau);
+  var foot = [{ label: 'Đóng', close: true }];
+  if (acc(l.user)) foot.unshift({ label: 'Xem tài khoản', cls: 'ghost', onClick: function () { LMS.go('tai-khoan.html', { tk: acc(l.user).id }); } });
+  U.modal({ title: 'Chi tiết nhật ký', size: 'lg', body: body, foot: foot, noFocus: true });
+}
+
+function csvCell(v) { v = v == null ? '' : String(v); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function exportCsv() {
+  var list = rows().slice().sort(function (a, b) { return a.t < b.t ? 1 : -1; });
+  if (!list.length) { U.toast('Không có bản ghi để xuất', 'bad'); return; }
+  var lines = [['Thời điểm', 'Tên đăng nhập', 'Họ tên', 'Hành động', 'Đối tượng', 'Tóm tắt'].join(',')];
+  list.forEach(function (l) { lines.push([fmtDTs(l.t), l.user, hoTen(l.user), l.hanhDong, l.doiTuong, l.tomTat].map(csvCell).join(',')); });
+  var text = '﻿' + lines.join('\r\n');
+  var name = 'nhat-ky-hoat-dong-' + LMS.iso(new Date()) + '.csv';
+  try {
+    var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    U.toast('Đã xuất ' + list.length + ' bản ghi', 'ok');
+  } catch (e) {
+    U.modal({ title: 'Sao chép dữ liệu CSV', size: 'lg', body: '<textarea class="mono" rows="14" readonly>' + esc(text.slice(1)) + '</textarea>', onOpen: function (api) { var t = api.body.querySelector('textarea'); t.focus(); t.select(); } });
+  }
+}
+
+function renderKpis() {
+  var all = LMS.db.nhatKy, t0 = LMS.TODAY.getTime(), w0 = LMS.addDays(LMS.TODAY, -6).getTime();
+  var today = all.filter(function (l) { return new Date(l.t).getTime() >= t0; }).length;
+  var week = all.filter(function (l) { return new Date(l.t).getTime() >= w0; });
+  var users = {}; week.forEach(function (l) { users[l.user] = 1; });
+  var del = week.filter(function (l) { return tone(l.hanhDong) === 'bad'; }).length;
+  $('kpis').innerHTML =
+    '<div class="kpi"><div class="k-label">Tổng bản ghi</div><div class="k-val">' + all.length + '</div><div class="k-sub">Lưu 500 bản ghi gần nhất</div></div>' +
+    '<div class="kpi"><div class="k-label">Hôm nay</div><div class="k-val">' + today + '</div><div class="k-sub">' + LMS.fmtDate(LMS.TODAY) + '</div></div>' +
+    '<div class="kpi"><div class="k-label">Người thao tác 7 ngày</div><div class="k-val">' + Object.keys(users).length + '</div><div class="k-sub">' + week.length + ' thao tác</div></div>' +
+    '<div class="kpi' + (del ? ' bad' : '') + '"><div class="k-label">Thao tác xóa / hủy 7 ngày</div><div class="k-val">' + del + '</div><div class="k-sub">' + (del ? 'Cần rà soát' : 'Không phát sinh') + '</div></div>';
+}
+function renderFilters() {
+  var users = distinct('user'); if (F.user && users.indexOf(F.user) < 0) users.unshift(F.user);
+  $('fUser').innerHTML = U.opts(users.map(function (u) { var h = hoTen(u); return { v: u, l: u + (h ? ' · ' + h : '') }; }), 'v', 'l', F.user, 'Tất cả người thực hiện');
+  $('fHd').innerHTML = U.opts(distinct('hanhDong'), null, null, F.hd, 'Tất cả hành động');
+  $('fDt').innerHTML = U.opts(distinct('doiTuong'), null, null, F.dt, 'Tất cả đối tượng');
+}
+function refresh(reset) {
+  $('fRange').querySelectorAll('[data-r]').forEach(function (b) { b.classList.toggle('on', b.dataset.r === F.range); });
+  tbl.render(reset);
+  var n = rows().length, all = LMS.db.nhatKy.length;
+  $('sub').textContent = (n === all ? all + ' bản ghi' : n + ' / ' + all + ' bản ghi') + ' · Chỉ xem, không sửa hoặc xóa';
+}
+function render() { renderKpis(); renderFilters(); refresh(false); }
+LMS.onChange(render);
+render();
+})();
+</script>
+</body></html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phân tích câu hỏi · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.scope{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.scope .sel{min-width:280px;flex:1 1 320px}
+.qtext{max-width:440px}
+.qtext .t-main{font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dv{font-weight:700;font-variant-numeric:tabular-nums}
+.dv.bad{color:var(--ems-danger)} .dv.warn{color:var(--ems-warning)} .dv.ok{color:var(--ems-success)}
+.help{display:none}
+.help.on{display:block}
+.help ul{margin:6px 0 0;padding-left:18px}
+.lg-note{font-size:12px;color:var(--ems-muted)}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var DK = { 'De': ['Dễ', 'ok'], 'TrungBinh': ['Trung bình', 'navy'], 'Kho': ['Khó', 'bad'] };
+var app = document.getElementById('app');
+var st = { mode: 'ky', ky: '', nh: '', q: '', review: false, dkt: '', help: false }, tbl, data;
+
+function db(){ return LMS.db; }
+function kyCoBai(){ var has = {}; db().baiLam.forEach(function(b){ has[b.ky] = 1; }); return db().kyThi.filter(function(k){ return has[k.id]; }).sort(function(a, b){ return a.moLuc < b.moLuc ? 1 : -1; }); }
+function nhCoBai(){ var has = {}; db().baiLam.forEach(function(b){ Object.keys(b.traLoi || {}).forEach(function(q){ var c = LMS.byId('cauHoi', q); if (c) has[c.nh] = 1; }); }); return db().nganHang.filter(function(n){ return has[n.id]; }); }
+function pct(x){ return x == null ? null : Math.round(x * 100); }
+function num2(x){ return x == null ? '—' : x.toFixed(2).replace('.', ','); }
+function dkThucNghiem(p){ return p > .8 ? 'De' : p < .3 ? 'Kho' : 'TrungBinh'; }
+
+function analyse(){
+  var bls, inScope;
+  if (st.mode === 'ky') { bls = db().baiLam.filter(function(b){ return b.ky === st.ky; }); inScope = function(){ return true; }; }
+  else { inScope = function(qid){ var c = LMS.byId('cauHoi', qid); return c && c.nh === st.nh; }; bls = db().baiLam.filter(function(b){ return Object.keys(b.traLoi || {}).some(inScope); }); }
+  var sorted = bls.slice().sort(function(a, b){ return b.diemTN - a.diemTN; });
+  var g = Math.max(1, Math.round(sorted.length * .27)), hi = {}, lo = {};
+  if (sorted.length >= 4) { sorted.slice(0, g).forEach(function(b){ hi[b.id] = 1; }); sorted.slice(-g).forEach(function(b){ lo[b.id] = 1; }); }
+  var m = {};
+  bls.forEach(function(b){ Object.keys(b.traLoi || {}).forEach(function(qid){ if (!inScope(qid)) return; var r = m[qid] = m[qid] || { n: 0, c: 0, hn: 0, hc: 0, ln: 0, lc: 0 }; var ok = b.traLoi[qid] === true; r.n++; if (ok) r.c++; if (hi[b.id]) { r.hn++; if (ok) r.hc++; } if (lo[b.id]) { r.ln++; if (ok) r.lc++; } }); });
+  var items = Object.keys(m).map(function(qid){
+    var q = LMS.byId('cauHoi', qid), r = m[qid]; if (!q) return null;
+    var p = r.n ? r.c / r.n : null, D = r.hn && r.ln ? r.hc / r.hn - r.lc / r.ln : null;
+    var reasons = [], short = [];
+    if (p != null && p < .2) { reasons.push('Tỷ lệ đúng dưới 20%: kiểm tra đáp án, nội dung quá khó'); short.push('Tỷ lệ đúng quá thấp'); }
+    if (p != null && p > .95) { reasons.push('Tỷ lệ đúng trên 95%: câu quá dễ, không phân loại được'); short.push('Tỷ lệ đúng quá cao'); }
+    if (D != null && D < .2) { reasons.push('Độ phân biệt ' + num2(D) + ' < 0,20: nhóm giỏi và nhóm yếu làm tương đương'); short.push('Phân biệt kém'); }
+    var dkt = p == null ? null : dkThucNghiem(p);
+    return { id: qid, q: q, nh: LMS.byId('nganHang', q.nh), n: r.n, c: r.c, p: p, D: D, dkt: dkt, lech: dkt && dkt !== q.doKho, reasons: reasons, short: short, flag: reasons.length > 0 };
+  }).filter(Boolean);
+  var tuLuan = 0;
+  if (st.mode === 'ky') { var k = LMS.byId('kyThi', st.ky), d = k && LMS.byId('deThi', k.de); if (d) tuLuan = d.cauHoi.filter(function(id){ var q = LMS.byId('cauHoi', id); return q && q.loai === 'tu-luan'; }).length; }
+  else tuLuan = db().cauHoi.filter(function(q){ return q.nh === st.nh && q.loai === 'tu-luan' && q.trangThai !== 'luu-tru'; }).length;
+  return { bls: bls, items: items, g: sorted.length >= 4 ? g : 0, tuLuan: tuLuan };
+}
+
+function render(){
+  var kl = kyCoBai(), nl = nhCoBai();
+  if (st.mode === 'ky' && !LMS.byId('kyThi', st.ky)) st.ky = kl.length ? kl[0].id : '';
+  if (st.mode === 'nh' && !LMS.byId('nganHang', st.nh)) st.nh = nl.length ? nl[0].id : '';
+  var nhAll = db().nganHang, nhHas = {}; nl.forEach(function(n){ nhHas[n.id] = 1; });
+  data = analyse();
+  var it = data.items, flag = it.filter(function(x){ return x.flag; }).length, lech = it.filter(function(x){ return x.lech; }).length;
+  var avgP = it.length ? it.reduce(function(a, x){ return a + x.p; }, 0) / it.length : null;
+  var withD = it.filter(function(x){ return x.D != null; }), avgD = withD.length ? withD.reduce(function(a, x){ return a + x.D; }, 0) / withD.length : null;
+  var scopeName = st.mode === 'ky' ? (LMS.byId('kyThi', st.ky) || {}).ten : (LMS.byId('nganHang', st.nh) || {}).ten;
+
+  app.innerHTML =
+    '<div class="page-head"><div><h1>Phân tích câu hỏi</h1><div class="sub">' + (scopeName ? esc(scopeName) + ' · ' : '') + data.bls.length + ' bài làm · ' + it.length + ' câu trắc nghiệm</div></div><div class="actions"><button class="btn ghost" id="bHelp" aria-expanded="' + st.help + '">? Cách tính</button></div></div>' +
+    '<div class="note info help' + (st.help ? ' on' : '') + '"><b>Chỉ số</b><ul><li>Tỷ lệ đúng = số lượt trả lời đúng / số lượt làm câu (từ bài làm đã nộp).</li><li>Độ khó thực nghiệm: Dễ khi tỷ lệ đúng > 80%, Khó khi < 30%, còn lại Trung bình.</li><li>Độ phân biệt = tỷ lệ đúng nhóm 27% điểm trắc nghiệm cao nhất − tỷ lệ đúng nhóm 27% thấp nhất.</li><li>Cần rà soát: tỷ lệ đúng < 20% hoặc > 95%, hoặc độ phân biệt < 0,20.</li><li>Câu tự luận chấm tay, không đưa vào phân tích tự động.</li></ul></div>' +
+    '<div class="panel panel-body"><div class="scope"><div class="seg" id="seg"><button data-v="ky" class="' + (st.mode === 'ky' ? 'on' : '') + '">Theo kỳ thi</button><button data-v="nh" class="' + (st.mode === 'nh' ? 'on' : '') + '">Theo ngân hàng</button></div>' +
+      (st.mode === 'ky' ? '<select class="sel" id="sKy">' + (kl.length ? U.opts(kl, 'id', function(k){ return k.ma + ' · ' + k.ten + ' (' + db().baiLam.filter(function(b){ return b.ky === k.id; }).length + ' bài)'; }, st.ky) : '<option value="">Chưa có kỳ thi nào có bài làm</option>') + '</select>'
+        : '<select class="sel" id="sNh">' + U.opts(nhAll, 'id', function(n){ return n.ma + ' · ' + n.ten + (nhHas[n.id] ? '' : ' (chưa có bài làm)'); }, st.nh) + '</select>') +
+      (st.mode === 'ky' && st.ky ? '<button class="btn sm" id="bGoKy">Mở kỳ thi</button>' : '') + '</div></div>' +
+    '<div class="kpis">' +
+      '<div class="kpi"><div class="k-label">Bài làm phân tích</div><div class="k-val">' + data.bls.length + '</div><div class="k-sub">' + (data.g ? 'Nhóm cao/thấp: ' + data.g + ' bài mỗi nhóm' : 'Cần ≥ 4 bài để tính độ phân biệt') + '</div></div>' +
+      '<div class="kpi"><div class="k-label">Câu trắc nghiệm</div><div class="k-val">' + it.length + '</div><div class="k-sub">' + (data.tuLuan ? data.tuLuan + ' câu tự luận không phân tích' : 'Không có câu tự luận') + '</div></div>' +
+      '<div class="kpi"><div class="k-label">Tỷ lệ đúng TB</div><div class="k-val">' + (avgP == null ? '—' : pct(avgP) + '%') + '</div><div class="k-sub">Độ phân biệt TB ' + num2(avgD) + '</div></div>' +
+      '<div class="kpi clickable ' + (flag ? 'bad' : 'ok') + (st.review ? ' active' : '') + '" id="kFlag"><div class="k-label">Cần rà soát</div><div class="k-val">' + flag + '</div><div class="k-sub">' + (flag ? 'Bấm để lọc' : 'Không có câu bất thường') + '</div></div>' +
+      '<div class="kpi ' + (lech ? 'warn' : '') + '"><div class="k-label">Lệch độ khó</div><div class="k-val">' + lech + '</div><div class="k-sub">Độ khó gán khác thực nghiệm</div></div>' +
+    '</div>' +
+    '<div class="grid g2"><div class="panel"><div class="panel-head"><h2>Phân bố tỷ lệ đúng</h2><span class="lg-note right">số câu theo khoảng tỷ lệ đúng</span></div><div class="panel-body" id="chart"></div></div>' +
+    '<div class="panel"><div class="panel-head"><h2>Độ phân biệt</h2><span class="lg-note right">nhóm 27% cao − 27% thấp</span></div><div class="panel-body" id="disc"></div></div></div>' +
+    '<div class="panel"><div class="panel-head filters"><input class="inp" id="fQ" placeholder="Tìm nội dung câu hỏi…" value="' + esc(st.q) + '"><select class="sel" id="fDk">' + U.opts(Object.keys(DK).map(function(k){ return { v: k, l: 'Thực nghiệm: ' + DK[k][0] }; }), 'v', 'l', st.dkt, 'Mọi độ khó thực nghiệm') + '</select><label class="check"><input type="checkbox" id="fRv"' + (st.review ? ' checked' : '') + '> Chỉ câu cần rà soát</label></div><div id="tbl"></div></div>';
+
+  document.getElementById('bHelp').onclick = function(){ st.help = !st.help; render(); };
+  app.querySelectorAll('#seg button').forEach(function(b){ b.onclick = function(){ st.mode = b.dataset.v; st.review = false; render(); }; });
+  var sk = document.getElementById('sKy'); if (sk) sk.onchange = function(e){ st.ky = e.target.value; render(); };
+  var sn = document.getElementById('sNh'); if (sn) sn.onchange = function(e){ st.nh = e.target.value; render(); };
+  var gk = document.getElementById('bGoKy'); if (gk) gk.onclick = function(){ LMS.go('ky-thi.html', { ky: st.ky }); };
+  document.getElementById('kFlag').onclick = function(){ st.review = !st.review; render(); };
+  document.getElementById('fQ').oninput = function(e){ st.q = e.target.value; tbl.render(true); };
+  document.getElementById('fDk').onchange = function(e){ st.dkt = e.target.value; tbl.render(true); };
+  document.getElementById('fRv').onchange = function(e){ st.review = e.target.checked; render(); };
+
+  var ch = document.getElementById('chart'), dc = document.getElementById('disc');
+  if (!it.length) { ch.innerHTML = '<div class="empty">Chưa có dữ liệu</div>'; dc.innerHTML = '<div class="empty">Chưa có dữ liệu</div>'; }
+  else {
+    var bins = [['<20%', 0, .2], ['20–40%', .2, .4], ['40–60%', .4, .6], ['60–80%', .6, .8], ['80–95%', .8, .95], ['>95%', .95, 1.01]];
+    var vals = bins.map(function(b){ return it.filter(function(x){ return x.p >= b[1] && (x.p < b[2] || (b[2] > 1 && x.p <= 1)); }).length; });
+    U.barChart(ch, { labels: bins.map(function(b){ return b[0]; }), values: vals, colors: ['var(--ems-danger)', 'var(--ems-chart-2)', 'var(--ems-chart-1)', 'var(--ems-chart-1)', 'var(--ems-chart-2)', 'var(--ems-danger)'], height: 210, max: Math.max(4, Math.ceil(Math.max.apply(null, vals) / 4) * 4), title: 'Phân bố tỷ lệ đúng' });
+    ch.insertAdjacentHTML('beforeend', '<div class="legend" style="margin-top:6px"><span><i style="background:var(--ems-danger)"></i>Ngưỡng cần rà soát</span><span><i style="background:var(--ems-chart-1)"></i>Vùng phân loại tốt</span></div>');
+    if (!withD.length) dc.innerHTML = '<div class="empty">Cần ít nhất 4 bài làm để tính độ phân biệt</div>';
+    else {
+      var cats = [['Tốt (≥ 0,40)', function(D){ return D >= .4; }, 'ok'], ['Khá (0,30–0,39)', function(D){ return D >= .3 && D < .4; }, ''], ['Tạm được (0,20–0,29)', function(D){ return D >= .2 && D < .3; }, 'warn'], ['Kém (< 0,20)', function(D){ return D < .2; }, 'bad']];
+      U.hbars(dc, cats.map(function(c){ var n = withD.filter(function(x){ return c[1](x.D); }).length; return { label: c[0], value: n, text: n + ' câu', tone: c[2] }; }), { max: withD.length });
+    }
+  }
+
+  var host = document.getElementById('tbl');
+  tbl = U.table(host, {
+    pageSize: 15, sort: 'flag', dir: -1, empty: data.bls.length ? 'Không có câu hỏi phù hợp' : 'Chưa có dữ liệu',
+    rows: function(){ var nq = U.norm(st.q.trim()); return data.items.filter(function(x){ if (st.review && !x.flag) return false; if (st.dkt && x.dkt !== st.dkt) return false; return !nq || U.norm(x.q.noiDung).indexOf(nq) >= 0; }); },
+    columns: [
+      { key: 'nd', label: 'Nội dung câu hỏi', sortVal: function(x){ return U.norm(x.q.noiDung); }, render: function(x){ return '<div class="qtext"><div class="t-main" title="' + esc(x.q.noiDung) + '">' + U.hl(x.q.noiDung, st.q) + '</div>' + (x.q.trangThai === 'luu-tru' ? '<div class="t-sub">Phiên bản cũ đã được thay</div>' : '') + '</div>'; } },
+      { key: 'nh', label: 'Ngân hàng', sortVal: function(x){ return x.nh ? x.nh.ma : ''; }, render: function(x){ return x.nh ? '<span class="mono" style="white-space:nowrap">' + esc(x.nh.ma) + '</span>' : '—'; } },
+      { key: 'pb', label: 'Phiên bản', cls: 'c', sortVal: function(x){ return x.q.phienBan || 1; }, render: function(x){ return 'v' + (x.q.phienBan || 1); } },
+      { key: 'n', label: 'Lượt làm', cls: 'num', render: function(x){ return x.n + (x.n < 10 ? '<div class="t-sub">ít dữ liệu</div>' : ''); } },
+      { key: 'p', label: 'Tỷ lệ đúng', w: '140px', render: function(x){ var v = pct(x.p); return U.prog(v, x.p < .2 || x.p > .95 ? 'bad' : x.p < .3 ? 'warn' : 'nv'); } },
+      { key: 'dk', label: 'Độ khó (gán → thực nghiệm)', sortVal: function(x){ return x.dkt; }, render: function(x){ return '<span style="white-space:nowrap">' + U.badge(DK[x.q.doKho][0]) + ' → ' + U.badge(DK[x.dkt][0], DK[x.dkt][1]) + '</span>' + (x.lech ? '<div class="t-sub">Lệch so với gán</div>' : ''); } },
+      { key: 'D', label: 'Độ phân biệt', cls: 'num', render: function(x){ if (x.D == null) return '<span class="muted">—</span>'; return '<span class="dv ' + (x.D < .2 ? 'bad' : x.D < .3 ? 'warn' : 'ok') + '">' + num2(x.D) + '</span>'; } },
+      { key: 'flag', label: 'Đánh giá', sortVal: function(x){ return (x.flag ? 10 : 0) + x.reasons.length; }, render: function(x){ return x.flag ? '<span class="badge bad" title="' + esc(x.reasons.join('\n')) + '">Cần rà soát</span><div class="t-sub">' + esc(x.short.join(', ')) + '</div>' : U.badge('Đạt', 'ok'); } },
+      { key: 'act', label: '', sortable: false, render: function(x){ return '<button class="btn sm" data-open="' + esc(x.id) + '">Mở câu hỏi</button>'; } }
+    ]
+  });
+  host.onclick = function(e){ var o = e.target.closest('[data-open]'); if (!o) return; var q = LMS.byId('cauHoi', o.dataset.open); if (q) LMS.go('ngan-hang-cau-hoi.html', { nh: q.nh, q: q.id }); };
+}
+
+var p = LMS.param('phan-tich-cau-hoi.html');
+if (p && p.ky) { st.mode = 'ky'; st.ky = p.ky; }
+else if (p && p.nh) { st.mode = 'nh'; st.nh = p.nh; }
+render();
+LMS.onChange(render);
+})();
+</script>
+</body></html>

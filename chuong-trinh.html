@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chương trình đào tạo · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.ct-code{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.ct-code .tree-toggle{flex:none;padding:0}
+.ct-spacer{display:inline-block;width:18px;flex:none}
+.ct-ten{min-width:220px}
+tr.tr-ngung .t-main,tr.tr-ngung .mono{color:var(--ems-muted)}
+tr.tr-flash td{background:var(--ems-navy-soft)}
+.lnk{background:none;border:0;padding:0;font:inherit;color:var(--ems-navy);cursor:pointer;font-weight:600}
+.lnk:hover{text-decoration:underline}
+.tag.hp{cursor:pointer}
+.tag.hp:hover{border-color:var(--ems-navy-line);color:var(--ems-navy)}
+.pick-list{max-height:360px;overflow-y:auto;border:1px solid var(--ems-border);border-radius:var(--r-ctl)}
+.pick-item{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-bottom:1px solid var(--ems-border);cursor:pointer}
+.pick-item:last-child{border-bottom:0}
+.pick-item:hover{background:var(--ems-surface-2)}
+.pick-item input{margin-top:3px}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var app = document.getElementById('app');
+var st = { q: '', khoa: '', tt: '', open: {}, fclose: {}, flash: null };
+function D(){ return LMS.db; }
+
+function kids(id){ return D().chuongTrinh.filter(function(c){ return (c.cha || null) === (id || null); }); }
+function subtree(id){ var out = [id]; kids(id).forEach(function(k){ out = out.concat(subtree(k.id)); }); return out; }
+function depthOf(c){ var d = 0, p = c; while (p && p.cha && d < 20) { p = LMS.byId('chuongTrinh', p.cha); d++; } return d; }
+function flat(){ var out = []; (function walk(pid, d){ kids(pid).forEach(function(c){ out.push({ c: c, d: d }); walk(c.id, d + 1); }); })(null, 0); return out; }
+function agg(id){
+  var ids = subtree(id), hp = {}, lopIds = {}, hv = {}, nLop = 0;
+  ids.forEach(function(i){ var c = LMS.byId('chuongTrinh', i); (c && c.hocPhan || []).forEach(function(h){ hp[h] = 1; }); });
+  D().lop.forEach(function(l){ if (ids.indexOf(l.chuongTrinh) >= 0) { lopIds[l.id] = 1; nLop++; } });
+  D().ghiDanh.forEach(function(g){ if (g.trangThai === 'dang-hoc' && lopIds[g.lop]) hv[g.hv] = 1; });
+  return { hp: Object.keys(hp).length, lop: nLop, hv: Object.keys(hv).length };
+}
+function khoaList(){ return D().donVi.filter(function(d){ return d.laKhoa; }); }
+function filterOn(){ return !!(st.q || st.khoa || st.tt); }
+function selfMatch(c){
+  if (st.q && U.norm(c.ma + ' ' + c.ten).indexOf(U.norm(st.q)) < 0) return false;
+  if (st.khoa && c.khoa !== st.khoa) return false;
+  if (st.tt && c.trangThai !== st.tt) return false;
+  return true;
+}
+var visMemo = {};
+function visible(c){ if (visMemo[c.id] != null) return visMemo[c.id]; var v = selfMatch(c) || kids(c.id).some(visible); visMemo[c.id] = v; return v; }
+function expanded(c){
+  if (filterOn()) return !st.fclose[c.id] && kids(c.id).some(visible);
+  return !!st.open[c.id];
+}
+
+function render(){
+  var db = D(); visMemo = {};
+  var tongHP = {}; db.chuongTrinh.forEach(function(c){ c.hocPhan.forEach(function(h){ tongHP[h] = 1; }); });
+  var dangDung = db.chuongTrinh.filter(function(c){ return c.trangThai === 'hoat-dong'; }).length;
+  app.innerHTML =
+    '<div class="page-head"><div><h1>Chương trình đào tạo</h1><div class="sub">' + db.chuongTrinh.length + ' chương trình · ' + dangDung + ' đang dùng · ' + Object.keys(tongHP).length + ' học phần đã gắn</div></div>' +
+    '<div class="actions"><button class="btn primary" id="btnAdd">+ Thêm chương trình</button></div></div>' +
+    '<div class="panel"><div class="panel-head filters">' +
+      '<input class="inp" id="fq" placeholder="Tìm theo mã hoặc tên chương trình" value="' + esc(st.q) + '">' +
+      '<select class="sel" id="fkhoa">' + U.opts(khoaList(), 'id', 'ten', st.khoa, 'Tất cả khoa') + '</select>' +
+      '<select class="sel" id="ftt">' + U.opts([{ v: 'hoat-dong', l: 'Đang dùng' }, { v: 'ngung', l: 'Ngưng dùng' }], 'v', 'l', st.tt, 'Tất cả trạng thái') + '</select>' +
+      '<button class="btn sm" id="btnExp">Bung tất cả</button><button class="btn sm" id="btnCol">Thu gọn tất cả</button>' +
+    '</div><div id="tree"></div></div>';
+
+  var rows = [];
+  (function walk(pid, d){
+    kids(pid).forEach(function(c){
+      if (filterOn() && !visible(c)) return;
+      rows.push({ c: c, d: d });
+      if (kids(c.id).length && expanded(c)) walk(c.id, d + 1);
+    });
+  })(null, 0);
+
+  var h = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Mã</th><th>Tên chương trình</th><th>Khoa chủ quản</th><th class="num">Số học phần</th><th class="num">Số lớp</th><th class="num">HV đang học</th><th>Trạng thái</th><th style="width:44px"></th></tr></thead><tbody>';
+  if (!rows.length) h += '<tr><td colspan="8"><div class="empty">' + (filterOn() ? 'Không có chương trình phù hợp' : 'Chưa có dữ liệu') + '</div></td></tr>';
+  rows.forEach(function(r){
+    var c = r.c, a = agg(c.id), hasKids = kids(c.id).length > 0, ex = hasKids && expanded(c);
+    var hpTags = c.hocPhan.map(function(hid){ var hp = LMS.byId('hocPhan', hid); return hp ? '<span class="tag hp" data-hp="' + esc(hid) + '" title="Mở học phần">' + esc(hp.ma) + '</span>' : ''; }).join('');
+    h += '<tr data-id="' + esc(c.id) + '" class="' + (c.trangThai === 'ngung' ? 'tr-ngung ' : '') + (st.flash === c.id ? 'tr-flash' : '') + '">' +
+      '<td><div class="ct-code" style="padding-left:' + (r.d * 20) + 'px">' + (hasKids ? '<button class="tree-toggle" data-tg="' + esc(c.id) + '" aria-label="' + (ex ? 'Thu gọn' : 'Bung') + '">' + (ex ? '▼' : '▶') + '</button>' : '<span class="ct-spacer"></span>') + '<span class="mono">' + U.hl(c.ma, st.q) + '</span></div></td>' +
+      '<td class="ct-ten"><div class="t-main">' + U.hl(c.ten, st.q) + '</div>' + (hpTags ? '<div style="margin-top:3px">' + hpTags + '</div>' : '') + '</td>' +
+      '<td>' + esc(LMS.donViTen(c.khoa)) + '</td>' +
+      '<td class="num"><b>' + a.hp + '</b>' + (hasKids ? '<div class="t-sub">cả nhánh</div>' : '') + '</td>' +
+      '<td class="num">' + (a.lop ? '<button class="lnk" data-lop="' + esc(c.id) + '" title="Xem lớp học">' + a.lop + '</button>' : '<span class="muted">0</span>') + '</td>' +
+      '<td class="num">' + a.hv + '</td>' +
+      '<td>' + (c.trangThai === 'ngung' ? U.badge('Ngưng dùng', '') : U.badge('Đang dùng', 'ok')) + '</td>' +
+      '<td class="c"><button class="icon-btn" data-m="' + esc(c.id) + '" aria-label="Thao tác">⋯</button></td></tr>';
+  });
+  h += '</tbody></table></div><div class="pager"><span>' + rows.length + ' dòng hiển thị</span></div>';
+  document.getElementById('tree').innerHTML = h;
+
+  var fq = document.getElementById('fq');
+  fq.oninput = function(){ st.q = fq.value.trim(); st.fclose = {}; var pos = fq.selectionStart; render(); var n = document.getElementById('fq'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} };
+  document.getElementById('fkhoa').onchange = function(e){ st.khoa = e.target.value; st.fclose = {}; render(); };
+  document.getElementById('ftt').onchange = function(e){ st.tt = e.target.value; st.fclose = {}; render(); };
+  document.getElementById('btnAdd').onclick = function(){ openForm(null, null); };
+  document.getElementById('btnExp').onclick = function(){ D().chuongTrinh.forEach(function(c){ st.open[c.id] = true; }); st.fclose = {}; render(); };
+  document.getElementById('btnCol').onclick = function(){ st.open = {}; if (filterOn()) D().chuongTrinh.forEach(function(c){ st.fclose[c.id] = true; }); render(); };
+  app.querySelectorAll('[data-tg]').forEach(function(b){ b.onclick = function(){
+    var id = b.dataset.tg, c = LMS.byId('chuongTrinh', id);
+    if (filterOn()) st.fclose[id] = expanded(c); else st.open[id] = !st.open[id];
+    render();
+  }; });
+  app.querySelectorAll('[data-lop]').forEach(function(b){ b.onclick = function(){ LMS.go('lop-hoc.html', { chuongTrinh: b.dataset.lop }); }; });
+  app.querySelectorAll('[data-hp]').forEach(function(b){ b.onclick = function(){ LMS.go('hoc-phan.html', { hocPhan: b.dataset.hp }); }; });
+  app.querySelectorAll('[data-m]').forEach(function(b){ b.onclick = function(){ rowMenu(b, LMS.byId('chuongTrinh', b.dataset.m)); }; });
+}
+
+function rowMenu(btn, c){
+  U.menu(btn, [
+    { label: 'Sửa thông tin', onClick: function(){ openForm(c, null); } },
+    { label: 'Gắn / gỡ học phần', onClick: function(){ openHocPhan(c); } },
+    { label: 'Thêm chương trình con', onClick: function(){ openForm(null, c); } },
+    { label: 'Xem lớp học', onClick: function(){ LMS.go('lop-hoc.html', { chuongTrinh: c.id }); } },
+    '-',
+    c.trangThai === 'ngung' ? { label: 'Kích hoạt', onClick: function(){ toggleTT(c); } } : { label: 'Ngưng dùng', onClick: function(){ toggleTT(c); } },
+    { label: 'Xóa', danger: true, onClick: function(){ remove(c); } }
+  ]);
+}
+
+function openForm(c, parent){
+  var isNew = !c, db = D();
+  var excl = c ? subtree(c.id) : [];
+  var parents = flat().filter(function(x){ return excl.indexOf(x.c.id) < 0; });
+  var chaSel = c ? (c.cha || '') : (parent ? parent.id : '');
+  var khoaSel = c ? c.khoa : (parent ? parent.khoa : '');
+  var body = '<div class="form-grid">' +
+    '<div class="field"><label>Mã chương trình <span class="req">*</span></label><input class="inp" name="ma" maxlength="30" value="' + esc(c ? c.ma : '') + '"></div>' +
+    '<div class="field"><label>Trạng thái</label><select class="sel" name="trangThai">' + U.opts([{ v: 'hoat-dong', l: 'Đang dùng' }, { v: 'ngung', l: 'Ngưng dùng' }], 'v', 'l', c ? c.trangThai : 'hoat-dong') + '</select></div>' +
+    '<div class="field full"><label>Tên chương trình <span class="req">*</span></label><input class="inp" name="ten" maxlength="200" value="' + esc(c ? c.ten : '') + '"></div>' +
+    '<div class="field"><label>Chương trình cấp trên</label><select class="sel" name="cha"><option value="">— Cấp gốc —</option>' + parents.map(function(x){ return '<option value="' + esc(x.c.id) + '"' + (x.c.id === chaSel ? ' selected' : '') + '>' + esc((x.d ? '\u00a0\u00a0\u00a0'.repeat(x.d) + '└ ' : '') + x.c.ma + ' · ' + x.c.ten) + '</option>'; }).join('') + '</select></div>' +
+    '<div class="field"><label>Khoa chủ quản <span class="req">*</span></label><select class="sel" name="khoa">' + U.opts(khoaList(), 'id', 'ten', khoaSel, '— Chọn khoa —') + '</select></div>' +
+    '</div>';
+  U.modal({
+    title: isNew ? (parent ? 'Thêm chương trình con · ' + parent.ma : 'Thêm chương trình đào tạo') : 'Sửa chương trình · ' + c.ma,
+    body: body,
+    foot: [{ label: 'Hủy', close: true }, { label: isNew ? 'Thêm' : 'Lưu', cls: 'primary', onClick: function(api){
+      var b = api.body, v = U.formVals(b), ok = true;
+      var dup = D().chuongTrinh.some(function(x){ return x.ma.toLowerCase() === v.ma.toLowerCase() && (!c || x.id !== c.id); });
+      var e1 = !v.ma ? 'Nhập mã chương trình' : (!/^[A-Za-z0-9_.\-]+$/.test(v.ma) ? 'Mã chỉ gồm chữ không dấu, số, _ . -' : (dup ? 'Mã đã tồn tại' : ''));
+      U.fieldErr(b, 'ma', e1); if (e1) ok = false;
+      U.fieldErr(b, 'ten', v.ten ? '' : 'Nhập tên chương trình'); if (!v.ten) ok = false;
+      U.fieldErr(b, 'khoa', v.khoa ? '' : 'Chọn khoa chủ quản'); if (!v.khoa) ok = false;
+      if (!ok) return false;
+      if (isNew) {
+        var n = { id: LMS.nextId('ct'), ma: v.ma, ten: v.ten, cha: v.cha || null, khoa: v.khoa, hocPhan: [], trangThai: v.trangThai };
+        D().chuongTrinh.push(n);
+        if (n.cha) st.open[n.cha] = true;
+        st.flash = n.id;
+        LMS.commit('Tạo', 'Chương trình đào tạo', n.ma + ' · ' + n.ten, null, { ma: n.ma, ten: n.ten });
+        U.toast('Đã thêm chương trình ' + n.ma, 'ok');
+      } else {
+        var truoc = { ma: c.ma, ten: c.ten, cha: c.cha, khoa: c.khoa, trangThai: c.trangThai };
+        c.ma = v.ma; c.ten = v.ten; c.cha = v.cha || null; c.khoa = v.khoa; c.trangThai = v.trangThai;
+        if (c.cha) st.open[c.cha] = true;
+        st.flash = c.id;
+        LMS.commit('Sửa', 'Chương trình đào tạo', c.ma + ' · ' + c.ten, truoc, { ma: c.ma, ten: c.ten, cha: c.cha, khoa: c.khoa, trangThai: c.trangThai });
+        U.toast('Đã lưu thay đổi', 'ok');
+      }
+      render();
+    } }]
+  });
+}
+
+function openHocPhan(c){
+  var sel = {}; c.hocPhan.forEach(function(h){ sel[h] = true; });
+  var q = '';
+  var body = '<input class="inp" data-q placeholder="Tìm học phần theo mã, tên, khoa">' +
+    '<div class="row small muted"><span data-cnt></span><button class="btn sm ghost right" data-onlysel>Chỉ hiện mục đã chọn</button></div>' +
+    '<div class="pick-list" data-list></div>';
+  var onlySel = false;
+  U.modal({
+    title: 'Gắn học phần · ' + c.ma, body: body,
+    onOpen: function(api){
+      var list = api.body.querySelector('[data-list]'), cnt = api.body.querySelector('[data-cnt]');
+      function draw(){
+        var hps = D().hocPhan.filter(function(h){
+          if (h.trangThai === 'ngung' && !sel[h.id]) return false;
+          if (onlySel && !sel[h.id]) return false;
+          return !q || U.norm(h.ma + ' ' + h.ten + ' ' + LMS.donViTen(h.khoa)).indexOf(U.norm(q)) >= 0;
+        });
+        list.innerHTML = hps.length ? hps.map(function(h){
+          var khac = D().chuongTrinh.filter(function(x){ return x.id !== c.id && x.hocPhan.indexOf(h.id) >= 0; }).map(function(x){ return x.ma; });
+          return '<label class="pick-item"><input type="checkbox" data-id="' + esc(h.id) + '"' + (sel[h.id] ? ' checked' : '') + '><div class="grow"><div><span class="mono">' + U.hl(h.ma, q) + '</span> · <b>' + U.hl(h.ten, q) + '</b></div><div class="small muted">' + esc(LMS.donViTen(h.khoa)) + ' · ' + h.soTC + ' tín chỉ · ' + h.bai.length + ' bài' + (khac.length ? ' · Đang gắn ở: ' + esc(khac.join(', ')) : '') + '</div></div>' + (h.trangThai === 'ngung' ? U.badge('Ngưng dùng', '') : '') + '</label>';
+        }).join('') : '<div class="empty">Không có học phần phù hợp</div>';
+        cnt.textContent = 'Đã chọn ' + Object.keys(sel).length + ' học phần';
+        list.querySelectorAll('[data-id]').forEach(function(cb){ cb.onchange = function(){ if (cb.checked) sel[cb.dataset.id] = true; else delete sel[cb.dataset.id]; cnt.textContent = 'Đã chọn ' + Object.keys(sel).length + ' học phần'; }; });
+      }
+      api.body.querySelector('[data-q]').oninput = function(e){ q = e.target.value.trim(); draw(); };
+      var bo = api.body.querySelector('[data-onlysel]');
+      bo.onclick = function(){ onlySel = !onlySel; bo.textContent = onlySel ? 'Hiện tất cả' : 'Chỉ hiện mục đã chọn'; draw(); };
+      draw();
+    },
+    foot: [{ label: 'Hủy', close: true }, { label: 'Lưu', cls: 'primary', onClick: function(){
+      var moi = D().hocPhan.filter(function(h){ return sel[h.id]; }).map(function(h){ return h.id; });
+      var bo = c.hocPhan.filter(function(h){ return moi.indexOf(h) < 0; });
+      var them = moi.filter(function(h){ return c.hocPhan.indexOf(h) < 0; });
+      var refs = [];
+      bo.forEach(function(hid){ D().lop.forEach(function(l){ if (l.chuongTrinh === c.id && l.hocPhan === hid) refs.push('Lớp ' + l.ma + ' · ' + LMS.name('hocPhan', hid)); }); });
+      if (refs.length) { U.blocked('Không thể gỡ học phần', refs, 'Học phần đang có lớp mở theo chương trình này.'); return false; }
+      if (!bo.length && !them.length) return;
+      var truoc = c.hocPhan.slice();
+      c.hocPhan = moi;
+      LMS.commit('Gắn học phần', 'Chương trình đào tạo', c.ma + ' · thêm ' + them.length + ', gỡ ' + bo.length + ' học phần', { hocPhan: truoc }, { hocPhan: moi });
+      U.toast('Đã cập nhật học phần của ' + c.ma, 'ok');
+      st.flash = c.id; render();
+    } }]
+  });
+}
+
+function toggleTT(c){
+  var ngung = c.trangThai !== 'ngung';
+  var dangMo = D().lop.filter(function(l){ return subtree(c.id).indexOf(l.chuongTrinh) >= 0 && (l.trangThai === 'dang-hoc' || l.trangThai === 'tuyen-sinh'); }).length;
+  U.confirm({
+    title: ngung ? 'Ngưng dùng chương trình' : 'Kích hoạt chương trình',
+    html: ngung ? 'Ngưng dùng <b>' + esc(c.ma + ' · ' + c.ten) + '</b>? Chương trình sẽ không được chọn khi mở lớp mới.' + (dangMo ? '<div class="note warn" style="margin-top:10px">' + dangMo + ' lớp đang học/tuyển sinh vẫn tiếp tục bình thường.</div>' : '') : 'Kích hoạt lại <b>' + esc(c.ma + ' · ' + c.ten) + '</b>?',
+    ok: ngung ? 'Ngưng dùng' : 'Kích hoạt', danger: ngung
+  }).then(function(yes){
+    if (!yes) return;
+    var t = c.trangThai; c.trangThai = ngung ? 'ngung' : 'hoat-dong';
+    LMS.commit(ngung ? 'Ngưng dùng' : 'Kích hoạt', 'Chương trình đào tạo', c.ma + ' · ' + c.ten, { trangThai: t }, { trangThai: c.trangThai });
+    U.toast(ngung ? 'Đã ngưng dùng ' + c.ma : 'Đã kích hoạt ' + c.ma, 'ok'); st.flash = c.id; render();
+  });
+}
+
+function remove(c){
+  var refs = LMS.refsOf('chuongTrinh', c.id);
+  if (refs.length) { U.blocked('Không thể xóa ' + c.ma, refs, c.trangThai === 'ngung' ? 'Chương trình đã ở trạng thái Ngưng dùng.' : 'Dùng thao tác Ngưng dùng để giữ lịch sử đào tạo.'); return; }
+  U.confirm({ title: 'Xóa chương trình', html: 'Xóa <b>' + esc(c.ma + ' · ' + c.ten) + '</b>' + (c.hocPhan.length ? ' (đang gắn ' + c.hocPhan.length + ' học phần — học phần không bị xóa)' : '') + '?', ok: 'Xóa', danger: true }).then(function(yes){
+    if (!yes) return;
+    var db = D(); db.chuongTrinh = db.chuongTrinh.filter(function(x){ return x.id !== c.id; });
+    LMS.commit('Xóa', 'Chương trình đào tạo', c.ma + ' · ' + c.ten, { ma: c.ma, ten: c.ten }, null);
+    U.toast('Đã xóa ' + c.ma, 'ok'); render();
+  });
+}
+
+// mặc định bung 2 cấp đầu
+flat().forEach(function(x){ if (x.d < 2) st.open[x.c.id] = true; });
+var p = LMS.param('chuong-trinh.html');
+if (p && p.chuongTrinh) { var cp = LMS.byId('chuongTrinh', p.chuongTrinh); while (cp && cp.cha) { st.open[cp.cha] = true; cp = LMS.byId('chuongTrinh', cp.cha); } st.flash = p.chuongTrinh; }
+LMS.onChange(render);
+render();
+})();
+</script>
+</body></html>

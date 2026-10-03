@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lớp học · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.k-row{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.k-row .k-val{font-size:22px}
+.dot-n{display:inline-flex;min-width:18px;height:18px;border-radius:99px;background:var(--ems-danger);color:#fff;font:700 11px var(--font);align-items:center;justify-content:center;padding:0 5px;margin-left:4px}
+.chip{border:1px solid var(--ems-border);border-radius:99px;padding:1px 9px;font-size:12px;color:var(--ems-text-2)}
+.chip.bad{border-color:var(--ems-danger-line);color:var(--ems-danger);background:var(--ems-danger-bg)}
+details.grp-hd{border:1px solid var(--ems-border);border-radius:var(--r-ctl);margin-bottom:8px}
+details.grp-hd summary{display:flex;gap:8px;align-items:center;padding:10px 12px;cursor:pointer;background:var(--ems-surface-2);border-radius:var(--r-ctl)}
+.grp-body{padding:0 12px}
+.mt .cell{display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--ems-surface-2);border:1px solid var(--ems-border)}
+.cell{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--ems-surface-2);border:1px solid var(--ems-border);vertical-align:middle}
+.cell.ok{background:var(--ems-success);border-color:var(--ems-success)} .cell.q{background:var(--ems-warning);border-color:var(--ems-warning)} .cell.cur{background:var(--ems-navy-soft);border-color:var(--ems-navy)}
+.mt th,.mt td{padding:5px 4px}
+.legend{display:flex;gap:14px;flex-wrap:wrap}
+.tb-list{display:flex;flex-direction:column;gap:10px}
+.tb-card{border:1px solid var(--ems-border);border-radius:var(--r-card);padding:12px 14px;background:var(--ems-surface)}
+.tb-card.pin{border-color:var(--ems-navy-line);box-shadow:inset 3px 0 0 var(--ems-navy)}
+.tb-n{white-space:pre-wrap;margin:6px 0;font-size:13px;color:var(--ems-text-2);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.opts{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+details.pv-tb{margin-top:12px}
+details.pv-tb summary{cursor:pointer;font-weight:600;font-size:13px}
+.ksq{border:1px solid var(--ems-border);border-radius:var(--r-ctl);padding:10px;margin-bottom:8px}
+.ksq .q-n{width:22px;height:22px;border-radius:50%;background:var(--ems-navy);color:#fff;font:700 11px var(--font);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ksopt{padding:6px 0 0 30px;display:flex;flex-direction:column;gap:6px}
+.res-q{border-top:1px solid var(--ems-border);padding:12px 0}
+.ks-tl{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto;margin-top:6px}
+.cmt{background:var(--ems-surface-2);border-radius:var(--r-ctl);padding:8px 10px;font-size:13px}
+.cover{display:flex;gap:12px;align-items:center}
+.cover .img{width:160px;height:90px;border-radius:var(--r-ctl);background:var(--ems-navy-soft) center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:var(--ems-muted);font-size:12px;border:1px solid var(--ems-border)}
+
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps span{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ems-muted)}
+.steps span i{width:20px;height:20px;border-radius:50%;border:1px solid var(--ems-border-strong);display:inline-grid;place-items:center;font-style:normal;font-size:11px}
+.steps span.on{color:var(--ems-navy)} .steps span.on i{background:var(--ems-navy);border-color:var(--ems-navy);color:#fff}
+.steps span.done i{background:var(--ems-success);border-color:var(--ems-success);color:#fff}
+.steps b{color:var(--ems-border-strong);font-weight:400}
+.pick-tree{border:1px solid var(--ems-border);border-radius:8px;max-height:340px;overflow:auto}
+.pick-tree .tree-row{cursor:pointer}
+.pick-tree .tree-row.leaf.sel{background:var(--ems-navy-soft)}
+.pick-tree .tree-row.node{font-weight:600;color:var(--ems-text-2)}
+.gv-list{border:1px solid var(--ems-border);border-radius:8px;max-height:170px;overflow:auto;padding:6px 10px;display:flex;flex-direction:column;gap:4px}
+.head-card{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.head-card .meta{color:var(--ems-muted);font-size:13px;margin-top:4px}
+.stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));border-top:1px solid var(--ems-border)}
+.stat-strip div{padding:12px 16px;border-right:1px solid var(--ems-border)}
+.stat-strip div:last-child{border-right:0}
+.stat-strip b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.stat-strip span{font-size:12px;color:var(--ems-muted)}
+@media (max-width:900px){.stat-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.stat-strip div:nth-child(3){border-right:0}}
+@media (max-width:520px){.stat-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.help{border:1px solid var(--ems-warning-line);background:var(--ems-warning-bg);border-radius:8px;padding:12px 14px;font-size:13px}
+.help ul{margin:6px 0 0;padding-left:18px}
+.help-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--ems-border-strong);background:var(--ems-surface);cursor:pointer;font-weight:700;color:var(--ems-muted)}
+.help-btn.has{border-color:var(--ems-warning);color:var(--ems-warning)}
+.help-btn.on{background:var(--ems-warning);color:#fff;border-color:var(--ems-warning)}
+.ccm th,.ccm td{text-align:center;padding:7px 6px}.ccm th.l,.ccm td.l{text-align:left}.ccm th.nc{font-style:italic;color:var(--ems-warning)}
+.ccm .c-co{color:var(--ems-success);font-weight:700}.ccm .c-vang{color:var(--ems-danger);font-weight:700;background:var(--ems-danger-bg)}.ccm .c-phep{color:var(--ems-warning);font-weight:700}
+.ccm .c-dc{text-decoration:underline dotted}.ccm tr.muted td{color:var(--ems-muted)}
+.nw{white-space:nowrap}.txt-bad{color:var(--ems-danger)}
+.score-inp{width:64px;text-align:right;padding:4px 6px}
+.lock{font-size:12px;color:var(--ems-warning)}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script src="lms-buoi.js"></script>
+<script src="lms-hoidap.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var HT = { 'truc-tuyen-gv':'Trực tuyến có giảng viên', 'tu-hoc':'Tự học trực tuyến', 'xem-lai':'Xem lại học liệu' };
+var TC = { 'chi-hoc':'Chỉ học', 'chung-nhan':'Có cấp chứng nhận', 'chung-chi':'Có cấp chứng chỉ' };
+var HT_GHI = { 'truc-tuyen-gv':'Có lịch buổi học trực tuyến với giảng viên, điểm danh và cột điểm chuyên cần.', 'tu-hoc':'Học viên tự học theo bài giảng; không có lịch buổi học, không điểm danh, không tính chuyên cần.', 'xem-lai':'Mở học liệu cho học viên đã học xem lại; không lịch học, không điểm danh, không tính điểm.' };
+/* cột Chuyên cần chỉ có ở lớp trực tuyến có giảng viên; bỏ cột thì cộng trọng số vào cột cuối, thêm cột thì lấy 10% từ cột cuối */
+function dongBoCotCC(l){
+  var i=l.cotDiem.findIndex(function(c){ return c.nguon==='diem-danh'; });
+  if(!LMS.coDiemDanh(l) && i>=0){ var ts=l.cotDiem[i].ts; l.cotDiem.splice(i,1); db().kyThi.forEach(function(k){ if(k.lop===l.id && k.cot>i) k.cot--; }); db().baiTap && db().baiTap.forEach(function(b){ if(b.lop===l.id && b.chuyenDiem && b.chuyenDiem.cot>i) b.chuyenDiem.cot--; }); if(l.cotDiem.length) l.cotDiem[l.cotDiem.length-1].ts+=ts; return 'bỏ cột Chuyên cần ('+ts+'%)'; }
+  if(LMS.coDiemDanh(l) && i<0){ var last=l.cotDiem[l.cotDiem.length-1]; if(last && last.ts>=20){ last.ts-=10; l.cotDiem.unshift({ten:'Chuyên cần',ts:10,nguon:'diem-danh'}); db().kyThi.forEach(function(k){ if(k.lop===l.id) k.cot++; }); db().baiTap && db().baiTap.forEach(function(b){ if(b.lop===l.id && b.chuyenDiem) b.chuyenDiem.cot++; }); return 'thêm cột Chuyên cần 10%'; } }
+  return '';
+}
+var GD = { 'dang-hoc':['Đang học','ok'], 'hoan-thanh':['Hoàn thành','navy'], 'thoi-hoc':['Thôi học','bad'], 'bao-luu':['Bảo lưu','warn'], 'cho-khai-giang':['Chờ khai giảng','info'] };
+var st = { view:'list', lop:null, tab:'info', q:'', khoa:'', tt:'', ct:'', help:false, tdView:'bai', td:'hv', tbF:'lop', tbQ:'' };
+
+var p = LMS.param('lop-hoc.html');
+if(p && p.lop){ st.view='detail'; st.lop=p.lop; if(p.tab) st.tab=p.tab; if(p.ks) st.ksMo=p.ks; }
+if(p && p.chuongTrinh) st.ct = p.chuongTrinh;
+
+function db(){ return LMS.db; }
+function gvNames(ids){ return (ids||[]).map(function(id){ var g=LMS.byId('giangVien',id); return g?g.hoTen:'—'; }); }
+function ctDesc(ctId){ var ids=[ctId], grow=true; while(grow){ grow=false; db().chuongTrinh.forEach(function(c){ if(c.cha&&ids.indexOf(c.cha)>=0&&ids.indexOf(c.id)<0){ ids.push(c.id); grow=true; } }); } return ids; }
+function nextMa(){ var n=0; db().lop.forEach(function(l){ var m=+String(l.ma).replace(/\D/g,''); if(m>n) n=m; }); return 'L'+String(n+1).padStart(4,'0'); }
+
+/* =================== DANH SÁCH =================== */
+var tbl;
+function renderList(){
+  var d=db();
+  var cnt = { 'dang-hoc':0,'tuyen-sinh':0,'ke-hoach':0,'ket-thuc':0 };
+  d.lop.forEach(function(l){ if(cnt[l.trangThai]!=null) cnt[l.trangThai]++; });
+  var ctName = st.ct ? LMS.name('chuongTrinh',st.ct) : '';
+  var h = '<div class="page-head"><div><h1>Lớp học</h1><div class="sub">'+d.lop.length+' lớp · '+cnt['dang-hoc']+' đang học · '+cnt['tuyen-sinh']+' đang tuyển sinh</div></div><div class="actions"><button class="btn primary" id="btnNew">+ Mở lớp</button></div></div>';
+  h += '<div class="kpis">'+[['dang-hoc','Đang học'],['tuyen-sinh','Đang tuyển sinh'],['ke-hoach','Lên kế hoạch'],['ket-thuc','Kết thúc']].map(function(k){ return '<div class="kpi clickable '+(st.tt===k[0]?'active':'')+'" data-tt="'+k[0]+'" tabindex="0"><div class="k-label">'+k[1]+'</div><div class="k-val">'+cnt[k[0]]+'</div></div>'; }).join('')+'</div>';
+  h += '<div class="panel"><div class="panel-head filters"><input class="inp" id="q" placeholder="Tìm theo mã lớp, tên lớp, học phần…" value="'+esc(st.q)+'" aria-label="Tìm lớp">'+
+       '<select class="sel" id="fKhoa" aria-label="Khoa">'+U.opts(d.donVi.filter(function(x){return x.laKhoa;}),'id','ten',st.khoa,'Tất cả khoa')+'</select>'+
+       '<select class="sel" id="fTT" aria-label="Trạng thái">'+U.opts(Object.keys(LMS.TT_LOP).map(function(k){ return {id:k,ten:LMS.TT_LOP[k][0]}; }),'id','ten',st.tt,'Tất cả trạng thái')+'</select>'+
+       (st.ct?'<span class="badge navy">Chương trình: '+esc(ctName)+' <button class="icon-btn" id="clrCt" aria-label="Bỏ lọc chương trình" style="padding:0 2px;font-size:12px">✕</button></span>':'')+
+       '</div><div id="tbl"></div></div>';
+  document.getElementById('app').innerHTML = h;
+  tbl = U.table(document.getElementById('tbl'), { pageSize: 12, sort:'batDau', dir:-1,
+    rows: function(){ var nq=U.norm(st.q), ids = st.ct?ctDesc(st.ct):null; return db().lop.filter(function(l){ var hp=LMS.hocPhanOfLop(l);
+      if(nq && U.norm(l.ma+' '+l.ten+' '+(hp?hp.ten:'')).indexOf(nq)<0) return false;
+      if(st.khoa && l.khoa!==st.khoa) return false; if(st.tt && l.trangThai!==st.tt) return false; if(ids && ids.indexOf(l.chuongTrinh)<0) return false; return true; }); },
+    onRowClick: function(l){ openDetail(l.id); },
+    columns: [
+      { key:'ma', label:'Mã lớp', render:function(l){ return '<span class="mono">'+esc(l.ma)+'</span>'; } },
+      { key:'ten', label:'Tên lớp', render:function(l){ var hp=LMS.hocPhanOfLop(l); return '<div class="t-main">'+U.hl(l.ten,st.q)+'</div><div class="t-sub">'+esc(hp?hp.ten:'')+' · '+esc(LMS.name('chuongTrinh',l.chuongTrinh))+'</div>'; } },
+      { key:'khoa', label:'Khoa', render:function(l){ return esc(LMS.donViTen(l.khoa)); }, sortVal:function(l){ return LMS.donViTen(l.khoa); } },
+      { key:'batDau', label:'Thời gian', render:function(l){ var t=LMS.trangThaiThoiGian(l); return '<div class="num">'+LMS.fmtDate(l.batDau)+' – '+LMS.fmtDate(l.ketThuc)+'</div><div>'+U.badge(t.label,t.tone)+'</div>'; } },
+      { key:'gv', label:'Giảng viên', render:function(l){ var n=gvNames(l.giangVien); return n.length?esc(n[0])+(n.length>1?' <span class="muted">+'+(n.length-1)+'</span>':''):'<span class="badge bad">Chưa phân công</span>'; }, sortable:false },
+      { key:'hv', label:'Học viên', cls:'num', render:function(l){ var n=LMS.soHV(l.id); return '<b>'+n+'</b>'+(l.sucChua?'<span class="muted">/'+l.sucChua+'</span>':''); }, sortVal:function(l){ return LMS.soHV(l.id); } },
+      { key:'td', label:'Tiến độ / kế hoạch', w:'200px', render:function(l){ if(l.trangThai!=='dang-hoc') return '<span class="muted">—</span>'; var s=LMS.lopStats(l.id); if(s.tienDo==null) return '<span class="muted">Chưa có dữ liệu</span>'; return U.prog(s.tienDo, s.tienDo < s.keHoach-15?'bad':s.tienDo<s.keHoach-5?'warn':'', s.tienDo+'% · KH '+s.keHoach+'%'); }, sortVal:function(l){ var s=l.trangThai==='dang-hoc'?LMS.lopStats(l.id):null; return s&&s.tienDo!=null?s.tienDo-s.keHoach:null; } },
+      { key:'trangThai', label:'Trạng thái', render:function(l){ var t=LMS.TT_LOP[l.trangThai]; return U.badge(t[0],t[1]); } },
+      { key:'x', label:'', sortable:false, render:function(l){ return '<button class="icon-btn" data-m="'+l.id+'" aria-label="Thao tác">⋯</button>'; } }
+    ],
+    after: function(host){ host.querySelectorAll('[data-m]').forEach(function(b){ b.onclick=function(e){ e.stopPropagation(); rowMenu(b, LMS.byId('lop',b.dataset.m)); }; }); }
+  });
+  document.getElementById('q').oninput=function(){ st.q=this.value; tbl.render(true); };
+  document.getElementById('fKhoa').onchange=function(){ st.khoa=this.value; tbl.render(true); };
+  document.getElementById('fTT').onchange=function(){ st.tt=this.value; renderList(); };
+  document.querySelectorAll('[data-tt]').forEach(function(k){ k.onclick=function(){ st.tt = st.tt===k.dataset.tt?'':k.dataset.tt; renderList(); }; });
+  var c=document.getElementById('clrCt'); if(c) c.onclick=function(){ st.ct=''; renderList(); };
+  document.getElementById('btnNew').onclick=function(){ wizard(); };
+}
+function rowMenu(btn, l){
+  U.menu(btn, [
+    { label:'Xem chi tiết', onClick:function(){ openDetail(l.id); } },
+    { label:'Nhân bản lớp', onClick:function(){ cloneLop(l); } },
+    { label:'Chuyển trạng thái', onClick:function(){ changeStatus(btn,l); } },
+    '-',
+    { label:'Hủy lớp', danger:true, disabled: l.trangThai==='huy'||l.trangThai==='ket-thuc', onClick:function(){ cancelLop(l); } },
+    { label:'Xóa lớp', danger:true, onClick:function(){ deleteLop(l); } }
+  ]);
+}
+
+/* =================== MỞ LỚP (3 bước) =================== */
+function wizard(){
+  var w = { step:1, hp:null, ct:null, q:'', f:{ ma:nextMa(), ten:'', khoa:'', hinhThuc:'truc-tuyen-gv', gv:[], batDau:'', ketThuc:'', sucChua:40, khoanThu:'', tuDangKy:true, diemDat:5 } };
+  var api = U.modal({ title:'Mở lớp', size:'lg', body:'<div></div>', noFocus:true, foot:[
+    { label:'Hủy' },
+    { label:'Quay lại', id:'wBack', close:false, onClick:function(){ if(w.step>1){ collect(); w.step--; paint(); } return false; } },
+    { label:'Tiếp tục', id:'wNext', cls:'primary', close:false, onClick:function(){ next(); return false; } }
+  ]});
+  function steps(){ return '<div class="steps">'+['Chọn học phần','Thông tin lớp','Xác nhận'].map(function(t,i){ var n=i+1; return (i?'<b>—</b>':'')+'<span class="'+(n===w.step?'on':n<w.step?'done':'')+'"><i>'+(n<w.step?'✓':n)+'</i>'+t+'</span>'; }).join('')+'</div>'; }
+  function tree(){
+    var d=db(), nq=U.norm(w.q), h='';
+    function hpMatch(hp){ return !nq || U.norm(hp.ma+' '+hp.ten).indexOf(nq)>=0; }
+    function nodeMatch(c){ if(!nq) return true; if(U.norm(c.ma+' '+c.ten).indexOf(nq)>=0) return true; if(c.hocPhan.some(function(id){ return hpMatch(LMS.byId('hocPhan',id)); })) return true; return d.chuongTrinh.some(function(x){ return x.cha===c.id && nodeMatch(x); }); }
+    function walk(pid, lv){ d.chuongTrinh.filter(function(c){ return c.cha===pid && c.trangThai!=='ngung'; }).forEach(function(c){ if(!nodeMatch(c)) return;
+      h += '<div class="tree-row node" style="padding-left:'+(10+lv*18)+'px">▾ '+U.hl(c.ten,w.q)+' <span class="muted small">'+esc(c.ma)+'</span></div>';
+      c.hocPhan.forEach(function(id){ var hp=LMS.byId('hocPhan',id); if(!hp||hp.trangThai!=='hoat-dong'||(!hpMatch(hp)&&!(nq&&U.norm(c.ten).indexOf(nq)>=0))) return; var mins=hp.bai.reduce(function(a,b){return a+b.phut;},0);
+        h += '<div class="tree-row leaf '+(w.hp===hp.id&&w.ct===c.id?'sel':'')+'" data-hp="'+hp.id+'" data-ct="'+c.id+'" style="padding-left:'+(28+lv*18)+'px" tabindex="0"><input type="radio" name="hpPick" '+(w.hp===hp.id&&w.ct===c.id?'checked':'')+' aria-label="Chọn '+esc(hp.ten)+'"> <span class="t-main">'+U.hl(hp.ten,w.q)+'</span> <span class="mono muted">'+esc(hp.ma)+'</span><span class="right muted small">'+hp.bai.length+' bài · '+Math.round(mins/60*10)/10+' giờ · '+hp.soTC+' TC</span></div>'; });
+      walk(c.id, lv+1); }); }
+    walk(null,0);
+    return h || '<div class="empty">Không tìm thấy chương trình hoặc học phần phù hợp</div>';
+  }
+  function paint(){
+    var b=api.body, d=db(), f=w.f, h=steps();
+    if(w.step===1){
+      h += '<div class="field"><label for="wq">Tìm chương trình hoặc học phần</label><input class="inp" id="wq" placeholder="Gõ tên hoặc mã, không cần dấu" value="'+esc(w.q)+'"></div><div class="pick-tree" id="wTree">'+tree()+'</div>';
+      if(w.hp){ var hp=LMS.byId('hocPhan',w.hp); h += '<div class="note info">Đã chọn: <b>'+esc(hp.ten)+'</b> trong '+esc(LMS.name('chuongTrinh',w.ct))+' · '+hp.bai.length+' bài giảng</div>'; }
+    }
+    if(w.step===2){
+      var hp2=LMS.byId('hocPhan',w.hp); if(!f.khoa) f.khoa=hp2.khoa;
+      var gvs = d.giangVien.filter(function(g){ return g.trangThai!=='ngung'; }).sort(function(a,b){ return (a.donVi===f.khoa?0:1)-(b.donVi===f.khoa?0:1); });
+      h += '<div class="form-grid">'+
+        '<div class="field"><label>Mã lớp</label><input class="inp mono" name="ma" value="'+esc(f.ma)+'" readonly></div>'+
+        '<div class="field"><label for="w_ten">Tên lớp <span class="req">*</span></label><input class="inp" id="w_ten" name="ten" value="'+esc(f.ten)+'" placeholder="VD: Lớp '+esc(hp2.ten)+' - K28"></div>'+
+        '<div class="field"><label for="w_khoa">Khoa quản lý <span class="req">*</span></label><select class="sel" id="w_khoa" name="khoa">'+U.opts(d.donVi.filter(function(x){return x.laKhoa;}),'id','ten',f.khoa,'Chọn khoa')+'</select></div>'+
+        '<div class="field"><label for="w_ht">Hình thức học</label><select class="sel" id="w_ht" name="hinhThuc">'+U.opts(Object.keys(HT).map(function(k){return {id:k,ten:HT[k]};}),'id','ten',f.hinhThuc)+'</select><div class="hint">'+esc(HT_GHI[f.hinhThuc]||'')+'</div></div>'+
+        '<div class="field"><label for="w_bd">Ngày bắt đầu <span class="req">*</span></label><input class="inp" type="date" id="w_bd" name="batDau" value="'+f.batDau+'"></div>'+
+        '<div class="field"><label for="w_kt">Ngày kết thúc <span class="req">*</span></label><input class="inp" type="date" id="w_kt" name="ketThuc" value="'+f.ketThuc+'"'+(f.batDau?' min="'+LMS.iso(LMS.addDays(LMS.parse(f.batDau),1))+'"':'')+'></div>'+
+        '<div class="field"><label for="w_sc">Sức chứa (0 = không giới hạn)</label><input class="inp" type="number" min="0" id="w_sc" name="sucChua" value="'+f.sucChua+'"></div>'+
+        '<div class="field"><label for="w_kthu">Khoản thu</label><select class="sel" id="w_kthu" name="khoanThu">'+U.opts(d.khoanThu.filter(function(k){return k.trangThai==='dang-dung';}),'id',function(k){ return k.ten+' · '+U.money(k.donGia*(1+k.vat/100)); },f.khoanThu,'Không thu phí')+'</select></div>'+
+        '<div class="field full"><label>Giảng viên phụ trách <span class="req">*</span></label><div class="gv-list" id="gvList">'+gvs.map(function(g){ return '<label class="check"><input type="checkbox" name="gv_'+g.id+'" data-gv="'+g.id+'"'+(f.gv.indexOf(g.id)>=0?' checked':'')+'> '+esc(g.hoTen)+' <span class="muted small">· '+esc(LMS.donViTen(g.donVi))+(g.taiKhoan?'':' · chưa có tài khoản')+'</span></label>'; }).join('')+'</div></div>'+
+        '<div class="field"><label for="w_dd">Điểm đạt tổng kết (thang 10)</label><input class="inp" type="number" step="0.5" min="0" max="10" id="w_dd" name="diemDat" value="'+f.diemDat+'"></div>'+
+        '<div class="field" style="justify-content:flex-end"><label class="check"><input type="checkbox" name="tuDangKy"'+(f.tuDangKy?' checked':'')+'> Cho phép học viên tự đăng ký trên cổng</label></div>'+
+      '</div>';
+    }
+    if(w.step===3){
+      var hp3=LMS.byId('hocPhan',w.hp), kt=LMS.byId('khoanThu',f.khoanThu);
+      h += '<dl class="kv"><dt>Mã lớp</dt><dd class="mono">'+esc(f.ma)+'</dd><dt>Tên lớp</dt><dd><b>'+esc(f.ten)+'</b></dd><dt>Chương trình</dt><dd>'+esc(LMS.name('chuongTrinh',w.ct))+'</dd><dt>Học phần</dt><dd>'+esc(hp3.ten)+' · '+hp3.bai.length+' bài giảng</dd><dt>Khoa quản lý</dt><dd>'+esc(LMS.donViTen(f.khoa))+'</dd><dt>Hình thức</dt><dd>'+esc(HT[f.hinhThuc])+'</dd><dt>Thời gian</dt><dd>'+LMS.fmtDate(f.batDau)+' – '+LMS.fmtDate(f.ketThuc)+' ('+LMS.daysBetween(f.batDau,f.ketThuc)+' ngày)</dd><dt>Giảng viên</dt><dd>'+esc(gvNames(f.gv).join(', '))+'</dd><dt>Sức chứa</dt><dd>'+(+f.sucChua?f.sucChua+' học viên':'Không giới hạn')+'</dd><dt>Học phí</dt><dd>'+(kt?esc(kt.ten)+' · '+U.money(kt.donGia*(1+kt.vat/100)):'Không thu phí')+'</dd><dt>Tự đăng ký</dt><dd>'+(f.tuDangKy?'Có':'Không')+'</dd><dt>Cột điểm mặc định</dt><dd>Chuyên cần 10% · Giữa kỳ 40% · Cuối kỳ 50% · đạt từ '+f.diemDat+'</dd></dl><div class="note info">Lớp được tạo ở trạng thái Lên kế hoạch. Chuyển sang Tuyển sinh khi đã sẵn sàng công bố lên cổng học viên.</div>';
+    }
+    b.innerHTML = h;
+    var nextBtn=document.getElementById('wNext'), back=document.getElementById('wBack');
+    back.disabled = w.step===1; nextBtn.textContent = w.step===3?'Tạo lớp':'Tiếp tục';
+    if(w.step===1){
+      var qi=b.querySelector('#wq'); qi.oninput=function(){ w.q=this.value; b.querySelector('#wTree').innerHTML=tree(); bindTree(); }; setTimeout(function(){ qi.focus(); qi.setSelectionRange(qi.value.length,qi.value.length); },20);
+      bindTree();
+    }
+    if(w.step===2){ var bd=b.querySelector('#w_bd'); bd.onchange=function(){ var kt=b.querySelector('#w_kt'); if(this.value) kt.min=LMS.iso(LMS.addDays(LMS.parse(this.value),1)); }; }
+  }
+  function bindTree(){ api.body.querySelectorAll('.leaf').forEach(function(r){ r.onclick=function(){ w.hp=r.dataset.hp; w.ct=r.dataset.ct; paint(); }; r.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); r.click(); } }; }); }
+  function collect(){ if(w.step!==2) return; var v=U.formVals(api.body); var f=w.f; f.ten=v.ten; f.khoa=v.khoa; f.hinhThuc=v.hinhThuc; f.batDau=v.batDau; f.ketThuc=v.ketThuc; f.sucChua=+v.sucChua||0; f.khoanThu=v.khoanThu; f.tuDangKy=v.tuDangKy; f.diemDat=+v.diemDat||5; f.gv=[].slice.call(api.body.querySelectorAll('[data-gv]:checked')).map(function(x){ return x.dataset.gv; }); }
+  function next(){
+    if(w.step===1){ if(!w.hp){ U.toast('Chọn một học phần trong cây chương trình','bad'); return; } var hp=LMS.byId('hocPhan',w.hp); if(!hp.bai.length){ U.toast('Học phần chưa có bài giảng, bổ sung ở màn Học phần trước khi mở lớp','bad'); return; } w.step=2; paint(); return; }
+    if(w.step===2){ collect(); var b=api.body, f=w.f, ok=true;
+      function chk(n,c,m){ U.fieldErr(b,n,c?'':m); if(!c) ok=false; }
+      chk('ten', f.ten.length>=3, 'Nhập tên lớp');
+      chk('ten', !db().lop.some(function(l){ return U.norm(l.ten)===U.norm(f.ten); }) || !f.ten, 'Tên lớp đã tồn tại');
+      chk('khoa', !!f.khoa, 'Chọn khoa quản lý');
+      chk('batDau', !!f.batDau, 'Chọn ngày bắt đầu');
+      chk('ketThuc', !!f.ketThuc && (!f.batDau || f.ketThuc > f.batDau), f.ketThuc?'Ngày kết thúc phải sau ngày bắt đầu':'Chọn ngày kết thúc');
+      var gvErr = b.querySelector('#gvList'); var gf = gvErr.closest('.field'); var e = gf.querySelector('.err')||gf.appendChild(Object.assign(document.createElement('div'),{className:'err'})); e.textContent = f.gv.length?'':'Chọn ít nhất một giảng viên'; if(!f.gv.length) ok=false;
+      if(!ok) return; w.step=3; paint(); return; }
+    if(w.step===3){ var f=w.f;
+      var lop = { id:LMS.nextId('lop'), ma:f.ma, ten:f.ten, chuongTrinh:w.ct, hocPhan:w.hp, khoa:f.khoa, batDau:f.batDau, ketThuc:f.ketThuc, giangVien:f.gv, hinhThuc:f.hinhThuc, sucChua:f.sucChua, khoanThu:f.khoanThu||null, tuDangKy:f.tuDangKy, trangThai:'ke-hoach', cotDiem:(f.hinhThuc==='truc-tuyen-gv'?[{ten:'Chuyên cần',ts:10,nguon:'diem-danh'}]:[]).concat([{ten:'Kiểm tra giữa kỳ',ts:40,nguon:'ky-thi',kyThi:null},{ten:'Thi cuối kỳ',ts:f.hinhThuc==='truc-tuyen-gv'?50:60,nguon:'ky-thi',kyThi:null}]), diemDat:f.diemDat };
+      db().lop.push(lop); db().tienDo[lop.id]={};
+      LMS.commit('Tạo','Lớp học',lop.ma+' · '+lop.ten, null, {ma:lop.ma,ten:lop.ten,hocPhan:LMS.name('hocPhan',lop.hocPhan),batDau:lop.batDau,ketThuc:lop.ketThuc});
+      api.close(); U.toast('Đã mở lớp '+lop.ma,'ok'); openDetail(lop.id); }
+  }
+  paint();
+}
+
+/* =================== CHI TIẾT =================== */
+function openDetail(id){ st.view='detail'; st.lop=id; st.tab = st.tab||'info'; render(); window.scrollTo(0,0); }
+function constraints(l){
+  var n=LMS.soHV(l.id), s=LMS.lopStats(l.id), r=[];
+  var coDD = db().buoiHoc.some(function(b){ return b.lop===l.id && b.diemDanh; });
+  var coDiem = db().baiLam.some(function(b){ var k=LMS.byId('kyThi',b.ky); return k && k.lop===l.id; });
+  var coTien = db().thanhToan.some(function(t){ return t.lop===l.id && t.trangThai==='da-thanh-toan'; });
+  var dk = db().dangKy.some(function(d){ return d.lop===l.id && d.trangThai==='cho-duyet'; });
+  var lockHP = n>0 || l.trangThai==='dang-hoc' || dk;
+  if(n>0) r.push('Lớp đã có '+n+' học viên ghi danh: không đổi học phần, sức chứa không nhỏ hơn '+n+'.');
+  if(dk) r.push('Còn đơn đăng ký chờ duyệt: không đổi học phần.');
+  if(l.trangThai==='dang-hoc') r.push('Lớp đang học: không đổi học phần, ngày bắt đầu.');
+  if(coDD) r.push('Đã điểm danh buổi học: không đổi hình thức học.');
+  if(coDiem) r.push('Đã có bài thi: không đổi cấu hình cột điểm gắn kỳ thi.');
+  if(coTien) r.push('Đã có học viên nộp học phí: không bỏ khoản thu.');
+  if(l.trangThai==='ket-thuc'||l.trangThai==='huy') r.push('Lớp '+LMS.TT_LOP[l.trangThai][0].toLowerCase()+': toàn bộ thông tin chỉ xem.');
+  return { list:r, lockHP:lockHP, lockHT:coDD, lockBD:l.trangThai==='dang-hoc', lockAll:l.trangThai==='ket-thuc'||l.trangThai==='huy', lockKT:coTien, minSC:n, coDiem:coDiem };
+}
+function renderDetail(){
+  var l = LMS.byId('lop', st.lop); if(!l){ st.view='list'; return renderList(); }
+  var s = LMS.lopStats(l.id), t=LMS.TT_LOP[l.trangThai], tg=LMS.trangThaiThoiGian(l);
+  var nBuoi = LMS.buoiCuaLop(l.id).length;
+  var h = '<div><a href="#" id="back">‹ Danh sách lớp</a></div>';
+  h += '<div class="panel"><div class="panel-body head-card"><div class="grow" style="min-width:0"><div class="row"><h1>'+esc(l.ten)+'</h1>'+U.badge(t[0],t[1])+U.badge(tg.label,tg.tone)+'</div><div class="meta"><span class="mono">'+esc(l.ma)+'</span> · '+esc(s.hp.ten)+' · '+esc(LMS.donViTen(l.khoa))+' · '+esc(HT[l.hinhThuc])+' · '+LMS.fmtDate(l.batDau)+' – '+LMS.fmtDate(l.ketThuc)+'</div></div><div class="row"><button class="btn" id="btnSt">Chuyển trạng thái ▾</button><button class="icon-btn" id="btnMore" aria-label="Thao tác khác">⋯</button></div></div>';
+  h += '<div class="stat-strip"><div><b>'+s.dangHoc+'</b><span>Học viên'+(l.sucChua?' / '+l.sucChua:'')+'</span></div><div><b>'+s.soBai+'</b><span>Bài giảng</span></div>'+(LMS.coDiemDanh(l)?'<div><b>'+s.buoiDaDay+'/'+s.buoiTong+'</b><span>Buổi đã dạy</span></div><div><b>'+(s.chuyenCan==null?'—':s.chuyenCan+'%')+'</b><span>Chuyên cần'+(s.buoiDaChot?' · '+s.buoiDaChot+' buổi':'')+'</span></div>':'<div><b>Tự học</b><span>Không lịch học, điểm danh</span></div>')+'<div><b>'+(s.tienDo==null?'—':s.tienDo+'%')+'</b><span>Tiến độ · KH '+s.keHoach+'%</span></div><div><b>'+(s.coDiem?s.dat+'/'+s.coDiem:'—')+'</b><span>Đạt / có điểm</span></div><div><b>'+ksOf(l).filter(function(k){ return LMS.ksTrangThai(k).key==='mo'; }).length+'</b><span>Khảo sát đang mở</span></div></div>';
+  var dd=LMS.coDiemDanh(l); if(!dd && st.tab==='buoi') st.tab='info';
+  var nHD=hdOf(l).length, nCho=hdOf(l).filter(function(t){ return LMS.hdChoTL(t); }).length, nTB=tbOf(l).filter(function(t){ return t.loai!=='tu-dong' && t.trangThai==='da-gui'; }).length, nKS=ksOf(l).length, nDK=db().dangKy.filter(function(d){ return d.lop===l.id && d.trangThai==='cho-duyet'; }).length;
+  var tabs=[['info','Thông tin lớp'],['hv','Học viên ('+s.soHV+')'],['nd','Nội dung học tập'],['td','Tiến độ học tập']].concat(dd?[['buoi','Buổi học và điểm danh ('+nBuoi+')']]:[]).concat([['diem','Điểm'],['hd','Hỏi đáp / Thảo luận ('+nHD+')'+(nCho?' <span class="dot-n">'+nCho+'</span>':'')],['tb','Thông báo ('+nTB+')'],['ks','Khảo sát ('+nKS+')'],['gv','Giảng viên ('+l.giangVien.length+')'],['dk','Quản lý đăng ký học'+(nDK?' <span class="dot-n">'+nDK+'</span>':'')]]);
+  if(!tabs.some(function(x){ return x[0]===st.tab; })) st.tab='info';
+  h += '<div class="tabs" role="tablist">'+tabs.map(function(x){ return '<button class="tab '+(st.tab===x[0]?'on':'')+'" data-tab="'+x[0]+'" role="tab">'+x[1]+'</button>'; }).join('')+'</div><div class="panel-body" id="tabBody"></div></div>';
+  document.getElementById('app').innerHTML = h;
+  document.getElementById('back').onclick=function(e){ e.preventDefault(); st.view='list'; st.tab='info'; render(); };
+  document.querySelectorAll('[data-tab]').forEach(function(b){ b.onclick=function(){ st.tab=b.dataset.tab; renderDetail(); }; });
+  document.getElementById('btnSt').onclick=function(){ changeStatus(this,l); };
+  document.getElementById('btnMore').onclick=function(){ U.menu(this,[{label:'Nhân bản lớp',onClick:function(){ cloneLop(l); }},{label:'Mở trên cổng học viên (xem trước)',onClick:function(){ U.toast('Trang lớp trên cổng học viên: '+l.ten); }},'-',{label:'Hủy lớp',danger:true,disabled:l.trangThai==='huy'||l.trangThai==='ket-thuc',onClick:function(){ cancelLop(l); }},{label:'Xóa lớp',danger:true,onClick:function(){ deleteLop(l); }}]); };
+  var tb=document.getElementById('tabBody');
+  ({info:tabInfo,hv:tabHV,nd:tabND,td:tabTD,buoi:tabBuoi,diem:tabDiem,hd:tabHD,tb:tabTB,ks:tabKS,gv:tabGV,dk:tabDK})[st.tab](tb,l);
+}
+
+/* ---- tab Thông tin ---- */
+function tabInfo(tb,l){
+  var d=db(), c=constraints(l), hp=LMS.hocPhanOfLop(l);
+  var ro=function(x){ return (c.lockAll||x)?' disabled':''; };
+  var h = '<div class="row" style="margin-bottom:12px"><h2>Thông tin lớp</h2><button class="help-btn right '+(c.list.length?'has ':'')+(st.help?'on':'')+'" id="helpBtn" title="'+(c.list.length?c.list.length+' ràng buộc đang áp dụng, bấm để xem':'Ghi chú các trường')+'" aria-expanded="'+st.help+'">?</button></div>';
+  if(st.help){ h += '<div class="help" style="margin-bottom:14px">'+(c.list.length?'<b>Ràng buộc đang áp dụng cho lớp này</b><ul>'+c.list.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>':'<b>Lớp chưa vướng ràng buộc nào</b>')+'<div style="margin-top:8px"><b>Ghi chú</b><ul><li>Học phần quyết định danh sách bài giảng, quy tắc mở bài và tiêu chí hoàn thành của lớp.</li><li>Khoa quản lý dùng để phân quyền báo cáo theo đơn vị.</li><li>Sức chứa 0 là không giới hạn số học viên.</li><li>Có khoản thu thì học viên đăng ký trên cổng phải thanh toán trước khi được ghi danh.</li></ul></div></div>'; }
+  var gvs=d.giangVien;
+  h += '<div class="cover" style="margin-bottom:12px"><div class="img" id="cvImg" style="'+(l.anhBia?'background-image:url('+l.anhBia+')':'')+'">'+(l.anhBia?'':'Ảnh minh họa mặc định')+'</div><div class="stack" style="gap:6px"><b class="small">Ảnh bìa lớp</b><span class="muted small">Hiển thị ở trang khám phá khóa học trên cổng học viên. JPG/PNG tối đa 2 MB, tỷ lệ 16:9.</span><div class="row" style="gap:6px"><label class="btn sm"'+(c.lockAll?' style="pointer-events:none;opacity:.5"':'')+'>⤴ Đổi ảnh<input type="file" accept="image/png,image/jpeg" id="cvF" hidden></label>'+(l.anhBia&&!c.lockAll?'<button class="btn sm danger" id="cvX">Bỏ ảnh bìa</button>':'')+'</div></div></div>';
+  h += '<form id="fInfo" class="form-grid">'+
+    '<div class="field"><label>Mã lớp</label><input class="inp mono" value="'+esc(l.ma)+'" disabled></div>'+
+    '<div class="field"><label for="i_tc">Tính chất lớp học</label><select class="sel" id="i_tc" name="tinhChat"'+ro()+'>'+U.opts(Object.keys(TC).map(function(k){ return {id:k,t:TC[k]}; }),'id','t',l.tinhChat||'chi-hoc')+'</select><div class="hint">Quyết định lớp có cấp chứng nhận/chứng chỉ khi học viên đạt.</div></div>'+
+    '<div class="field"><label for="i_ten">Tên lớp <span class="req">*</span></label><input class="inp" id="i_ten" name="ten" value="'+esc(l.ten)+'"'+ro()+'></div>'+
+    '<div class="field"><label for="i_khoa">Khoa quản lý <span class="req">*</span></label><select class="sel" id="i_khoa" name="khoa"'+ro()+'>'+U.opts(d.donVi.filter(function(x){return x.laKhoa;}),'id','ten',l.khoa,'Chọn khoa')+'</select></div>'+
+    '<div class="field"><label for="i_hp">Học phần'+(c.lockHP?' <span class="lock">· đã khóa</span>':'')+'</label><select class="sel" id="i_hp" name="hocPhan"'+ro(c.lockHP)+'>'+U.opts(d.hocPhan.filter(function(x){return x.trangThai==='hoat-dong'||x.id===l.hocPhan;}),'id',function(x){ return x.ten+' ('+x.bai.length+' bài)'; },l.hocPhan)+'</select></div>'+
+    '<div class="field"><label for="i_ht">Hình thức học'+(c.lockHT?' <span class="lock">· đã khóa</span>':'')+'</label><select class="sel" id="i_ht" name="hinhThuc"'+ro(c.lockHT)+'>'+U.opts(Object.keys(HT).map(function(k){return {id:k,ten:HT[k]};}),'id','ten',l.hinhThuc)+'</select><div class="hint">'+esc(HT_GHI[l.hinhThuc]||'')+'</div></div>'+
+    '<div class="field"><label for="i_bd">Ngày bắt đầu'+(c.lockBD?' <span class="lock">· đã khóa</span>':'')+'</label><input class="inp" type="date" id="i_bd" name="batDau" value="'+l.batDau+'"'+ro(c.lockBD)+'></div>'+
+    '<div class="field"><label for="i_kt">Ngày kết thúc</label><input class="inp" type="date" id="i_kt" name="ketThuc" value="'+l.ketThuc+'" min="'+LMS.iso(LMS.addDays(LMS.parse(l.batDau),1))+'"'+ro()+'></div>'+
+    '<div class="field"><label for="i_sc">Sức chứa</label><input class="inp" type="number" min="0" id="i_sc" name="sucChua" value="'+l.sucChua+'"'+ro()+'></div>'+
+    '<div class="field"><label for="i_kthu">Khoản thu'+(c.lockKT?' <span class="lock">· đã khóa</span>':'')+'</label><select class="sel" id="i_kthu" name="khoanThu"'+ro(c.lockKT)+'>'+U.opts(d.khoanThu,'id',function(k){ return k.ten+' · '+U.money(k.donGia*(1+k.vat/100)); },l.khoanThu,'Không thu phí')+'</select></div>'+
+    '<div class="field full"><label>Giảng viên phụ trách <span class="req">*</span></label><div class="gv-list" id="gvList">'+gvs.map(function(g){ return '<label class="check"><input type="checkbox" data-gv="'+g.id+'"'+(l.giangVien.indexOf(g.id)>=0?' checked':'')+ro()+'> '+esc(g.hoTen)+' <span class="muted small">· '+esc(LMS.donViTen(g.donVi))+'</span>'+(g.taiKhoan?'':' '+U.badge('Chưa có tài khoản','bad'))+'</label>'; }).join('')+'</div></div>'+
+    '<div class="field full muted small" style="margin-top:-6px">Giảng viên chính: <b>'+esc(LMS.name('giangVien',l.giangVien[0],'hoTen'))+'</b> · đổi giảng viên chính, vai trò trợ giảng ở tab Giảng viên.</div>'+
+    '<div class="field"><label for="i_stc">Số tín chỉ (STC)</label><input class="inp" type="number" min="0" max="10" id="i_stc" name="soTC" value="'+(l.soTC!=null?l.soTC:(hp?hp.soTC:0))+'"'+ro()+'><div class="hint">Hiển thị ở bảng điểm học vụ; để 0 nếu không tính tín chỉ.</div></div>'+
+    '<div class="field"><label for="i_dd">Điểm đạt tổng kết</label><input class="inp" type="number" step="0.5" min="0" max="10" id="i_dd" name="diemDat" value="'+l.diemDat+'"'+ro()+'></div>'+
+    '<div class="field" style="justify-content:flex-end"><label class="check"><input type="checkbox" name="tuDangKy"'+(l.tuDangKy?' checked':'')+ro()+'> Cho phép học viên tự đăng ký trên cổng</label><label class="check"><input type="checkbox" name="tinhDiem"'+(l.tinhDiem!==false?' checked':'')+ro()+'> Tính điểm học phần</label></div>'+
+    '<div class="field full"><label for="i_gc">Ghi chú</label><textarea id="i_gc" name="ghiChu" rows="2"'+ro()+'>'+esc(l.ghiChu||'')+'</textarea></div>'+
+    '</form>';
+  if(!c.lockAll) h += '<div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" id="iReset">Hoàn tác</button><button class="btn primary" id="iSave">Lưu thông tin</button></div>';
+  tb.innerHTML=h;
+  document.getElementById('helpBtn').onclick=function(){ st.help=!st.help; renderDetail(); };
+  var cvF=document.getElementById('cvF'); if(cvF) cvF.onchange=function(){ var f=cvF.files&&cvF.files[0]; if(!f) return; if(f.size>2*1024*1024){ U.toast('Ảnh vượt 2 MB','bad'); return; } var r=new FileReader(); r.onload=function(){ var im=new Image(); im.onload=function(){ var cv=document.createElement('canvas'); cv.width=480; cv.height=270; var x=cv.getContext('2d'), sc=Math.max(480/im.width,270/im.height); x.drawImage(im,(480-im.width*sc)/2,(270-im.height*sc)/2,im.width*sc,im.height*sc); l.anhBia=cv.toDataURL('image/jpeg',.8); LMS.commit('Đổi ảnh bìa','Lớp học',l.ma); U.toast('Đã cập nhật ảnh bìa','ok'); renderDetail(); }; im.src=r.result; }; r.readAsDataURL(f); };
+  var cvX=document.getElementById('cvX'); if(cvX) cvX.onclick=function(){ l.anhBia=null; LMS.commit('Bỏ ảnh bìa','Lớp học',l.ma); renderDetail(); };
+  if(c.lockAll) return;
+  document.getElementById('iReset').onclick=function(){ renderDetail(); };
+  document.getElementById('iSave').onclick=function(){
+    var f=document.getElementById('fInfo'), v=U.formVals(f), ok=true;
+    function chk(n,cond,m){ U.fieldErr(f,n,cond?'':m); if(!cond) ok=false; }
+    chk('ten', v.ten.length>=3, 'Nhập tên lớp');
+    chk('khoa', !!v.khoa, 'Chọn khoa');
+    chk('ketThuc', v.ketThuc > (c.lockBD?l.batDau:v.batDau), 'Ngày kết thúc phải sau ngày bắt đầu');
+    chk('sucChua', +v.sucChua===0 || +v.sucChua>=c.minSC, 'Sức chứa không nhỏ hơn số học viên đang có ('+c.minSC+')');
+    var gv=[].slice.call(f.querySelectorAll('[data-gv]:checked')).map(function(x){return x.dataset.gv;});
+    if(!gv.length){ U.toast('Chọn ít nhất một giảng viên','bad'); ok=false; }
+    if(!ok) return;
+    var before = { ten:l.ten, khoa:LMS.donViTen(l.khoa), hocPhan:LMS.name('hocPhan',l.hocPhan), ketThuc:l.ketThuc, sucChua:l.sucChua, giangVien:gvNames(l.giangVien).join(', ') };
+    if(v.tuDangKy && l.trangThai!=='tuyen-sinh' && l.trangThai!=='dang-hoc'){ U.toast('Tự đăng ký chỉ bật được khi lớp đang tuyển sinh hoặc đang học','bad'); return; }
+    var gvCu=l.giangVien; gv.sort(function(a,b){ var x=gvCu.indexOf(a), y=gvCu.indexOf(b); return (x<0?99:x)-(y<0?99:y); });
+    l.ten=v.ten; l.khoa=v.khoa; l.ketThuc=v.ketThuc; l.sucChua=+v.sucChua; l.giangVien=gv; l.diemDat=+v.diemDat||5; l.tuDangKy=v.tuDangKy; l.tinhChat=v.tinhChat; l.soTC=Math.max(0,+v.soTC||0); l.tinhDiem=v.tinhDiem; l.ghiChu=v.ghiChu;
+    if(!c.lockHP && v.hocPhan && v.hocPhan!==l.hocPhan){ l.hocPhan=v.hocPhan; db().tienDo[l.id]={}; }
+    var doiHT = !c.lockHT && v.hinhThuc && v.hinhThuc!==l.hinhThuc;
+    if(doiHT && v.hinhThuc!=='truc-tuyen-gv' && !st.htOk){ var nb=LMS.buoiCuaLop(l.id).length; U.confirm({title:'Chuyển sang '+HT[v.hinhThuc],html:'Lớp sẽ không còn lịch học và điểm danh.'+(nb?' <b>'+nb+'</b> buổi học đã lên lịch bị xóa.':'')+' Cột điểm Chuyên cần bị bỏ, trọng số chuyển sang cột cuối.',ok:'Chuyển'}).then(function(y){ if(y){ st.htOk=true; document.getElementById('iSave').click(); } }); return; }
+    st.htOk=false;
+    if(doiHT){ l.hinhThuc=v.hinhThuc; if(!LMS.coDiemDanh(l)) db().buoiHoc=db().buoiHoc.filter(function(b){ return b.lop!==l.id; }); var ghi=dongBoCotCC(l); if(ghi) U.toast('Đã '+ghi,'ok'); }
+    if(!c.lockBD) l.batDau=v.batDau; if(!c.lockKT) l.khoanThu=v.khoanThu||null;
+    LMS.commit('Sửa','Lớp học',l.ma+' · cập nhật thông tin', before, { ten:l.ten, khoa:LMS.donViTen(l.khoa), hocPhan:LMS.name('hocPhan',l.hocPhan), ketThuc:l.ketThuc, sucChua:l.sucChua, giangVien:gvNames(l.giangVien).join(', ') });
+    U.toast('Đã lưu thông tin lớp','ok'); renderDetail();
+  };
+}
+
+/* ---- tab Học viên ---- */
+function tabHV(tb,l){
+  var d=db(), dk=d.dangKy.filter(function(x){ return x.lop===l.id && x.trangThai==='cho-duyet'; });
+  var h='<div class="row" style="margin-bottom:10px"><h2>Danh sách học viên</h2><div class="right row"><button class="btn" id="hvPaste">Nhập theo mã học viên</button><button class="btn primary" id="hvAdd"'+(l.trangThai==='ket-thuc'||l.trangThai==='huy'?' disabled':'')+'>+ Thêm học viên</button></div></div>';
+  if(dk.length) h+='<div class="note warn" style="margin-bottom:10px">'+dk.length+' đơn đăng ký trên cổng đang chờ duyệt. <a href="#" id="goDk">Xử lý ở Thu học phí</a></div>';
+  h+='<div class="filters" style="margin-bottom:8px"><input class="inp" id="hvQ" placeholder="Tìm học viên…"><select class="sel" id="hvTT" aria-label="Trạng thái">'+U.opts(Object.keys(GD).map(function(k){return {id:k,ten:GD[k][0]};}),'id','ten','','Tất cả trạng thái')+'</select></div><div id="hvTbl"></div>';
+  tb.innerHTML=h;
+  var q='', tt='';
+  var t = U.table(document.getElementById('hvTbl'), { pageSize:15, rows:function(){ var nq=U.norm(q); return db().ghiDanh.filter(function(g){ if(g.lop!==l.id) return false; var hv=LMS.byId('hocVien',g.hv); if(nq&&U.norm(hv.hoTen+' '+hv.ma).indexOf(nq)<0) return false; if(tt&&g.trangThai!==tt) return false; return true; }).map(function(g){ return {id:g.id,g:g,hv:LMS.byId('hocVien',g.hv)}; }); },
+    empty:'Lớp chưa có học viên',
+    columns:[
+      {key:'hv',label:'Học viên',render:function(r){ return U.person(r.hv.hoTen, esc(r.hv.ma)+' · '+esc(r.hv.sdt)); },sortVal:function(r){ return r.hv.hoTen.split(' ').pop(); }},
+      {key:'ngay',label:'Ghi danh',render:function(r){ return LMS.fmtDate(r.g.ngay); },sortVal:function(r){return r.g.ngay;}},
+      {key:'tt',label:'Trạng thái',render:function(r){ var x=GD[r.g.trangThai]||[r.g.trangThai,'']; return U.badge(x[0],x[1]); },sortVal:function(r){return r.g.trangThai;}},
+      {key:'td',label:'Tiến độ',w:'150px',render:function(r){ if(r.g.trangThai==='cho-khai-giang') return '<span class="muted">—</span>'; var x=LMS.tienDoHV(l.id,r.hv.id); return U.prog(x.pct,null,x.done+'/'+x.tong); },sortVal:function(r){ return LMS.tienDoHV(l.id,r.hv.id).pct; }},
+      LMS.coDiemDanh(l)&&{key:'cc',label:'Chuyên cần',cls:'num',render:function(r){ var x=LMS.chuyenCanHV(l.id,r.hv.id); return x? '<span style="'+(x.pct<LMS.CC_CANH_BAO?'color:var(--ems-danger);font-weight:600':'')+'">'+x.pct+'%</span>'+(x.vangLienTiep>=2?' <span class="badge bad">vắng '+x.vangLienTiep+' buổi liền</span>':'') : '<span class="muted">—</span>'; },sortVal:function(r){ var x=LMS.chuyenCanHV(l.id,r.hv.id); return x?x.pct:null; }},
+      {key:'dtk',label:'Điểm TK',cls:'num',render:function(r){ var x=LMS.diemTongKet(l,r.hv.id); return x==null?'<span class="muted">—</span>':'<b style="color:'+(x>=l.diemDat?'var(--ems-success)':'var(--ems-danger)')+'">'+x.toFixed(1)+'</b>'; },sortVal:function(r){ return LMS.diemTongKet(l,r.hv.id); }},
+      {key:'rk',label:'Nguy cơ',render:function(r){ if(r.g.trangThai!=='dang-hoc') return ''; var x=LMS.riskOf(l.id,r.hv.id); if(!x) return ''; return x.muc==='cao'?'<span class="badge bad" title="'+esc(x.reasons.join('; '))+'">Cao</span>':x.muc==='tb'?'<span class="badge warn" title="'+esc(x.reasons.join('; '))+'">Theo dõi</span>':'<span class="badge ok">Ổn</span>'; },sortVal:function(r){ var x=LMS.riskOf(l.id,r.hv.id); return x?x.score:-1; }},
+      {key:'x',label:'',sortable:false,render:function(r){ return '<button class="icon-btn" data-g="'+r.g.id+'" aria-label="Thao tác">⋯</button>'; }}
+    ].filter(Boolean),
+    after:function(host){ host.querySelectorAll('[data-g]').forEach(function(b){ b.onclick=function(){ var g=d.ghiDanh.find(function(x){return x.id===b.dataset.g;}); gdMenu(b,l,g); }; }); }
+  });
+  document.getElementById('hvQ').oninput=function(){ q=this.value; t.render(true); };
+  document.getElementById('hvTT').onchange=function(){ tt=this.value; t.render(true); };
+  document.getElementById('hvAdd').onclick=function(){ addHV(l); };
+  document.getElementById('hvPaste').onclick=function(){ pasteHV(l); };
+  var gd=document.getElementById('goDk'); if(gd) gd.onclick=function(e){ e.preventDefault(); LMS.go('thu-hoc-phi.html',{tab:'dang-ky',lop:l.id}); };
+}
+function gdMenu(btn,l,g){
+  var hv=LMS.byId('hocVien',g.hv);
+  function setTT(tt,label,reason){ var b=g.trangThai; g.trangThai=tt; if(reason) g.lyDo=reason; LMS.commit(label,'Ghi danh',hv.ma+' · '+hv.hoTen+' · '+l.ma+(reason?' · '+reason:''),{trangThai:GD[b][0]},{trangThai:GD[tt][0]}); U.toast('Đã cập nhật: '+hv.hoTen+' → '+GD[tt][0],'ok'); renderDetail(); }
+  U.menu(btn,[
+    {label:'Xem hồ sơ học viên',onClick:function(){ LMS.go('hoc-vien.html',{hv:hv.id}); }},
+    {label:'Bảo lưu',disabled:g.trangThai!=='dang-hoc',onClick:function(){ reasonBox('Bảo lưu học viên '+hv.hoTen,'Bảo lưu',function(r){ setTT('bao-luu','Bảo lưu',r); }); }},
+    {label:'Học tiếp',disabled:g.trangThai!=='bao-luu',onClick:function(){ setTT('dang-hoc','Học tiếp'); }},
+    {label:'Chuyển lớp',disabled:g.trangThai!=='dang-hoc',onClick:function(){ moveHV(l,g); }},
+    '-',
+    {label:'Thôi học',danger:true,disabled:g.trangThai==='thoi-hoc'||g.trangThai==='hoan-thanh',onClick:function(){ reasonBox('Thôi học: '+hv.hoTen,'Xác nhận thôi học',function(r){ setTT('thoi-hoc','Thôi học',r); },true); }}
+  ]);
+}
+function reasonBox(title,ok,cb,danger){ U.modal({title:title,size:'sm',body:'<div class="field"><label for="rs">Lý do <span class="req">*</span></label><textarea id="rs" name="r"></textarea></div>',foot:[{label:'Hủy'},{label:ok,cls:danger?'danger solid':'primary',onClick:function(api){ var v=U.formVals(api.body).r; if(!v){ U.fieldErr(api.body,'r','Nhập lý do'); return false; } cb(v); }}]}); }
+function addHV(l){
+  var d=db(), inLop={}; d.ghiDanh.forEach(function(g){ if(g.lop===l.id && g.trangThai!=='thoi-hoc') inLop[g.hv]=1; });
+  var sel={}, q='';
+  var api=U.modal({title:'Thêm học viên vào '+l.ma, size:'lg', body:'<div class="filters"><input class="inp" id="aq" placeholder="Tìm theo họ tên, mã, CCCD, SĐT…"></div><div id="aList" style="max-height:380px;overflow:auto;border:1px solid var(--ems-border);border-radius:8px"></div><div class="muted small" id="aInfo"></div>',
+    foot:[{label:'Hủy'},{label:'Thêm vào lớp',cls:'primary',onClick:function(){ var ids=Object.keys(sel); if(!ids.length){ U.toast('Chưa chọn học viên','bad'); return false; } var cur=LMS.soHV(l.id); if(l.sucChua && cur+ids.length>l.sucChua){ U.toast('Vượt sức chứa: còn '+(l.sucChua-cur)+' chỗ','bad'); return false; }
+      var tt = l.trangThai==='dang-hoc'?'dang-hoc':'cho-khai-giang';
+      ids.forEach(function(id){ d.ghiDanh.push({id:LMS.nextId('gd'),lop:l.id,hv:id,ngay:LMS.iso(LMS.TODAY),trangThai:tt,hinhThuc:'moi'}); });
+      LMS.commit('Ghi danh','Lớp học',l.ma+' · thêm '+ids.length+' học viên'); U.toast('Đã thêm '+ids.length+' học viên vào lớp','ok'); renderDetail(); }}]});
+  function paint(){ var nq=U.norm(q); var list=d.hocVien.filter(function(h){ return h.trangThai!=='vo-hieu' && (!nq||U.norm(h.hoTen+' '+h.ma+' '+h.cccd+' '+h.sdt).indexOf(nq)>=0); }).slice(0,80);
+    api.body.querySelector('#aList').innerHTML = '<table class="tbl"><tbody>'+list.map(function(h){ var dis=inLop[h.id]; return '<tr><td style="width:32px"><input type="checkbox" data-a="'+h.id+'"'+(sel[h.id]?' checked':'')+(dis?' disabled':'')+' aria-label="Chọn"></td><td>'+U.person(h.hoTen,esc(h.ma)+' · '+esc(h.sdt))+'</td><td>'+(dis?U.badge('Đã trong lớp',''):'')+(h.taiKhoan?'':U.badge('Chưa có tài khoản','warn'))+'</td></tr>'; }).join('')+'</tbody></table>';
+    api.body.querySelector('#aInfo').textContent='Đã chọn '+Object.keys(sel).length+' học viên'+(l.sucChua?' · lớp còn '+Math.max(0,l.sucChua-LMS.soHV(l.id))+' chỗ':'');
+    api.body.querySelectorAll('[data-a]').forEach(function(c){ c.onchange=function(){ if(c.checked) sel[c.dataset.a]=1; else delete sel[c.dataset.a]; api.body.querySelector('#aInfo').textContent='Đã chọn '+Object.keys(sel).length+' học viên'; }; }); }
+  api.body.querySelector('#aq').oninput=function(){ q=this.value; paint(); }; paint();
+}
+function pasteHV(l){
+  U.modal({title:'Nhập học viên theo mã',body:'<div class="field"><label for="pm">Mã học viên, mỗi dòng một mã hoặc cách nhau bằng dấu phẩy</label><textarea id="pm" name="m" placeholder="HV0012&#10;HV0045"></textarea></div><div id="pmRes"></div>',foot:[{label:'Đóng'},{label:'Kiểm tra',close:false,onClick:function(api){ var codes=U.formVals(api.body).m.split(/[\s,;]+/).filter(Boolean).map(function(x){return x.toUpperCase();}); var d=db(), ok=[], dup=[], miss=[];
+    codes.forEach(function(c){ var h=d.hocVien.find(function(x){return x.ma===c;}); if(!h) miss.push(c); else if(d.ghiDanh.some(function(g){return g.lop===l.id&&g.hv===h.id&&g.trangThai!=='thoi-hoc';})) dup.push(c); else ok.push(h); });
+    api.body.querySelector('#pmRes').innerHTML='<div class="note '+(miss.length?'warn':'ok')+'">Hợp lệ: <b>'+ok.length+'</b> · Đã trong lớp: '+dup.length+' · Không tìm thấy: '+miss.length+(miss.length?' ('+esc(miss.join(', '))+')':'')+'</div>'+(ok.length?'<button class="btn primary" id="pmOk" style="margin-top:8px">Thêm '+ok.length+' học viên</button>':'');
+    var b=api.body.querySelector('#pmOk'); if(b) b.onclick=function(){ var tt=l.trangThai==='dang-hoc'?'dang-hoc':'cho-khai-giang'; ok.forEach(function(h){ d.ghiDanh.push({id:LMS.nextId('gd'),lop:l.id,hv:h.id,ngay:LMS.iso(LMS.TODAY),trangThai:tt,hinhThuc:'moi'}); }); LMS.commit('Ghi danh','Lớp học',l.ma+' · nhập '+ok.length+' học viên theo mã'); api.close(); U.toast('Đã thêm '+ok.length+' học viên','ok'); renderDetail(); };
+    return false; }}]});
+}
+function moveHV(l,g){
+  var hv=LMS.byId('hocVien',g.hv), others=db().lop.filter(function(x){ return x.id!==l.id && x.hocPhan===l.hocPhan && (x.trangThai==='dang-hoc'||x.trangThai==='tuyen-sinh'); });
+  if(!others.length){ U.toast('Không có lớp cùng học phần đang mở để chuyển','bad'); return; }
+  U.modal({title:'Chuyển lớp: '+hv.hoTen,size:'sm',body:'<div class="field"><label for="mv">Lớp chuyển đến</label><select class="sel" id="mv" name="to">'+U.opts(others,'id',function(x){ return x.ma+' · '+x.ten+' ('+LMS.soHV(x.id)+(x.sucChua?'/'+x.sucChua:'')+')'; })+'</select></div><div class="muted small">Tiến độ bài giảng được chuyển theo vì cùng học phần.</div>',foot:[{label:'Hủy'},{label:'Chuyển lớp',cls:'primary',onClick:function(api){ var to=LMS.byId('lop',U.formVals(api.body).to); if(to.sucChua && LMS.soHV(to.id)>=to.sucChua){ U.toast('Lớp đích đã đủ sức chứa','bad'); return false; }
+    g.trangThai='thoi-hoc'; g.lyDo='Chuyển sang '+to.ma; db().ghiDanh.push({id:LMS.nextId('gd'),lop:to.id,hv:hv.id,ngay:LMS.iso(LMS.TODAY),trangThai:to.trangThai==='dang-hoc'?'dang-hoc':'cho-khai-giang',hinhThuc:'chuyen-lop'});
+    var td=(db().tienDo[l.id]||{})[hv.id]; if(td){ db().tienDo[to.id]=db().tienDo[to.id]||{}; db().tienDo[to.id][hv.id]=td; }
+    LMS.commit('Chuyển lớp','Ghi danh',hv.ma+' · '+l.ma+' → '+to.ma); U.toast('Đã chuyển '+hv.hoTen+' sang '+to.ma,'ok'); renderDetail(); }}]});
+}
+
+/* ---- tab Nội dung & tiến độ ---- */
+function tabND(tb,l){
+  var hp=LMS.hocPhanOfLop(l), gds=db().ghiDanh.filter(function(g){ return g.lop===l.id && (g.trangThai==='dang-hoc'||g.trangThai==='hoan-thanh'); }), n=gds.length;
+  var rule = hp.quyTac==='mo-toan-bo' ? 'Mở toàn bộ bài' : 'Mở theo điều kiện tiên quyết';
+  var h='<div class="row" style="margin-bottom:10px"><div><h2>'+esc(hp.ten)+'</h2><div class="muted small">'+rule+' · Hoàn thành bài khi '+[hp.tieuChi.xemOn!==false?'xem ≥ '+hp.tieuChi.xem+'%':'', hp.tieuChi.quizOn!==false?(hp.tieuChi.quizKieu==='pct'?'quiz đúng ≥ '+hp.tieuChi.quizPct+'%':'quiz ≥ '+hp.tieuChi.quizDiem+' điểm')+' (bài có quiz)':''].filter(Boolean).join(' và ')+'</div></div><div class="right row"><button class="btn" id="goHP">Sửa nội dung ở Học phần</button></div></div><div id="ndT"></div>';
+  tb.innerHTML=h;
+  st.tdView='bai';
+  document.getElementById('goHP').onclick=function(){ LMS.go('hoc-phan.html',{hocPhan:hp.id,tab:'nd'}); };
+  if(st.tdView==='bai'){
+    U.table(document.getElementById('ndT'),{ pageSize:30, countLabel:false, rows: hp.bai.map(function(b,i){ var done=0, qs=[]; gds.forEach(function(g){ var t=LMS.tienDoHV(l.id,g.hv); if(t.done>i) done++; if(t.quiz[b.id]!=null) qs.push(t.quiz[b.id]); }); return {id:b.id,i:i,b:b,done:done,qavg:qs.length?qs.reduce(function(a,c){return a+c;},0)/qs.length:null}; }),
+      columns:[
+        {key:'i',label:'#',cls:'num',render:function(r){ return r.i+1; }},
+        {key:'b',label:'Bài giảng',render:function(r){ return '<div class="t-main">'+esc(r.b.ten)+'</div><div class="t-sub">'+r.b.phut+' phút'+(r.b.quiz?' · Quiz '+r.b.quiz+' câu':'')+(r.b.tienQuyet.length&&hp.quyTac!=='mo-toan-bo'?' · mở khi xong '+r.b.tienQuyet.map(function(id){ return 'bài '+(hp.bai.findIndex(function(x){return x.id===id;})+1); }).join(', '):'')+'</div>'; },sortable:false},
+        {key:'done',label:'Đã hoàn thành',w:'220px',render:function(r){ return n?U.prog(Math.round(r.done/n*100),null,r.done+'/'+n):'<span class="muted">Chưa có học viên</span>'; },sortVal:function(r){return r.done;}},
+        {key:'q',label:'Điểm quiz TB',cls:'num',render:function(r){ return r.qavg==null?'<span class="muted">—</span>':'<b style="color:'+(r.qavg<hp.tieuChi.quizDiem?'var(--ems-danger)':'inherit')+'">'+r.qavg.toFixed(1)+'</b>'; },sortVal:function(r){return r.qavg;}},
+        {key:'bt',label:'Bài tập',render:function(r){ var bts=db().baiTap.filter(function(x){ return x.lop===l.id && x.phamVi.bai.indexOf(r.b.id)>=0; }); var open = l.trangThai==='dang-hoc'||l.trangThai==='tuyen-sinh'; return '<div class="row" style="gap:4px">'+bts.map(function(x){ var ss=LMS.btStatus(x); return '<a href="#" class="tag" data-gobt="'+x.id+'" title="'+esc(x.ten+' · '+ss.label)+'">'+esc(x.ma)+'</a>'; }).join('')+(open?'<a href="#" class="small" data-giaobt="'+r.b.id+'">+ Giao</a>':'')+'</div>'; },sortable:false}
+      ], after:function(host){ host.querySelectorAll('[data-gobt]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); LMS.go('bai-tap.html',{bt:a.dataset.gobt}); }; }); host.querySelectorAll('[data-giaobt]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); LMS.go('bai-tap.html',{lop:l.id,moi:true,bai:a.dataset.giaobt}); }; }); }});
+  } else {
+    U.table(document.getElementById('ndT'),{ pageSize:20, rows: gds.map(function(g){ return {id:g.id,hv:LMS.byId('hocVien',g.hv),t:LMS.tienDoHV(l.id,g.hv)}; }), sort:'pct',
+      columns:[
+        {key:'hv',label:'Học viên',render:function(r){ return U.person(r.hv.hoTen,esc(r.hv.ma)); },sortVal:function(r){return r.hv.hoTen;}},
+        {key:'at',label:'Đang ở bài',render:function(r){ var b=hp.bai[Math.min(r.t.done,hp.bai.length-1)]; return r.t.done>=hp.bai.length?U.badge('Đã học hết','ok'):esc(b.ten); },sortable:false},
+        {key:'pct',label:'Hoàn thành',w:'170px',render:function(r){ var kh=LMS.keHoachPct(l); return U.prog(r.t.pct, r.t.pct<kh-20?'bad':r.t.pct<kh-5?'warn':'', r.t.done+'/'+r.t.tong); },sortVal:function(r){return r.t.pct;}},
+        {key:'q',label:'Quiz TB',cls:'num',render:function(r){ var qs=Object.keys(r.t.quiz).map(function(k){return r.t.quiz[k];}); return qs.length?(qs.reduce(function(a,b){return a+b;},0)/qs.length).toFixed(1):'<span class="muted">—</span>'; },sortable:false},
+        {key:'last',label:'Học gần nhất',render:function(r){ if(!r.t.lastAt) return '<span class="muted">Chưa học</span>'; var dd=LMS.daysBetween(r.t.lastAt,LMS.TODAY); return LMS.fmtDate(r.t.lastAt)+(dd>=7?' '+U.badge(dd+' ngày trước','warn'):''); },sortVal:function(r){return r.t.lastAt;}}
+      ]});
+  }
+}
+
+/* ---- tab Buổi học và điểm danh ----
+   Lịch học của lớp tạo và quản lý tại đây; điểm danh lấy tự động từ nhật ký phòng học trực tuyến, giảng viên rà soát và xác nhận. */
+function tabBuoi(tb,l){
+  if(LMS.dongBoBuoi(true)) LMS.save();
+  var BU=LMS.buoiUI, bs=LMS.buoiCuaLop(l.id), s0=LMS.lopStats(l.id), ro=l.trangThai==='ket-thuc'||l.trangThai==='huy', now=Date.now();
+  var huyN=bs.filter(function(b){ return b.huy; }).length, ke=bs.filter(function(b){ return !b.huy && LMS.buoiMoc(b).bd.getTime()>now; })[0];
+  var xpCho=bs.reduce(function(a,b){ return a+(b.huy?0:BU.choDuyet(b)); },0);
+  var ctx={vaiTro:'pdt', onDone:renderDetail};
+  st.bV=st.bV||'ds'; st.bF=st.bF||'all';
+  var h=kpiRow([
+    ['Tổng số buổi',bs.length-huyN,huyN?huyN+' buổi đã hủy':''],
+    ['Đã dạy',s0.buoiDaDay,s0.buoiTong>s0.buoiDaDay?'còn '+(s0.buoiTong-s0.buoiDaDay)+' buổi':'đã dạy hết lịch'],
+    ['Chờ xác nhận',s0.buoiChoXN,s0.buoiChoXN?'kết quả tự động, GV chưa chốt':'không có',s0.buoiChoXN?'warn':''],
+    ['Chưa có điểm danh',s0.buoiChuaDD,s0.buoiChuaDD?'thiếu nhật ký phòng học':'không có',s0.buoiChuaDD?'bad':''],
+    ['Chuyên cần',s0.chuyenCan==null?'—':s0.chuyenCan+'%',s0.buoiDaChot?(s0.hvDuoiNguong?s0.hvDuoiNguong+' HV dưới '+LMS.CC_CANH_BAO+'%':'không HV dưới '+LMS.CC_CANH_BAO+'%'):'chưa có buổi điểm danh',s0.hvDuoiNguong?'warn':''],
+    ['Buổi kế tiếp',ke?LMS.fmtDate(ke.ngay):'—',ke?ke.gio+'–'+ke.den+' · '+LMS.name('giangVien',ke.gv,'hoTen'):'']
+  ]);
+  h+='<div class="row" style="margin:12px 0 10px"><div class="seg" id="bView"><button data-v="ds"'+(st.bV==='ds'?' class="on"':'')+'>Danh sách buổi</button><button data-v="cc"'+(st.bV==='cc'?' class="on"':'')+'>Bảng chuyên cần</button></div>'+
+    '<span class="muted small">Điểm danh tự động theo nhật ký phòng học trực tuyến'+(xpCho?' · <b style="color:var(--ems-warning)">'+xpCho+' đơn xin vắng chờ duyệt</b>':'')+'</span>'+
+    '<div class="right row"><button class="btn" id="bRule">Quy tắc điểm danh</button>'+(ro?'':'<button class="btn" id="bDK">Tạo lịch định kỳ</button><button class="btn primary" id="bAdd">+ Thêm buổi</button>')+'</div></div><div id="bT"></div>';
+  tb.innerHTML=h;
+  document.querySelectorAll('#bView button').forEach(function(x){ x.onclick=function(){ st.bV=x.dataset.v; renderDetail(); }; });
+  document.getElementById('bRule').onclick=function(){ BU.quyTac({onDone:renderDetail}); };
+  if(!ro){ document.getElementById('bDK').onclick=function(){ BU.dinhKy({lop:l.id,onDone:renderDetail}); }; document.getElementById('bAdd').onclick=function(){ BU.form(null,{lop:l.id,onDone:renderDetail}); }; }
+  if(st.bV==='cc') return bangChuyenCan(document.getElementById('bT'),l,ctx);
+  var host=document.getElementById('bT');
+  var F=[['all','Tất cả'],['sap','Sắp tới'],['day','Đã dạy'],['can','Cần xử lý'],['huy','Đã hủy']];
+  function hop(b){ var k=LMS.buoiStatus(b).key; if(st.bF==='sap') return k==='sap'||k==='hom-nay'||k==='dang'; if(st.bF==='day') return k==='xong'||k==='cho-xn'||k==='chua-dd'; if(st.bF==='can') return k==='cho-xn'||k==='chua-dd'||(!b.huy&&BU.choDuyet(b)>0); if(st.bF==='huy') return k==='huy'; return true; }
+  host.innerHTML='<div class="seg" id="bF" style="margin-bottom:10px">'+F.map(function(f){ var n=bs.filter(function(b){ var o=st.bF; st.bF=f[0]; var r=hop(b); st.bF=o; return r; }).length; return '<button data-v="'+f[0]+'"'+(st.bF===f[0]?' class="on"':'')+'>'+f[1]+' '+n+'</button>'; }).join('')+'</div><div id="bTT"></div>';
+  host.querySelectorAll('#bF button').forEach(function(x){ x.onclick=function(){ st.bF=x.dataset.v; renderDetail(); }; });
+  U.table(document.getElementById('bTT'),{ pageSize:15, rows:bs.filter(hop), empty:'Không có buổi học phù hợp', columns:[
+    {key:'ten',label:'Buổi',render:function(b){ return '<div class="t-main">'+esc(b.ten)+(b.hocBu?' <span class="tag">học bù</span>':'')+'</div>'+(b.chuDe?'<div class="t-sub" style="max-width:260px">'+esc(b.chuDe)+'</div>':''); },sortVal:function(b){ return b.ngay+b.gio; }},
+    {key:'ngay',label:'Ngày · giờ',render:function(b){ return '<div class="nw">'+LMS.THU[LMS.parse(b.ngay).getDay()]+', '+LMS.fmtDate(b.ngay)+'</div><div class="t-sub num">'+esc(b.gio+'–'+b.den)+'</div>'; },sortVal:function(b){ return b.ngay+b.gio; }},
+    {key:'gv',label:'Giảng viên · phòng',render:function(b){ return esc(LMS.name('giangVien',b.gv,'hoTen'))+'<div class="t-sub">'+esc(b.phong)+'</div>'; },sortable:false},
+    {key:'st',label:'Trạng thái',render:function(b){ return BU.oTrangThai(b)+(b.huy&&b.lyDoHuy?'<div class="t-sub" title="'+esc(b.lyDoHuy)+'">'+esc(b.lyDoHuy.length>34?b.lyDoHuy.slice(0,32)+'…':b.lyDoHuy)+'</div>':''); },sortable:false},
+    {key:'dd',label:'Điểm danh',cls:'num',render:function(b){ return BU.oDiemDanh(b); },sortable:false},
+    {key:'x',label:'',sortable:false,cls:'num',render:function(b){ var a=BU.hanhDongChinh(b); return '<span class="nw">'+(a?'<button class="btn sm '+a.cls+'" data-bo="'+b.id+'">'+a.label+'</button> ':'')+'<button class="icon-btn" data-bm="'+b.id+'" aria-label="Thao tác">⋯</button></span>'; }}
+  ], after:function(hh){
+    hh.querySelectorAll('[data-bo]').forEach(function(x){ x.onclick=function(e){ e.stopPropagation(); BU.chiTiet(LMS.byId('buoiHoc',x.dataset.bo),ctx); }; });
+    hh.querySelectorAll('[data-bm]').forEach(function(x){ x.onclick=function(e){ e.stopPropagation(); var b=LMS.byId('buoiHoc',x.dataset.bm); if(ro) U.menu(x,[{label:'Chi tiết buổi',onClick:function(){ BU.chiTiet(b,ctx); }}]); else BU.menu(x,b,ctx); }; });
+  } });
+}
+function bangChuyenCan(host,l,ctx){
+  var BU=LMS.buoiUI, bs=LMS.buoiCuaLop(l.id).filter(function(b){ return !b.huy && b.diemDanh; });
+  var gds=db().ghiDanh.filter(function(g){ return g.lop===l.id && g.trangThai!=='cho-khai-giang'; });
+  st.ccLoc=st.ccLoc||false;
+  var rows=gds.map(function(g){ var hv=LMS.byId('hocVien',g.hv); return {g:g,hv:hv,cc:LMS.chuyenCanHV(l.id,g.hv)}; }).filter(function(r){ return r.hv && (!st.ccLoc || (r.cc && r.cc.pct<LMS.CC_CANH_BAO)); });
+  rows.sort(function(a,b){ return a.hv.ma<b.hv.ma?-1:1; });
+  if(!bs.length){ host.innerHTML='<div class="empty">Chưa có buổi học nào có kết quả điểm danh</div>'; return; }
+  var SY={co:['✓','c-co'],vang:['V','c-vang'],phep:['P','c-phep']};
+  var h='<div class="row" style="margin-bottom:8px"><label class="check"><input type="checkbox" id="ccLoc"'+(st.ccLoc?' checked':'')+'> Chỉ học viên chuyên cần dưới '+LMS.CC_CANH_BAO+'%</label><span class="muted small">✓ có mặt · M có mặt, đi muộn · V vắng · P có phép · chấm dưới: điều chỉnh sau rà soát · cột in nghiêng: chưa chốt</span><button class="btn sm right" id="ccCsv">Xuất CSV</button></div>';
+  h+='<div class="tbl-wrap"><table class="tbl ccm"><thead><tr><th class="l">Mã HV</th><th class="l">Họ và tên</th>'+bs.map(function(b){ return '<th class="'+(b.chot?'':'nc')+'" title="'+esc(b.ten+' · '+LMS.fmtDate(b.ngay)+(b.chot?'':' · chưa chốt'))+'"><button class="lnk" data-cb="'+b.id+'">'+esc(b.ten.replace('Buổi ','B'))+'</button><div class="t-sub">'+LMS.fmtDate(b.ngay).slice(0,5)+'</div></th>'; }).join('')+'<th>Có mặt</th><th>Có phép</th><th>Vắng</th><th>Chuyên cần</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    h+='<tr'+(r.g.trangThai==='thoi-hoc'?' class="muted"':'')+'><td class="l"><span class="mono">'+esc(r.hv.ma)+'</span></td><td class="l nw">'+esc(r.hv.hoTen)+(r.g.trangThai==='thoi-hoc'?' <span class="tag">thôi học</span>':'')+'</td>';
+    bs.forEach(function(b){ var v=b.diemDanh[r.hv.id]; if(!v){ h+='<td class="muted">·</td>'; return; } var a=b.thamGia?LMS.ddTuDong(b,r.hv.id):null, sy=SY[v], t=sy[0]; if(v==='co'&&a&&a.muon) t='M'; var dc=(b.dieuChinh||{})[r.hv.id]; h+='<td class="'+sy[1]+(dc?' c-dc':'')+'" title="'+esc(BU.TT[v][0]+(a&&a.vao?' · '+a.phut+' phút ('+a.pct+'%)':'')+(dc?' · điều chỉnh: '+dc.ghiChu:''))+'">'+t+'</td>'; });
+    var c=r.cc; h+='<td class="num">'+(c?c.co:'—')+'</td><td class="num">'+(c?c.phep:'—')+'</td><td class="num">'+(c?c.vang:'—')+'</td><td class="num"><b style="color:'+(c&&c.pct<LMS.CC_NGUY_CO?'var(--ems-danger)':c&&c.pct<LMS.CC_CANH_BAO?'var(--ems-warning)':'inherit')+'">'+(c?c.pct+'%':'—')+'</b></td></tr>';
+  });
+  if(!rows.length) h+='<tr><td colspan="'+(bs.length+6)+'" class="muted" style="text-align:center;padding:16px">Không có học viên dưới ngưỡng</td></tr>';
+  h+='</tbody></table></div>';
+  host.innerHTML=h;
+  document.getElementById('ccLoc').onchange=function(e){ st.ccLoc=e.target.checked; bangChuyenCan(host,l,ctx); };
+  host.querySelectorAll('[data-cb]').forEach(function(x){ x.onclick=function(){ BU.chiTiet(LMS.byId('buoiHoc',x.dataset.cb),ctx); }; });
+  document.getElementById('ccCsv').onclick=function(){ var out=[['Mã HV','Họ và tên'].concat(bs.map(function(b){ return b.ten+' '+LMS.fmtDate(b.ngay); })).concat(['Có mặt','Có phép','Vắng','Chuyên cần (%)'])]; rows.forEach(function(r){ out.push([r.hv.ma,r.hv.hoTen].concat(bs.map(function(b){ var v=b.diemDanh[r.hv.id]; return v?BU.TT[v][0]:''; })).concat(r.cc?[r.cc.co,r.cc.phep,r.cc.vang,r.cc.pct]:['','','',''])); }); csv('chuyen-can-'+l.ma+'.csv',out); };
+}
+
+/* ---- tab Bảng điểm ---- */
+function tabDiem(tb,l){
+  var d=db(), c=constraints(l), kys=d.kyThi.filter(function(k){ return k.lop===l.id; });
+  var sumTS=l.cotDiem.reduce(function(a,x){return a+(+x.ts||0);},0);
+  var h='<div class="row" style="margin-bottom:10px"><h2>Cấu hình cột điểm</h2><span class="muted small">Tổng trọng số '+sumTS+'% · điểm đạt '+l.diemDat+'</span><div class="right row"><button class="btn" id="goBT">Bài tập của lớp ('+d.baiTap.filter(function(b){ return b.lop===l.id; }).length+')</button><button class="btn" id="cfgCol">Sửa cột điểm</button><button class="btn" id="expDiem">Xuất bảng điểm CSV</button></div></div>';
+  h+='<div class="grid g3" style="margin-bottom:14px">'+l.cotDiem.map(function(col,i){ var src = col.nguon==='diem-danh'?'Tự động từ điểm danh':col.nguon==='nhap'?'Giảng viên nhập':col.nguon==='bai-tap'?'Từ bài tập · '+(col.gop==='cao-nhat'?'lấy điểm cao nhất':'trung bình các bài')+(col.khongNop==='tinh-0'?', không nộp tính 0':''):'Từ kỳ thi'; var extra=''; if(col.nguon==='bai-tap'){ var bts=(col.baiTap||[]).map(function(id){ return LMS.byId('baiTap',id); }).filter(Boolean); extra = bts.length ? '<div class="row" style="gap:4px;margin-top:4px">'+bts.map(function(b){ var ss=LMS.btStats(b); return '<a href="#" class="tag" data-gobt="'+b.id+'" title="'+esc(b.ten)+' · '+ss.daCham+'/'+ss.tong+' đã chấm">'+esc(b.ma)+'</a>'; }).join('')+'</div>' : '<div>'+U.badge('Chưa có bài tập chuyển điểm','warn')+'</div>'; } if(col.nguon==='ky-thi'){ var k=LMS.byId('kyThi',col.kyThi); extra = k? '<div class="small">'+esc(k.ten)+'</div><div>'+U.badge(LMS.kyThiStatus(k).label,LMS.kyThiStatus(k).tone)+(k.congBo?'':' <span class="muted small">điểm hiện khi công bố</span>')+'</div>' : '<div>'+U.badge('Chưa gắn kỳ thi','warn')+' <a href="#" data-goky="1" class="small">Tạo kỳ thi</a></div>'; }
+    return '<div class="kpi"><div class="k-label">'+esc(col.ten)+' · '+col.ts+'%</div><div class="small">'+src+'</div>'+extra+'</div>'; }).join('')+'</div>';
+  h+='<div id="dT"></div>';
+  tb.innerHTML=h;
+  document.querySelectorAll('[data-gobt]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); LMS.go('bai-tap.html',{bt:a.dataset.gobt}); }; });
+  document.getElementById('goBT').onclick=function(){ LMS.go('bai-tap.html',{lop:l.id}); };
+  document.querySelectorAll('[data-goky]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); LMS.go('ky-thi.html',{lop:l.id,moi:true}); }; });
+  var gds=d.ghiDanh.filter(function(g){ return g.lop===l.id && g.trangThai!=='thoi-hoc' && g.trangThai!=='cho-khai-giang'; });
+  d.diemNhap = d.diemNhap || {};
+  var cols=[{key:'hv',label:'Học viên',render:function(r){ return U.person(r.hv.hoTen,esc(r.hv.ma)); },sortVal:function(r){return r.hv.hoTen.split(' ').pop();}}];
+  l.cotDiem.forEach(function(col,i){ cols.push({key:'c'+i,label:col.ten+' '+col.ts+'%',cls:'num',render:function(r){ if(col.nguon==='nhap' && l.trangThai!=='ket-thuc'){ var v=d.diemNhap[l.id+':'+r.hv.id+':'+i]; return '<input class="inp score-inp" type="number" min="0" max="10" step="0.1" data-dn="'+r.hv.id+':'+i+'" value="'+(v==null?'':v)+'" aria-label="Điểm '+esc(col.ten)+'">'; } var v2=LMS.diemCot(l,r.hv.id,i); return v2==null?'<span class="muted">—</span>':v2.toFixed(1); },sortVal:function(r){ return LMS.diemCot(l,r.hv.id,i); }}); });
+  cols.push({key:'tk',label:'Tổng kết',cls:'num',render:function(r){ var v=LMS.diemTongKet(l,r.hv.id); return v==null?'<span class="muted">—</span>':'<b>'+v.toFixed(1)+'</b>'; },sortVal:function(r){ return LMS.diemTongKet(l,r.hv.id); }});
+  cols.push({key:'kq',label:'Kết quả',render:function(r){ var v=LMS.diemTongKet(l,r.hv.id); return v==null?U.badge('Chưa đủ điểm',''):v>=l.diemDat?U.badge('Đạt','ok'):U.badge('Chưa đạt','bad'); },sortable:false});
+  U.table(document.getElementById('dT'),{ pageSize:40, rows:gds.map(function(g){ return {id:g.id,hv:LMS.byId('hocVien',g.hv)}; }), columns:cols, empty:'Lớp chưa có học viên',
+    after:function(host){ host.querySelectorAll('[data-dn]').forEach(function(inp){ inp.onchange=function(){ var v=inp.value===''?null:Math.max(0,Math.min(10,+inp.value)); var k=l.id+':'+inp.dataset.dn; if(v==null) delete d.diemNhap[k]; else d.diemNhap[k]=v; LMS.commit('Nhập điểm','Bảng điểm',l.ma+' · '+LMS.name('hocVien',inp.dataset.dn.split(':')[0],'hoTen')); }; }); } });
+  document.getElementById('cfgCol').onclick=function(){ editCols(l,c); };
+  document.getElementById('expDiem').onclick=function(){ var rows=[['Mã HV','Họ tên'].concat(l.cotDiem.map(function(x){return x.ten;})).concat(['Tổng kết','Kết quả'])]; gds.forEach(function(g){ var hv=LMS.byId('hocVien',g.hv); var tk=LMS.diemTongKet(l,hv.id); rows.push([hv.ma,hv.hoTen].concat(l.cotDiem.map(function(x,i){ var v=LMS.diemCot(l,hv.id,i); return v==null?'':v; })).concat([tk==null?'':tk, tk==null?'Chưa đủ điểm':tk>=l.diemDat?'Đạt':'Chưa đạt'])); }); csv('bang-diem-'+l.ma+'.csv', rows); };
+}
+function editCols(l,c){
+  var work=JSON.parse(JSON.stringify(l.cotDiem)), kys=db().kyThi.filter(function(k){ return k.lop===l.id; });
+  var api=U.modal({title:'Cột điểm lớp '+l.ma,size:'lg',body:'<div></div>',foot:[{label:'Hủy'},{label:'Lưu',cls:'primary',onClick:function(){ var s=work.reduce(function(a,x){return a+(+x.ts||0);},0); if(s!==100){ U.toast('Tổng trọng số phải bằng 100% (hiện '+s+'%)','bad'); return false; } if(work.some(function(x){ return !x.ten; })){ U.toast('Nhập tên cho mọi cột','bad'); return false; }
+    var before=l.cotDiem.map(function(x){ return x.ten+' '+x.ts+'%'; }).join(', '); l.cotDiem=work; kys.forEach(function(k){ if(!work[k.cot]||work[k.cot].kyThi!==k.id){ var idx=work.findIndex(function(x){return x.kyThi===k.id;}); if(idx>=0) k.cot=idx; } }); db().baiTap.forEach(function(b){ if(b.lop!==l.id||!b.chuyenDiem) return; var ix=work.findIndex(function(x){ return x.nguon==='bai-tap' && (x.baiTap||[]).indexOf(b.id)>=0; }); if(ix<0) b.chuyenDiem=null; else b.chuyenDiem.cot=ix; });
+    LMS.commit('Sửa','Bảng điểm',l.ma+' · cấu hình cột điểm',{cot:before},{cot:work.map(function(x){ return x.ten+' '+x.ts+'%'; }).join(', ')}); U.toast('Đã lưu cấu hình cột điểm','ok'); renderDetail(); }}]});
+  function paint(){ var s=work.reduce(function(a,x){return a+(+x.ts||0);},0);
+    api.body.innerHTML=(c.coDiem?'<div class="note warn">Lớp đã có bài thi: cột đang gắn kỳ thi có bài làm không đổi được nguồn.</div>':'')+'<table class="tbl"><thead><tr><th>Tên cột</th><th>Trọng số %</th><th>Nguồn điểm</th><th>Liên kết</th><th></th></tr></thead><tbody>'+work.map(function(x,i){ var locked = (c.coDiem && x.nguon==='ky-thi' && x.kyThi && db().baiLam.some(function(b){return b.ky===x.kyThi;})) || (x.nguon==='bai-tap' && (x.baiTap||[]).length>0);
+      return '<tr><td><input class="inp" data-i="'+i+'" data-f="ten" value="'+esc(x.ten)+'" aria-label="Tên cột"></td><td><input class="inp score-inp" type="number" min="0" max="100" data-i="'+i+'" data-f="ts" value="'+x.ts+'" aria-label="Trọng số"></td><td><select class="sel" data-i="'+i+'" data-f="nguon"'+(locked?' disabled':'')+'>'+U.opts((LMS.coDiemDanh(l)||x.nguon==='diem-danh'?[{id:'diem-danh',t:'Điểm danh (tự động)'}]:[]).concat([{id:'ky-thi',t:'Kỳ thi'},{id:'nhap',t:'Giảng viên nhập'},{id:'bai-tap',t:'Bài tập (chuyển điểm)'}]),'id','t',x.nguon)+'</select></td><td>'+(x.nguon==='bai-tap'?((x.baiTap||[]).length?'<span class="small">'+x.baiTap.map(function(id){ return esc(LMS.name('baiTap',id,'ma')); }).join(', ')+'</span>':'<span class="muted small">chuyển điểm tại màn Bài tập</span>'):x.nguon==='ky-thi'?'<select class="sel" data-i="'+i+'" data-f="kyThi"'+(locked?' disabled':'')+'>'+U.opts(kys,'id','ten',x.kyThi,'Chưa gắn')+'</select>':'<span class="muted">—</span>')+'</td><td>'+(locked?'':'<button class="icon-btn" data-del="'+i+'" aria-label="Xóa cột">✕</button>')+'</td></tr>'; }).join('')+'</tbody></table><div class="row"><button class="btn sm" id="addCol">+ Thêm cột</button><span class="right small '+(s===100?'':'')+'" style="color:'+(s===100?'var(--ems-success)':'var(--ems-danger)')+'">Tổng trọng số: '+s+'%</span></div>';
+    api.body.querySelectorAll('[data-f]').forEach(function(e){ e.onchange=function(){ var o=work[e.dataset.i]; o[e.dataset.f]= e.dataset.f==='ts'?+e.value:e.value||null; if(e.dataset.f==='nguon'&&o.nguon!=='ky-thi') o.kyThi=null; if(e.dataset.f==='nguon'&&o.nguon==='bai-tap'){ o.baiTap=o.baiTap||[]; o.gop=o.gop||'trung-binh'; o.khongNop=o.khongNop||'tinh-0'; } paint(); }; });
+    api.body.querySelectorAll('[data-del]').forEach(function(e){ e.onclick=function(){ work.splice(+e.dataset.del,1); paint(); }; });
+    api.body.querySelector('#addCol').onclick=function(){ work.push({ten:'Cột mới',ts:0,nguon:'nhap'}); paint(); }; }
+  paint();
+}
+
+/* ---- dùng chung ---- */
+function gdsHoc(l){ return db().ghiDanh.filter(function(g){ return g.lop===l.id && (g.trangThai==='dang-hoc'||g.trangThai==='hoan-thanh'); }); }
+function gdsNhan(l){ return db().ghiDanh.filter(function(g){ return g.lop===l.id && g.trangThai!=='thoi-hoc'; }); }
+function khoa(l){ return l.trangThai==='ket-thuc'||l.trangThai==='huy'; }
+function kpiRow(items){ return '<div class="kpis k-row">'+items.map(function(k){ return '<div class="kpi '+(k[3]||'')+'"><div class="k-label">'+k[0]+'</div><div class="k-val">'+k[1]+'</div>'+(k[2]?'<div class="k-sub">'+k[2]+'</div>':'')+'</div>'; }).join('')+'</div>'; }
+
+/* ---- tab Tiến độ học tập ---- */
+function tabTD(tb,l){
+  var hp=LMS.hocPhanOfLop(l), gds=gdsHoc(l), n=gds.length, kh=LMS.keHoachPct(l), nb=hp.bai.length;
+  var rows=gds.map(function(g){ return {id:g.id,g:g,hv:LMS.byId('hocVien',g.hv),t:LMS.tienDoHV(l.id,g.hv)}; });
+  var tb0=n?Math.round(rows.reduce(function(a,r){ return a+r.t.pct; },0)/n):0, xong=rows.filter(function(r){ return r.t.done>=nb; }).length, chua=rows.filter(function(r){ return !r.t.done; }).length;
+  var cham=rows.filter(function(r){ return r.t.pct<kh-20; }), quiz=rows.reduce(function(a,r){ return a+Object.keys(r.t.quiz).length; },0);
+  var h=kpiRow([['Hoàn thành trung bình',tb0+'%','kế hoạch theo thời gian '+kh+'%',tb0<kh-10?'warn':''],['Đã học hết bài',xong+'/'+n,'học viên hoàn thành toàn bộ '+nb+' bài'],['Chưa bắt đầu',chua,'chưa hoàn thành bài nào',chua?'warn':''],['Chậm tiến độ',cham.length,'thấp hơn kế hoạch trên 20 điểm %',cham.length?'bad':''],['Lượt quiz đã làm',quiz,'']])+
+    '<div class="row" style="margin:12px 0 8px"><div class="seg"><button data-v="hv" class="'+(st.td==='hv'?'on':'')+'">Theo học viên</button><button data-v="bai" class="'+(st.td==='bai'?'on':'')+'">Theo bài học</button><button data-v="mt" class="'+(st.td==='mt'?'on':'')+'">Ma trận</button></div><div class="right row">'+(cham.length&&!khoa(l)?'<button class="btn" id="tdNhac">Nhắc '+cham.length+' học viên chậm tiến độ</button>':'')+'<button class="btn" id="tdCsv">Xuất CSV</button></div></div><div id="tdB"></div>';
+  tb.innerHTML=h;
+  tb.querySelectorAll('[data-v]').forEach(function(b){ b.onclick=function(){ st.td=b.dataset.v; tabTD(tb,l); }; });
+  document.getElementById('tdCsv').onclick=function(){ csv('tien-do-'+l.ma+'.csv',[['Mã HV','Họ tên','Bài đã hoàn thành','Tổng bài','Tiến độ (%)','Quiz TB','Học gần nhất']].concat(rows.map(function(r){ var qs=Object.keys(r.t.quiz).map(function(k){ return r.t.quiz[k]; }); return [r.hv.ma,r.hv.hoTen,r.t.done,r.t.tong,r.t.pct,qs.length?(qs.reduce(function(a,b){return a+b;},0)/qs.length).toFixed(1):'',r.t.lastAt?LMS.fmtDate(r.t.lastAt):'']; }))); };
+  var nh=document.getElementById('tdNhac'); if(nh) nh.onclick=function(){ compose(l,{loai:'hoc-tap',tieuDe:'Nhắc hoàn thành bài học đúng tiến độ',noiDung:'Tiến độ học của em đang chậm hơn kế hoạch của lớp ('+kh+'%). Em sắp xếp thời gian hoàn thành các bài còn lại trong tuần này; cần hỗ trợ, em đặt câu hỏi ở mục Hỏi đáp.',nhan:cham.map(function(r){ return r.hv.id; })}); };
+  var host=document.getElementById('tdB');
+  if(st.td==='bai'){
+    U.table(host,{ pageSize:30, rows: hp.bai.map(function(b,i){ var done=0, qs=[]; gds.forEach(function(g){ var t=LMS.tienDoHV(l.id,g.hv); if(t.done>i) done++; if(t.quiz[b.id]!=null) qs.push(t.quiz[b.id]); }); return {id:b.id,i:i,b:b,done:done,qavg:qs.length?qs.reduce(function(a,c){return a+c;},0)/qs.length:null,qn:qs.length}; }),
+      columns:[{key:'i',label:'#',cls:'num',render:function(r){ return r.i+1; }},{key:'b',label:'Bài học',render:function(r){ return '<div class="t-main">'+esc(r.b.ten)+'</div>'; },sortable:false},
+        {key:'done',label:'Đã hoàn thành',w:'220px',render:function(r){ return n?U.prog(Math.round(r.done/n*100),null,r.done+'/'+n):'—'; },sortVal:function(r){ return r.done; }},
+        {key:'q',label:'Quiz',cls:'num',render:function(r){ return r.qavg==null?'<span class="muted">—</span>':'<b style="color:'+(r.qavg<hp.tieuChi.quizDiem?'var(--ems-danger)':'inherit')+'">'+r.qavg.toFixed(1)+'</b><div class="t-sub">'+r.qn+' lượt</div>'; },sortVal:function(r){ return r.qavg; }}]});
+  } else if(st.td==='mt'){
+    host.innerHTML='<div class="tbl-wrap"><table class="tbl mt"><thead><tr><th>Học viên</th>'+hp.bai.map(function(b,i){ return '<th class="c" title="'+esc(b.ten)+'">'+(i+1)+'</th>'; }).join('')+'<th class="num">%</th></tr></thead><tbody>'+rows.sort(function(a,b){ return b.t.pct-a.t.pct; }).map(function(r){ return '<tr><td class="nw">'+esc(r.hv.hoTen)+'</td>'+hp.bai.map(function(b,i){ var q=r.t.quiz[b.id]; var c=i<r.t.done?(q!=null&&q<hp.tieuChi.quizDiem?'q':'ok'):i===r.t.done?'cur':''; return '<td class="c"><span class="cell '+c+'" title="'+esc(b.ten)+(q!=null?' · quiz '+q:'')+'"></span></td>'; }).join('')+'<td class="num">'+r.t.pct+'%</td></tr>'; }).join('')+'</tbody></table></div><div class="legend small muted" style="margin-top:6px"><span><span class="cell ok"></span> đã hoàn thành</span><span><span class="cell q"></span> hoàn thành, quiz dưới '+hp.tieuChi.quizDiem+'</span><span><span class="cell cur"></span> đang học</span><span><span class="cell"></span> chưa mở</span></div>';
+  } else {
+    U.table(host,{ pageSize:20, rows:rows, sort:'pct',
+      columns:[{key:'ma',label:'Mã HV',render:function(r){ return '<span class="mono">'+esc(r.hv.ma)+'</span>'; },sortVal:function(r){ return r.hv.ma; }},
+        {key:'hv',label:'Họ và tên',render:function(r){ return '<b>'+esc(r.hv.hoTen)+'</b>'; },sortVal:function(r){ return r.hv.hoTen.split(' ').pop(); }},
+        {key:'at',label:'Đang ở bài',render:function(r){ return r.t.done>=nb?U.badge('Đã học hết','ok'):esc(hp.bai[Math.min(r.t.done,nb-1)].ten); },sortable:false},
+        {key:'pct',label:'Hoàn thành',w:'170px',render:function(r){ return U.prog(r.t.pct, r.t.pct<kh-20?'bad':r.t.pct<kh-5?'warn':'', r.t.done+'/'+r.t.tong); },sortVal:function(r){ return r.t.pct; }},
+        {key:'q',label:'Quiz TB',cls:'num',render:function(r){ var qs=Object.keys(r.t.quiz).map(function(k){return r.t.quiz[k];}); return qs.length?(qs.reduce(function(a,b){return a+b;},0)/qs.length).toFixed(1):'<span class="muted">—</span>'; },sortable:false},
+        {key:'last',label:'Học gần nhất',render:function(r){ if(!r.t.lastAt) return '<span class="muted">Chưa học</span>'; var dd=LMS.daysBetween(r.t.lastAt,LMS.TODAY); return LMS.fmtDate(r.t.lastAt)+(dd>=7?' '+U.badge(dd+' ngày trước','warn'):''); },sortVal:function(r){ return r.t.lastAt; }}]});
+  }
+}
+
+/* ---- tab Hỏi đáp / Thảo luận ---- */
+function hdOf(l){ return db().hoiDap.filter(function(t){ return t.lop===l.id && !t.xoa; }); }
+function tabHD(tb,l){
+  var HD=LMS.hoiDapUI, hp=LMS.hocPhanOfLop(l), ts=hdOf(l);
+  st.hd=st.hd||{open:{},box:null,boxTo:null,who:null,an:false,q:'',hl:null}; st.hdMo=st.hdMo||{}; st.hdLoc=st.hdLoc||'all'; st.hdQ=st.hdQ||'';
+  if(st.hdLop!==l.id){ st.hdLop=l.id; st.hdMo={}; st.hd.box=null; st.hd.open={}; }
+  var cho=ts.filter(HD.cho), da=ts.filter(function(t){ return t.loai!=='binh-luan' && HD.daTL(t); }), rieng=ts.filter(function(t){ return t.rieng; });
+  var gvTL=0, hvTL=0; ts.forEach(function(t){ HD.reps(t).forEach(function(r){ if(r.vaiTro==='hv') hvTL++; else gvTL++; }); });
+  var baiCo={}; ts.forEach(function(t){ if(t.bai) baiCo[t.bai]=1; });
+  var LOC=[['all','Tất cả',ts.length],['chua','Chưa trả lời',cho.length],['da','Đã trả lời',da.length],['rieng','Gửi riêng giảng viên',rieng.length]];
+  var h=kpiRow([['Câu hỏi trong lớp',ts.length,ts.filter(function(t){ return t.loai==='binh-luan'; }).length?ts.filter(function(t){ return t.loai==='binh-luan'; }).length+' chủ đề thảo luận':''],['Chưa trả lời',cho.length,cho.filter(HD.quaHan).length?cho.filter(HD.quaHan).length+' quá 48 giờ':'',cho.filter(HD.quaHan).length?'bad':cho.length?'warn':''],['Đã trả lời',da.length,''],['Phản hồi của giảng viên',gvTL,'gồm cả quản trị'],['Học viên trả lời nhau',hvTL,'lượt'],['Gửi riêng giảng viên',rieng.length,''],['Bài có thảo luận',Object.keys(baiCo).length+' / '+hp.bai.length,'']]);
+  h+='<div class="filters" style="margin:12px 0 10px"><input class="inp" id="hdQ" placeholder="Tìm theo tên bài, tên học viên hoặc nội dung" value="'+esc(st.hdQ)+'" aria-label="Tìm câu hỏi">'+
+    '<select class="sel" id="hdLoc" aria-label="Lọc">'+U.opts(LOC.map(function(x){ return {v:x[0],t:x[1]+' ('+x[2]+')'}; }),'v','t',st.hdLoc)+'</select>'+
+    '<label class="check"><input type="checkbox" id="hdAn"'+(st.hd.an?' checked':'')+'> Hiện nội dung đã xóa</label>'+
+    '<span class="right row" style="gap:6px"><button class="btn sm" id="hdBung">Bung tất cả</button><button class="btn sm" id="hdGon">Thu gọn</button><button class="btn sm" id="hdXuat">Xuất Excel</button><button class="btn sm" id="goHD">Mở màn Hỏi đáp</button></span></div>'+
+    '<div class="muted small" style="margin-bottom:10px">Quản trị và giảng viên của lớp trả lời, sửa, xóa được ở câu hỏi gốc và từng trả lời bên trong; trả lời một người sẽ gắn tên người đó (@) và gửi thông báo cho họ.</div>';
+  var q=U.norm(st.hdQ);
+  var list=ts.concat(st.hd.an?db().hoiDap.filter(function(t){ return t.lop===l.id && t.xoa; }):[]).filter(function(t){
+    if(st.hdLoc==='chua' && !HD.cho(t)) return false;
+    if(st.hdLoc==='da' && !(t.loai!=='binh-luan' && HD.daTL(t))) return false;
+    if(st.hdLoc==='rieng' && !t.rieng) return false;
+    if(q){ var b=HD.baiOf(t); if(U.norm(t.noiDung+' '+HD.hvTen(t.hv)+' '+(b?b.ten:'')+' '+HD.reps(t).map(function(r){ return r.noiDung+' '+HD.tenNguoi(r); }).join(' ')).indexOf(q)<0) return false; }
+    return true;
+  });
+  var byBai={}; list.forEach(function(t){ (byBai[t.bai||'_']=byBai[t.bai||'_']||[]).push(t); });
+  var keys=hp.bai.map(function(b){ return b.id; }).filter(function(k){ return byBai[k]; }); if(byBai._) keys.push('_');
+  if(q || st.hdLoc!=='all') keys.forEach(function(k){ st.hdMo[k]=true; });
+  h+=keys.length?keys.map(function(k){ var g=byBai[k], b=hp.bai.find(function(x){ return x.id===k; }), c=g.filter(HD.cho).length, ph=g.reduce(function(a,t){ return a+HD.reps(t).length; },0);
+    return '<details class="grp-hd" data-k="'+k+'"'+(st.hdMo[k]?' open':'')+'><summary><b>'+esc(b?b.ten:'Chung, không gắn bài')+'</b><span class="right row" style="gap:6px"><span class="chip">'+g.length+' câu hỏi</span><span class="chip">'+ph+' phản hồi</span>'+(c?'<span class="chip bad">'+c+' chưa trả lời</span>':'')+'</span></summary><div class="grp-body" data-g="'+k+'"></div></details>'; }).join('')
+    :'<div class="empty">'+(ts.length?'Không có câu hỏi phù hợp bộ lọc':'Lớp chưa có câu hỏi nào.')+'</div>';
+  tb.innerHTML=h;
+  var o={st:st.hd, tuongDoi:true, hienBai:false, flat:true, menu:false, onChange:renderDetail, moNhom:function(t){ st.hdMo[t.bai||'_']=true; }};
+  st.hd.q=st.hdQ;
+  keys.forEach(function(k){ var g=byBai[k].sort(function(a,b){ if(a.ghim!==b.ghim) return a.ghim?-1:1; return a.ngay<b.ngay?1:-1; }); HD.render(tb.querySelector('[data-g="'+k+'"]'),g,o); });
+  tb.querySelectorAll('details.grp-hd').forEach(function(d){ d.addEventListener('toggle',function(){ st.hdMo[d.dataset.k]=d.open; }); });
+  var qi=document.getElementById('hdQ'); qi.oninput=function(){ st.hdQ=qi.value; var pos=qi.selectionStart; renderDetail(); var n=document.getElementById('hdQ'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
+  document.getElementById('hdLoc').onchange=function(e){ st.hdLoc=e.target.value; renderDetail(); };
+  document.getElementById('hdAn').onchange=function(e){ st.hd.an=e.target.checked; renderDetail(); };
+  document.getElementById('hdBung').onclick=function(){ keys.forEach(function(k){ st.hdMo[k]=true; }); renderDetail(); };
+  document.getElementById('hdGon').onclick=function(){ st.hdMo={}; renderDetail(); };
+  document.getElementById('hdXuat').onclick=function(){ HD.taiCsv('hoi-dap-'+l.ma+'.csv',HD.csvRows(list)); };
+  document.getElementById('goHD').onclick=function(){ LMS.go('hoi-dap.html',{lop:l.id}); };
+}
+
+/* ---- tab Giảng viên ---- */
+function vaiTroGV(l,id){ return l.giangVien[0]===id?'Giảng viên chính':((l.vaiTroGV||{})[id]==='tro-giang'?'Trợ giảng':'Giảng viên'); }
+function tabGV(tb,l){
+  var bs=LMS.buoiCuaLop(l.id), ro=khoa(l);
+  var h='<div class="row" style="margin-bottom:10px"><span class="muted small">Lớp có nhiều giảng viên phụ trách; giảng viên chính đứng đầu danh sách, được chọn mặc định khi tạo buổi học và nhận thông báo hỏi đáp.</span><button class="btn primary right" id="gvAdd"'+(ro?' disabled':'')+'>+ Thêm giảng viên</button></div><div id="gvT"></div>';
+  tb.innerHTML=h;
+  U.table(document.getElementById('gvT'),{ rows:l.giangVien.map(function(id,i){ return {id:id,i:i,g:LMS.byId('giangVien',id)}; }).filter(function(r){ return r.g; }), empty:'Lớp chưa có giảng viên',
+    columns:[{key:'ma',label:'Mã GV',render:function(r){ return '<span class="mono">'+esc(r.g.ma)+'</span>'; },sortable:false},
+      {key:'ten',label:'Họ và tên',render:function(r){ return '<b>'+esc(r.g.hoTen)+'</b>'+(r.i===0?' '+U.badge('Giảng viên chính','navy'):''); },sortable:false},
+      {key:'vt',label:'Vai trò',render:function(r){ return esc(vaiTroGV(l,r.id)); },sortable:false},
+      {key:'lh',label:'Liên hệ',render:function(r){ return '<div class="small">'+esc(r.g.email||'—')+'</div><div class="t-sub mono">'+esc(r.g.sdt||'')+'</div>'; },sortable:false},
+      LMS.coDiemDanh(l)&&{key:'b',label:'Buổi phụ trách',cls:'num',render:function(r){ var mine=bs.filter(function(b){ return b.gv===r.id && !b.huy; }), day=mine.filter(function(b){ return LMS.parse(b.ngay)<LMS.TODAY; }).length; return '<b>'+mine.length+'</b><div class="t-sub">'+day+' đã dạy</div>'; },sortable:false},
+      {key:'tk',label:'Tài khoản',render:function(r){ return r.g.taiKhoan?U.badge('Đăng nhập được','ok'):U.badge('Chưa có tài khoản','bad'); },sortable:false},
+      {key:'x',label:'',sortable:false,render:function(r){ return ro?'':'<div class="row" style="gap:4px;justify-content:flex-end">'+(r.i?'<button class="btn sm" data-chinh="'+r.id+'">Đặt làm chính</button>':'')+'<button class="btn sm" data-vt="'+r.id+'">Đổi vai trò</button><button class="btn sm danger" data-go="'+r.id+'"'+(l.giangVien.length<2?' disabled title="Lớp cần ít nhất một giảng viên"':'')+'>Gỡ</button></div>'; }}].filter(Boolean),
+    after:function(host){
+      host.querySelectorAll('[data-chinh]').forEach(function(b){ b.onclick=function(){ var id=b.dataset.chinh, cu=l.giangVien[0]; l.giangVien=[id].concat(l.giangVien.filter(function(x){ return x!==id; })); if(l.vaiTroGV) delete l.vaiTroGV[id]; LMS.commit('Đổi giảng viên chính','Lớp học',l.ma,{chinh:LMS.name('giangVien',cu,'hoTen')},{chinh:LMS.name('giangVien',id,'hoTen')}); U.toast('Đã đặt '+LMS.name('giangVien',id,'hoTen')+' làm giảng viên chính','ok'); renderDetail(); }; });
+      host.querySelectorAll('[data-vt]').forEach(function(b){ b.onclick=function(){ var id=b.dataset.vt; if(l.giangVien[0]===id){ U.toast('Giảng viên chính giữ vai trò chính; đặt người khác làm chính trước'); return; } l.vaiTroGV=l.vaiTroGV||{}; l.vaiTroGV[id]=l.vaiTroGV[id]==='tro-giang'?'giang-vien':'tro-giang'; LMS.commit('Đổi vai trò giảng viên','Lớp học',l.ma+' · '+LMS.name('giangVien',id,'hoTen')+' → '+vaiTroGV(l,id)); renderDetail(); }; });
+      host.querySelectorAll('[data-go]').forEach(function(b){ b.onclick=function(){ var id=b.dataset.go, g=LMS.byId('giangVien',id), sap=bs.filter(function(x){ return x.gv===id && !x.huy && LMS.parse(x.ngay)>=LMS.TODAY; }), con=l.giangVien.filter(function(x){ return x!==id; });
+        U.modal({title:'Gỡ '+g.hoTen+' khỏi lớp',size:'sm',body:(sap.length?'<div class="note warn">'+g.hoTen+' đang phụ trách '+sap.length+' buổi học sắp tới.</div><div class="field"><label for="thay">Chuyển các buổi này cho</label><select class="sel" id="thay" name="thay">'+U.opts(con.map(function(x){ return LMS.byId('giangVien',x); }),'id','hoTen',con[0])+'</select></div>':'<div class="small">Giảng viên không còn buổi học sắp tới. Lịch sử buổi đã dạy và điểm danh được giữ nguyên.</div>'),
+          foot:[{label:'Hủy'},{label:'Gỡ khỏi lớp',cls:'danger solid',onClick:function(a){ var thay=sap.length?U.formVals(a.body).thay:null; sap.forEach(function(x){ x.gv=thay; }); l.giangVien=con; LMS.commit('Gỡ giảng viên','Lớp học',l.ma+' · '+g.hoTen+(sap.length?' · chuyển '+sap.length+' buổi cho '+LMS.name('giangVien',thay,'hoTen'):'')); U.toast('Đã gỡ '+g.hoTen+' khỏi lớp','ok'); renderDetail(); }}]}); }; });
+    }});
+  var add=document.getElementById('gvAdd'); if(add) add.onclick=function(){ var ds=db().giangVien.filter(function(g){ return g.trangThai!=='ngung' && l.giangVien.indexOf(g.id)<0; });
+    U.modal({title:'Thêm giảng viên vào '+l.ma,size:'sm',body:'<div class="field"><label for="ag">Giảng viên</label><select class="sel" id="ag" name="g">'+U.opts(ds,'id',function(g){ return g.hoTen+' · '+LMS.donViTen(g.donVi)+(g.taiKhoan?'':' (chưa có tài khoản)'); },'','Chọn giảng viên')+'</select></div><div class="field"><label for="av">Vai trò</label><select class="sel" id="av" name="v">'+U.opts([{v:'giang-vien',t:'Giảng viên'},{v:'tro-giang',t:'Trợ giảng'}],'v','t','giang-vien')+'</select></div>',
+      foot:[{label:'Hủy'},{label:'Thêm',cls:'primary',onClick:function(a){ var v=U.formVals(a.body); if(!v.g){ U.fieldErr(a.body,'g','Chọn giảng viên'); return false; } l.giangVien.push(v.g); l.vaiTroGV=l.vaiTroGV||{}; l.vaiTroGV[v.g]=v.v; LMS.commit('Thêm giảng viên','Lớp học',l.ma+' · '+LMS.name('giangVien',v.g,'hoTen')); U.toast('Đã thêm giảng viên','ok'); renderDetail(); }}]}); };
+}
+
+/* ---- tab Quản lý đăng ký học ---- */
+var DK_TT={'cho-duyet':['Chờ duyệt','warn'],'cho-thanh-toan':['Chờ thanh toán','info'],'da-duyet':['Đã duyệt','ok'],'tu-choi':['Từ chối','bad']};
+function tabDK(tb,l){
+  var list=db().dangKy.filter(function(d){ return d.lop===l.id; });
+  var c=function(t){ return list.filter(function(d){ return d.trangThai===t; }).length; };
+  tb.innerHTML=kpiRow([['Chờ duyệt',c('cho-duyet'),'',c('cho-duyet')?'warn':''],['Chờ thanh toán',c('cho-thanh-toan'),l.khoanThu?'ghi danh sau khi thanh toán':'lớp không thu phí'],['Đã duyệt',c('da-duyet'),''],['Từ chối',c('tu-choi'),''],['Còn chỗ',l.sucChua?Math.max(0,l.sucChua-LMS.soHV(l.id)):'Không giới hạn','sức chứa '+(l.sucChua||'—')]])+
+    '<div class="row" style="margin:12px 0 8px"><span class="muted small">'+(l.tuDangKy?'Lớp đang cho học viên tự đăng ký trên cổng; duyệt xong học viên được thêm vào danh sách lớp'+(l.khoanThu?' sau khi thanh toán học phí':'')+'.':'Lớp không mở tự đăng ký; bật ở tab Thông tin lớp khi lớp ở trạng thái Đang tuyển sinh.')+'</span></div><div id="dkT"></div>';
+  U.table(document.getElementById('dkT'),{ rows:list, sort:'ngay', dir:-1, empty:'Chưa có yêu cầu đăng ký',
+    columns:[{key:'ma',label:'Mã HV',render:function(d){ var h=LMS.byId('hocVien',d.hv); return '<span class="mono">'+esc(h?h.ma:'')+'</span>'; },sortable:false},
+      {key:'ten',label:'Họ và tên',render:function(d){ var h=LMS.byId('hocVien',d.hv); return '<b>'+esc(h?h.hoTen:'—')+'</b>'; },sortable:false},
+      {key:'lh',label:'Liên hệ',render:function(d){ var h=LMS.byId('hocVien',d.hv)||{}; return '<div class="mono small">'+esc(h.sdt||'')+'</div><div class="t-sub">'+esc(h.email||'')+'</div>'; },sortable:false},
+      {key:'ngay',label:'Ngày gửi',render:function(d){ return LMS.fmtDate(d.ngay); }},
+      {key:'tt',label:'Trạng thái',render:function(d){ var t=DK_TT[d.trangThai]||[d.trangThai,'']; return U.badge(t[0],t[1])+(d.lyDo?'<div class="t-sub">'+esc(d.lyDo)+'</div>':''); }},
+      {key:'x',label:'',sortable:false,render:function(d){ if(khoa(l)) return ''; if(d.trangThai==='cho-duyet') return '<div class="row" style="gap:4px;justify-content:flex-end"><button class="btn sm primary" data-ok="'+d.id+'">Duyệt</button><button class="btn sm danger" data-no="'+d.id+'">Từ chối</button></div>'; if(d.trangThai==='tu-choi') return '<button class="btn sm" data-undo="'+d.id+'">Hoàn tác</button>'; if(d.trangThai==='cho-thanh-toan') return '<button class="btn sm" data-tt="'+d.id+'">Xem đơn thu</button>'; return ''; }}],
+    after:function(host){
+      host.querySelectorAll('[data-ok]').forEach(function(b){ b.onclick=function(){ var d=db().dangKy.find(function(x){ return x.id===b.dataset.ok; }), h=LMS.byId('hocVien',d.hv), k=l.khoanThu&&LMS.byId('khoanThu',l.khoanThu);
+        if(l.sucChua && LMS.soHV(l.id)>=l.sucChua){ U.blocked('Không thể duyệt',['Lớp đã đủ '+l.sucChua+' học viên'],'Tăng sức chứa ở tab Thông tin lớp hoặc từ chối đơn.'); return; }
+        U.confirm({title:'Duyệt đăng ký',html:'Duyệt <b>'+esc(h.hoTen)+'</b> vào lớp '+esc(l.ma)+'?'+(k?'<div class="note info" style="margin-top:8px">Lớp có thu phí: tạo đơn thu '+esc(k.ten)+', học viên được ghi danh sau khi thanh toán.</div>':''),ok:'Duyệt'}).then(function(y){ if(!y) return;
+          if(k){ db().thanhToan.push({id:LMS.nextId('tt'),ma:'PT'+Date.now().toString().slice(-6),hv:h.id,lop:l.id,khoanThu:k.id,soTien:Math.round(k.donGia*(1+k.vat/100)),trangThai:'cho-thanh-toan',kenh:'—',ngay:LMS.iso(LMS.TODAY),ngayTao:LMS.iso(LMS.TODAY)}); d.trangThai='cho-thanh-toan'; }
+          else { d.trangThai='da-duyet'; var ex=db().ghiDanh.find(function(g){ return g.lop===l.id && g.hv===h.id; }); var tt=l.trangThai==='dang-hoc'?'dang-hoc':'cho-khai-giang'; if(ex) ex.trangThai=tt; else db().ghiDanh.push({id:LMS.nextId('gd'),lop:l.id,hv:h.id,ngay:LMS.iso(LMS.TODAY),trangThai:tt,hinhThuc:'dang-ky'}); }
+          LMS.commit('Duyệt đăng ký','Đơn đăng ký',h.ma+' · '+l.ma); U.toast(k?'Đã duyệt, chờ học viên thanh toán':'Đã duyệt và thêm '+h.hoTen+' vào lớp','ok'); renderDetail(); }); }; });
+      host.querySelectorAll('[data-no]').forEach(function(b){ b.onclick=function(){ var d=db().dangKy.find(function(x){ return x.id===b.dataset.no; }); reasonBox('Từ chối đăng ký','Từ chối',function(r){ d.trangThai='tu-choi'; d.lyDo=r; LMS.commit('Từ chối đăng ký','Đơn đăng ký',l.ma+' · '+r); U.toast('Đã từ chối, học viên nhận thông báo kèm lý do','ok'); renderDetail(); },true); }; });
+      host.querySelectorAll('[data-undo]').forEach(function(b){ b.onclick=function(){ var d=db().dangKy.find(function(x){ return x.id===b.dataset.undo; }); d.trangThai='cho-duyet'; delete d.lyDo; LMS.commit('Hoàn tác từ chối','Đơn đăng ký',l.ma); renderDetail(); }; });
+      host.querySelectorAll('[data-tt]').forEach(function(b){ b.onclick=function(){ LMS.go('thu-hoc-phi.html',{lop:l.id}); }; });
+    }});
+}
+
+/* ---- tab Thông báo ---- */
+var TB_LOAI={'chung':['Chung',''],'hoc-tap':['Học tập','navy'],'lich-hoc':['Lịch học','info'],'bai-tap':['Bài tập','warn'],'thi':['Thi, kiểm tra','bad'],'khan':['Khẩn','bad'],'tu-dong':['Tự động','']};
+var TB_TT={'da-gui':['Đã gửi','ok'],'hen-gio':['Hẹn giờ','navy'],'nhap':['Nháp','warn'],'thu-hoi':['Đã thu hồi','']};
+var TB_MAU={
+  'lich-hoc':['Thay đổi lịch học','Buổi học ngày {ngay} chuyển sang {gio}, phòng học trực tuyến {phong}. Học viên vào phòng trước 10 phút để điểm danh.'],
+  'bai-tap':['Nhắc hạn nộp bài tập','Bài tập {bai_tap} hết hạn nộp lúc {han_nop}. Học viên chưa nộp hoàn thành đúng hạn.'],
+  'thi':['Lịch kiểm tra','Kỳ kiểm tra {ky_thi} diễn ra trực tuyến lúc {gio_thi}. Học viên kiểm tra thiết bị, đường truyền và xác nhận đã đọc thông báo này.'],
+  'hoc-tap':['Chuẩn bị bài trước buổi học','Đề nghị học viên xem trước video và tài liệu của bài {bai_hoc} trước buổi học tới, ghi lại câu hỏi để thảo luận.'],
+  'khan':['Thông báo khẩn','']
+};
+function tbNorm(t){ if(!t.loai){ t.loai='tu-dong'; } if(!t.trangThai) t.trangThai='da-gui'; if(!t.xem){ t.xem={}; var days=Math.max(0,LMS.daysBetween(t.ngay,LMS.TODAY)), rate=Math.min(.95,.35+days*.12); t.nguoiNhan.forEach(function(id,i){ if(((i*37+id.length*13)%100)/100<rate) t.xem[id]=t.ngay; }); } if(!t.xacNhan) t.xacNhan={}; if(!t.kenh) t.kenh={portal:true,email:false}; return t; }
+function tbAuto(){ var n=Date.now(), c=false; (db().thongBao||[]).forEach(function(t){ if(t.trangThai==='hen-gio' && t.henGio && new Date(t.henGio).getTime()<=n){ t.trangThai='da-gui'; t.ngay=t.henGio; c=true; } }); if(c) LMS.commit(null); }
+function tbOf(l){ tbAuto(); return (db().thongBao||[]).filter(function(t){ return t.lop===l.id; }).map(tbNorm); }
+function tabTB(tb,l){
+  var all=tbOf(l), gui=all.filter(function(t){ return t.trangThai==='da-gui'; }), lop=gui.filter(function(t){ return t.loai!=='tu-dong'; });
+  var luot=lop.reduce(function(a,t){ return a+t.nguoiNhan.length; },0), xem=lop.reduce(function(a,t){ return a+Object.keys(t.xem).length; },0);
+  var canXN=lop.filter(function(t){ return t.yeuCauXacNhan; }), chuaXN=canXN.reduce(function(a,t){ return a+t.nguoiNhan.filter(function(h){ return !t.xacNhan[h]; }).length; },0);
+  st.tbF=st.tbF||'lop';
+  var rows=all.filter(function(t){ if(st.tbF==='lop') return t.loai!=='tu-dong' && t.trangThai!=='thu-hoi'; if(st.tbF==='cho') return t.trangThai==='hen-gio'||t.trangThai==='nhap'; if(st.tbF==='tu-dong') return t.loai==='tu-dong'; if(st.tbF==='thu-hoi') return t.trangThai==='thu-hoi'; return true; }).filter(function(t){ var q=U.norm(st.tbQ||''); return !q||U.norm(t.tieuDe+' '+t.noiDung).indexOf(q)>=0; }).sort(function(a,b){ if(a.ghim!==b.ghim) return a.ghim?-1:1; var o={'nhap':0,'hen-gio':1}; var x=o[a.trangThai]!=null?o[a.trangThai]:2, y=o[b.trangThai]!=null?o[b.trangThai]:2; if(x!==y) return x-y; return a.ngay<b.ngay?1:-1; });
+  var h=kpiRow([['Đã gửi',lop.length,'thông báo của lớp'],['Tỷ lệ đã xem',luot?Math.round(xem/luot*100)+'%':'—',xem+'/'+luot+' lượt'],['Chưa xác nhận',chuaXN,canXN.length?'trên '+canXN.length+' thông báo cần xác nhận':'không có thông báo cần xác nhận',chuaXN?'warn':''],['Hẹn giờ · nháp',all.filter(function(t){ return t.trangThai==='hen-gio'; }).length+' · '+all.filter(function(t){ return t.trangThai==='nhap'; }).length,'']])+
+    '<div class="row" style="margin:12px 0 8px"><div class="seg">'+[['lop','Của lớp'],['cho','Hẹn giờ & nháp'],['tu-dong','Tự động từ hệ thống'],['thu-hoi','Đã thu hồi']].map(function(x){ return '<button data-f="'+x[0]+'" class="'+(st.tbF===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div><input class="inp" id="tbQ" placeholder="Tìm tiêu đề, nội dung" value="'+esc(st.tbQ||'')+'" style="max-width:240px" aria-label="Tìm thông báo"><button class="btn primary right" id="tbNew"'+(l.trangThai==='huy'?' disabled':'')+'>+ Soạn thông báo</button></div>';
+  h+= rows.length ? '<div class="tb-list">'+rows.map(function(t){ var n=t.nguoiNhan.length, s=Object.keys(t.xem).length, x=Object.keys(t.xacNhan).length, lo=TB_LOAI[t.loai]||TB_LOAI.chung, tt=TB_TT[t.trangThai];
+    return '<div class="tb-card'+(t.ghim?' pin':'')+'"><div class="row" style="gap:6px"><b class="tb-t">'+esc(t.tieuDe)+'</b>'+U.badge(lo[0],lo[1])+(t.ghim?U.badge('Đã ghim','navy'):'')+(t.trangThai!=='da-gui'?U.badge(tt[0]+(t.trangThai==='hen-gio'?' · '+LMS.fmtDT(t.henGio):''),tt[1]):'')+(t.yeuCauXacNhan?U.badge('Cần xác nhận','info'):'')+'<span class="right muted small">'+(t.trangThai==='nhap'?'Chưa gửi':LMS.fmtDT(t.ngay))+' · '+esc(t.nguoiGui||'')+'</span></div>'+
+      '<div class="tb-n">'+esc(t.noiDung)+'</div>'+((t.dinhKem||[]).length?'<div class="row" style="gap:4px">'+t.dinhKem.map(function(f){ return '<span class="tag">📎 '+esc(LMS.name('thuVien',f))+'</span>'; }).join('')+'</div>':'')+
+      '<div class="row" style="gap:12px;margin-top:6px"><span class="small muted">Gửi '+n+' học viên · '+[t.kenh.portal?'Cổng học viên':'',t.kenh.email?'Email':''].filter(Boolean).join(' + ')+'</span>'+(t.trangThai==='da-gui'?'<span class="grow" style="max-width:260px">'+U.prog(n?Math.round(s/n*100):0,'ok','Đã xem '+s+'/'+n)+'</span>'+(t.yeuCauXacNhan?'<span class="small">Xác nhận <b>'+x+'/'+n+'</b></span>':''):'')+'<span class="right row" style="gap:4px">'+(t.trangThai==='da-gui'?'<button class="btn sm" data-ct="'+t.id+'">Người nhận</button>':'')+(t.trangThai==='nhap'||t.trangThai==='hen-gio'?'<button class="btn sm" data-ed="'+t.id+'">Sửa</button>':'')+'<button class="icon-btn" data-m="'+t.id+'" aria-label="Thao tác">⋯</button></span></div></div>'; }).join('')+'</div>' : '<div class="empty">Không có thông báo</div>';
+  tb.innerHTML=h;
+  tb.querySelectorAll('[data-f]').forEach(function(b){ b.onclick=function(){ st.tbF=b.dataset.f; tabTB(tb,l); }; });
+  document.getElementById('tbQ').oninput=function(e){ st.tbQ=e.target.value; var p=e.target.selectionStart; tabTB(tb,l); var q=document.getElementById('tbQ'); q.focus(); q.setSelectionRange(p,p); };
+  document.getElementById('tbNew').onclick=function(){ compose(l); };
+  tb.querySelectorAll('[data-ed]').forEach(function(b){ b.onclick=function(){ compose(l,null,all.find(function(t){ return t.id===b.dataset.ed; })); }; });
+  tb.querySelectorAll('[data-ct]').forEach(function(b){ b.onclick=function(){ tbChiTiet(l,all.find(function(t){ return t.id===b.dataset.ct; })); }; });
+  tb.querySelectorAll('[data-m]').forEach(function(b){ b.onclick=function(){ var t=all.find(function(x){ return x.id===b.dataset.m; }); U.menu(b,[
+    {label:t.ghim?'Bỏ ghim':'Ghim đầu trang lớp',disabled:t.trangThai==='thu-hoi',onClick:function(){ t.ghim=!t.ghim; LMS.commit(t.ghim?'Ghim thông báo':'Bỏ ghim thông báo','Thông báo',l.ma+' · '+t.tieuDe); renderDetail(); }},
+    {label:'Nhân bản thành bản nháp',onClick:function(){ var c=JSON.parse(JSON.stringify(t)); c.id=LMS.nextId('tb'); c.trangThai='nhap'; c.tieuDe=t.tieuDe+' (bản sao)'; c.xem={}; c.xacNhan={}; c.ghim=false; c.thuHoi=null; if(c.loai==='tu-dong') c.loai='chung'; db().thongBao.push(c); LMS.commit('Nhân bản thông báo','Thông báo',l.ma+' · '+t.tieuDe); st.tbF='cho'; renderDetail(); }},
+    t.trangThai==='da-gui'&&t.nguoiNhan.length>Object.keys(t.xem).length?{label:'Nhắc người chưa xem ('+(t.nguoiNhan.length-Object.keys(t.xem).length)+')',onClick:function(){ nhacTB(l,t); }}:null,
+    t.trangThai==='hen-gio'?{label:'Gửi ngay',onClick:function(){ t.trangThai='da-gui'; t.ngay=new Date().toISOString(); t.henGio=null; LMS.commit('Gửi thông báo','Thông báo',l.ma+' · '+t.tieuDe); U.toast('Đã gửi tới '+t.nguoiNhan.length+' học viên','ok'); renderDetail(); }}:null,
+    '-',
+    t.trangThai==='da-gui'?{label:'Thu hồi',danger:true,onClick:function(){ reasonBox('Thu hồi thông báo','Thu hồi',function(r){ t.trangThai='thu-hoi'; t.ghim=false; t.thuHoi={luc:new Date().toISOString(),lyDo:r}; LMS.commit('Thu hồi thông báo','Thông báo',l.ma+' · '+t.tieuDe+' · '+r); U.toast('Học viên không còn thấy thông báo này','ok'); renderDetail(); },true); }}:null,
+    t.trangThai==='nhap'||t.trangThai==='hen-gio'?{label:'Xóa',danger:true,onClick:function(){ U.confirm({title:'Xóa thông báo',message:'Xóa "'+t.tieuDe+'"? Thông báo chưa gửi nên học viên không bị ảnh hưởng.',ok:'Xóa',danger:true}).then(function(y){ if(!y) return; db().thongBao=db().thongBao.filter(function(x){ return x.id!==t.id; }); LMS.commit('Xóa thông báo','Thông báo',l.ma+' · '+t.tieuDe); renderDetail(); }); }}:null
+  ]); }; });
+}
+function nhacTB(l,t){ var chua=t.nguoiNhan.filter(function(h){ return !t.xem[h]; }); t.nhac=(t.nhac||[]).concat([{luc:new Date().toISOString(),so:chua.length}]); LMS.commit('Nhắc xem thông báo','Thông báo',l.ma+' · '+t.tieuDe+' · '+chua.length+' học viên'); U.toast('Đã gửi nhắc qua email tới '+chua.length+' học viên chưa xem','ok'); }
+function tbChiTiet(l,t){
+  var f='all';
+  var api=U.modal({title:t.tieuDe,size:'lg',body:'<div></div>',foot:[{label:'Đóng'},{label:'Nhắc người chưa xem',cls:'primary',onClick:function(){ nhacTB(l,t); return false; }}]});
+  function paint(){ var rows=t.nguoiNhan.map(function(h){ return {hv:LMS.byId('hocVien',h),xem:t.xem[h],xn:t.xacNhan[h]}; }).filter(function(r){ return r.hv && (f==='all'||(f==='chua'&&!r.xem)||(f==='xem'&&r.xem)||(f==='cxn'&&!r.xn)); });
+    api.body.innerHTML='<div class="note">'+esc(t.noiDung).replace(/\n/g,'<br>')+'</div><div class="row" style="margin:10px 0"><div class="seg">'+[['all','Tất cả '+t.nguoiNhan.length],['xem','Đã xem '+Object.keys(t.xem).length],['chua','Chưa xem '+(t.nguoiNhan.length-Object.keys(t.xem).length)]].concat(t.yeuCauXacNhan?[['cxn','Chưa xác nhận '+(t.nguoiNhan.length-Object.keys(t.xacNhan).length)]]:[]).map(function(x){ return '<button data-f="'+x[0]+'" class="'+(f===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join('')+'</div>'+((t.nhac||[]).length?'<span class="muted small right">Đã nhắc '+t.nhac.length+' lần, gần nhất '+LMS.fmtDT(t.nhac[t.nhac.length-1].luc)+'</span>':'')+'</div>'+
+      '<table class="tbl"><thead><tr><th>Mã HV</th><th>Họ và tên</th><th>Xem lúc</th>'+(t.yeuCauXacNhan?'<th>Xác nhận</th>':'')+'</tr></thead><tbody>'+rows.map(function(r){ return '<tr><td class="mono">'+esc(r.hv.ma)+'</td><td>'+esc(r.hv.hoTen)+'</td><td>'+(r.xem?LMS.fmtDT(r.xem):U.badge('Chưa xem',''))+'</td>'+(t.yeuCauXacNhan?'<td>'+(r.xn?U.badge('Đã xác nhận','ok'):'—')+'</td>':'')+'</tr>'; }).join('')+'</tbody></table>';
+    api.body.querySelectorAll('[data-f]').forEach(function(b){ b.onclick=function(){ f=b.dataset.f; paint(); }; }); }
+  paint();
+}
+function compose(l,preset,src){
+  var gds=gdsNhan(l), p=preset||{}, t=src?JSON.parse(JSON.stringify(src)):null;
+  var sel={}; (t?t.nguoiNhan:(p.nhan||gds.filter(function(g){ return g.trangThai==='dang-hoc'||g.trangThai==='cho-khai-giang'; }).map(function(g){ return g.hv; }))).forEach(function(h){ sel[h]=1; });
+  var f={ loai:t?t.loai:(p.loai||'chung'), tieuDe:t?t.tieuDe:(p.tieuDe||''), noiDung:t?t.noiDung:(p.noiDung||''), email:t?t.kenh.email:true, ghim:t?t.ghim:false, xacNhan:t?t.yeuCauXacNhan:(p.loai==='thi'), hen:t&&t.trangThai==='hen-gio', henGio:t&&t.henGio?t.henGio:'', dinhKem:t?(t.dinhKem||[]).slice():[] };
+  if(f.loai==='tu-dong') f.loai='chung';
+  var nhom=[['dang-hoc','Đang học',function(g){ return g.trangThai==='dang-hoc'; }],['cho','Chờ khai giảng',function(g){ return g.trangThai==='cho-khai-giang'; }],['bao-luu','Bảo lưu',function(g){ return g.trangThai==='bao-luu'; }],['nguy-co','Nguy cơ cao',function(g){ var r=LMS.riskOf(l.id,g.hv); return r&&r.muc==='cao'; }],['cham','Chậm tiến độ',function(g){ return g.trangThai==='dang-hoc' && LMS.tienDoHV(l.id,g.hv).pct<LMS.keHoachPct(l)-20; }],['chua-hoc','Chưa bắt đầu học',function(g){ return g.trangThai==='dang-hoc' && !LMS.tienDoHV(l.id,g.hv).done; }]].concat(LMS.coDiemDanh(l)?[['cc','Chuyên cần dưới '+LMS.CC_CANH_BAO+'%',function(g){ var c=LMS.chuyenCanHV(l.id,g.hv); return c && c.pct<LMS.CC_CANH_BAO; }]]:[]);
+  var q='';
+  var api=U.modal({title:(t?'Sửa thông báo':'Soạn thông báo')+' · '+l.ma,size:'lg',body:'<div></div>',foot:[{label:'Hủy'},{label:'Lưu nháp',onClick:function(){ return save('nhap'); }},{label:'Gửi',cls:'primary',id:'tbSend',onClick:function(){ return save(f.hen?'hen-gio':'da-gui'); }}]});
+  function thay(s){ var bs=LMS.buoiCuaLop(l.id).filter(function(b){ return !b.huy && LMS.parse(b.ngay)>=LMS.TODAY; })[0], bt=(db().baiTap||[]).filter(function(b){ return b.lop===l.id && b.trangThai==='da-giao'; }).sort(function(a,b){ return a.hanNop<b.hanNop?1:-1; })[0], ky=db().kyThi.filter(function(k){ return k.lop===l.id && new Date(k.dongLuc)>new Date(); })[0], hp=LMS.hocPhanOfLop(l), td=gds.length?LMS.tienDoHV(l.id,gds[0].hv).done:0;
+    return s.replace('{ngay}',bs?LMS.fmtDate(bs.ngay):'…').replace('{gio}',bs?bs.gio+'–'+bs.den:'…').replace('{phong}',bs?bs.phong:'…').replace('{bai_tap}',bt?bt.ma+' "'+bt.ten+'"':'…').replace('{han_nop}',bt?LMS.fmtDT(bt.hanNop):'…').replace('{ky_thi}',ky?ky.ten:'…').replace('{gio_thi}',ky?LMS.fmtDT(ky.moLuc):'…').replace('{bai_hoc}',hp&&hp.bai[td]?hp.bai[td].ten:'…'); }
+  function paint(){
+    var nq=U.norm(q), ids=Object.keys(sel);
+    api.body.innerHTML='<div class="form-grid"><div class="field"><label for="tL">Loại thông báo</label><select class="sel" id="tL">'+U.opts(Object.keys(TB_LOAI).filter(function(k){ return k!=='tu-dong'; }).map(function(k){ return {v:k,t:TB_LOAI[k][0]}; }),'v','t',f.loai)+'</select></div><div class="field"><label>&nbsp;</label>'+(TB_MAU[f.loai]&&TB_MAU[f.loai][1]?'<button class="btn" id="tMau">Dùng mẫu "'+esc(TB_MAU[f.loai][0])+'"</button>':'<span class="muted small">Loại này không có mẫu nội dung</span>')+'</div>'+
+      '<div class="field full"><label for="tT">Tiêu đề <span class="req">*</span></label><input class="inp" id="tT" name="tT" maxlength="150" value="'+esc(f.tieuDe)+'"></div>'+
+      '<div class="field full"><label for="tN">Nội dung <span class="req">*</span></label><textarea id="tN" name="tN" rows="6" maxlength="3000">'+esc(f.noiDung)+'</textarea><div class="hint" id="tNc">'+f.noiDung.length+'/3000 ký tự</div></div>'+
+      '<div class="field full"><label>Tệp đính kèm</label><div class="row" style="gap:4px">'+f.dinhKem.map(function(id,i){ return '<span class="tag">📎 '+esc(LMS.name('thuVien',id))+' <button class="lnk" data-rmf="'+i+'" aria-label="Bỏ tệp">✕</button></span>'; }).join('')+'<button class="btn sm" id="tF">+ Chọn từ thư viện</button></div></div>'+
+      '<div class="field full"><label>Người nhận <span class="req">*</span> <span class="muted">· đã chọn '+ids.length+'/'+gds.length+'</span></label><div class="row" style="gap:4px;margin-bottom:6px">'+nhom.map(function(x){ var n=gds.filter(x[2]).length; return '<button class="btn sm" data-nh="'+x[0]+'"'+(n?'':' disabled')+'>'+x[1]+' ('+n+')</button>'; }).join('')+'<button class="btn sm ghost" data-nh="all">Tất cả</button><button class="btn sm ghost" data-nh="none">Bỏ chọn</button></div><input class="inp" id="tQ" placeholder="Tìm học viên trong lớp" value="'+esc(q)+'" style="margin-bottom:6px"><div class="gv-list" style="max-height:180px">'+gds.filter(function(g){ var h=LMS.byId('hocVien',g.hv); return !nq||U.norm(h.hoTen+' '+h.ma).indexOf(nq)>=0; }).map(function(g){ var h=LMS.byId('hocVien',g.hv); return '<label class="check"><input type="checkbox" data-r="'+g.hv+'"'+(sel[g.hv]?' checked':'')+'> '+esc(h.hoTen)+' <span class="muted small">'+esc(h.ma)+' · '+GD[g.trangThai][0]+'</span></label>'; }).join('')+'</div></div>'+
+      '<div class="field full"><label>Tùy chọn gửi</label><div class="opts"><label class="check"><input type="checkbox" checked disabled> Cổng học viên (chuông thông báo)</label><label class="check"><input type="checkbox" id="oE"'+(f.email?' checked':'')+'> Gửi kèm email</label><label class="check"><input type="checkbox" id="oG"'+(f.ghim?' checked':'')+'> Ghim đầu trang lớp</label><label class="check"><input type="checkbox" id="oX"'+(f.xacNhan?' checked':'')+'> Yêu cầu học viên bấm "Đã đọc và xác nhận"</label><label class="check"><input type="checkbox" id="oH"'+(f.hen?' checked':'')+'> Hẹn giờ gửi</label>'+(f.hen?'<input class="inp" type="datetime-local" id="oHT" name="oHT" style="max-width:220px" value="'+(f.henGio?toLocal(f.henGio):'')+'">':'')+'</div></div></div>'+
+      '<details class="pv-tb"><summary>Xem trước trên cổng học viên</summary><div class="tb-card" style="margin-top:8px"><div class="row" style="gap:6px"><b>'+esc(f.tieuDe||'(chưa có tiêu đề)')+'</b>'+U.badge(TB_LOAI[f.loai][0],TB_LOAI[f.loai][1])+'</div><div class="tb-n">'+esc(f.noiDung||'')+'</div>'+(f.xacNhan?'<button class="btn sm primary" disabled>Đã đọc và xác nhận</button>':'')+'</div></details>';
+    var sb=api.el.querySelector('#tbSend'); if(sb) sb.textContent=f.hen?'Hẹn giờ gửi':'Gửi ngay ('+ids.length+')';
+    var B=api.body;
+    B.querySelector('#tL').onchange=function(e){ f.loai=e.target.value; if(f.loai==='thi') f.xacNhan=true; paint(); };
+    var m=B.querySelector('#tMau'); if(m) m.onclick=function(){ var mm=TB_MAU[f.loai]; if(!f.tieuDe) f.tieuDe=mm[0]; f.noiDung=thay(mm[1]); paint(); };
+    B.querySelector('#tT').oninput=function(e){ f.tieuDe=e.target.value; };
+    B.querySelector('#tN').oninput=function(e){ f.noiDung=e.target.value; B.querySelector('#tNc').textContent=f.noiDung.length+'/3000 ký tự'; };
+    B.querySelector('#tQ').oninput=function(e){ q=e.target.value; var p0=e.target.selectionStart; paint(); var i=api.body.querySelector('#tQ'); i.focus(); i.setSelectionRange(p0,p0); };
+    B.querySelectorAll('[data-nh]').forEach(function(b){ b.onclick=function(){ var k=b.dataset.nh; if(k==='all'){ gds.forEach(function(g){ sel[g.hv]=1; }); } else if(k==='none'){ sel={}; } else { sel={}; var x=nhom.find(function(n){ return n[0]===k; }); gds.filter(x[2]).forEach(function(g){ sel[g.hv]=1; }); } paint(); }; });
+    B.querySelectorAll('[data-r]').forEach(function(c){ c.onchange=function(){ if(c.checked) sel[c.dataset.r]=1; else delete sel[c.dataset.r]; var sb2=api.el.querySelector('#tbSend'); if(sb2&&!f.hen) sb2.textContent='Gửi ngay ('+Object.keys(sel).length+')'; }; });
+    B.querySelectorAll('[data-rmf]').forEach(function(b){ b.onclick=function(){ f.dinhKem.splice(+b.dataset.rmf,1); paint(); }; });
+    B.querySelector('#tF').onclick=function(){ var fs=db().thuVien.filter(function(x){ return x.loai!=='Video'; }); U.modal({title:'Chọn tệp đính kèm',size:'sm',body:'<select class="sel" id="fsel" size="10" style="height:auto">'+U.opts(fs,'id',function(x){ return x.ten+' · '+x.loai; })+'</select>',foot:[{label:'Hủy'},{label:'Đính kèm',cls:'primary',onClick:function(a){ var v=a.body.querySelector('#fsel').value; if(v && f.dinhKem.indexOf(v)<0) f.dinhKem.push(v); paint(); }}]}); };
+    B.querySelector('#oE').onchange=function(e){ f.email=e.target.checked; };
+    B.querySelector('#oG').onchange=function(e){ f.ghim=e.target.checked; };
+    B.querySelector('#oX').onchange=function(e){ f.xacNhan=e.target.checked; paint(); };
+    B.querySelector('#oH').onchange=function(e){ f.hen=e.target.checked; if(f.hen&&!f.henGio){ var d=new Date(); d.setDate(d.getDate()+1); d.setHours(7,0,0,0); f.henGio=d.toISOString(); } paint(); };
+    var ht=B.querySelector('#oHT'); if(ht) ht.onchange=function(e){ f.henGio=e.target.value?new Date(e.target.value).toISOString():''; };
+  }
+  function save(tt){
+    var ids=Object.keys(sel), ok=true;
+    if(!f.tieuDe.trim()){ U.fieldErr(api.body,'tT','Nhập tiêu đề'); ok=false; }
+    if(tt!=='nhap'){ if(!f.noiDung.trim()){ U.fieldErr(api.body,'tN','Nhập nội dung'); ok=false; } if(/\{[a-z_]+\}/.test(f.noiDung)){ U.fieldErr(api.body,'tN','Còn trường chưa điền trong mẫu: '+f.noiDung.match(/\{[a-z_]+\}/)[0]); ok=false; } if(!ids.length){ U.toast('Chọn ít nhất một người nhận','bad'); ok=false; } if(tt==='hen-gio' && (!f.henGio || new Date(f.henGio)<=new Date())){ U.fieldErr(api.body,'oHT','Chọn thời điểm trong tương lai'); U.toast('Thời điểm hẹn giờ phải sau hiện tại','bad'); ok=false; } }
+    if(!ok) return false;
+    var o=src?db().thongBao.find(function(x){ return x.id===src.id; }):{id:LMS.nextId('tb'),lop:l.id,xem:{},xacNhan:{},thuHoi:null};
+    o.loai=f.loai; o.tieuDe=f.tieuDe.trim(); o.noiDung=f.noiDung.trim(); o.nguoiNhan=ids; o.kenh={portal:true,email:f.email}; o.ghim=f.ghim; o.yeuCauXacNhan=f.xacNhan; o.dinhKem=f.dinhKem; o.trangThai=tt; o.henGio=tt==='hen-gio'?f.henGio:null; o.ngay=tt==='hen-gio'?f.henGio:new Date().toISOString(); o.nguoiGui=db().meta.user.ten;
+    if(!src) db().thongBao.push(o);
+    LMS.commit(tt==='nhap'?'Lưu nháp thông báo':tt==='hen-gio'?'Hẹn giờ thông báo':'Gửi thông báo','Thông báo',l.ma+' · '+o.tieuDe+' · '+ids.length+' người nhận');
+    U.toast(tt==='nhap'?'Đã lưu nháp':tt==='hen-gio'?'Sẽ gửi lúc '+LMS.fmtDT(o.henGio):'Đã gửi tới '+ids.length+' học viên'+(f.email?' qua cổng và email':''),'ok');
+    st.tbF=tt==='da-gui'?'lop':'cho'; st.tab='tb'; renderDetail();
+  }
+  paint();
+}
+function toLocal(iso){ var d=new Date(iso), z=function(n){ return (n<10?'0':'')+n; }; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+'T'+z(d.getHours())+':'+z(d.getMinutes()); }
+
+/* ---- tab Khảo sát ---- */
+var KS_LOAI={'thang':'Thang điểm 1–5','lua-chon':'Một lựa chọn','nhieu':'Nhiều lựa chọn','tu-luan':'Tự luận ngắn'};
+function ksOf(l){ return (db().khaoSat||[]).filter(function(k){ return k.lop===l.id && Array.isArray(k.cauHoi); }).map(function(k){ if(!k.phieu) k.phieu=[]; return k; }); }
+function ksNhan(l){ return gdsNhan(l).filter(function(g){ return g.trangThai!=='cho-khai-giang'; }).map(function(g){ return g.hv; }); }
+function tabKS(tb,l){
+  var ks=ksOf(l), mo=ks.filter(function(k){ return LMS.ksTrangThai(k).key==='mo'; });
+  var gs=0, ph=0, sd=0, sn=0; ks.forEach(function(k){ if(k.trangThai==='nhap') return; gs+=ksNhan(l).length; ph+=k.phieu.length; if(k.diemTB!=null){ sd+=k.diemTB*k.phieu.length; sn+=k.phieu.length; } });
+  var chua=mo.reduce(function(a,k){ return a+ksNhan(l).filter(function(h){ return !k.phieu.some(function(p){ return p.hv===h; }); }).length; },0);
+  var h=kpiRow([['Đang mở',mo.length,ks.filter(function(k){ return k.trangThai==='nhap'; }).length+' bản nháp'],['Tỷ lệ phản hồi',gs?Math.round(ph/gs*100)+'%':'—',ph+'/'+gs+' phiếu'],['Điểm hài lòng TB',sn?(sd/sn).toFixed(2).replace('.',',')+'<span class="muted small">/5</span>':'—','bình quân theo phiếu'],['Chưa phản hồi',chua,mo.length?'trên khảo sát đang mở':'',chua?'warn':'']])+
+    '<div class="row" style="margin:12px 0 8px"><span class="muted small">Khảo sát gửi tới học viên đang có trong lớp, có thời gian mở và đóng; ngoài thời gian mở học viên không gửi được phiếu. Bấm một dòng để xem kết quả.</span><button class="btn primary right" id="ksNew"'+(khoa(l)?' disabled':'')+'>+ Tạo khảo sát</button></div><div id="ksT"></div>';
+  tb.innerHTML=h;
+  U.table(document.getElementById('ksT'),{ rows:ks, empty:'Lớp chưa có khảo sát nào.', onRowClick:function(k){ if(k.trangThai==='nhap') ksBuilder(l,k); else ksKetQua(l,k); },
+    columns:[{key:'ten',label:'Tên khảo sát',render:function(k){ return '<div class="t-main">'+esc(k.ten)+'</div><div class="t-sub">'+k.cauHoi.length+' câu hỏi'+(k.anDanh?' · ẩn danh':'')+'</div>'; }},
+      {key:'tg',label:'Thời gian',render:function(k){ var c=k.ketThuc?LMS.daysBetween(LMS.TODAY,k.ketThuc):null; return LMS.fmtDate(k.batDau)+' – '+LMS.fmtDate(k.ketThuc)+(LMS.ksTrangThai(k).key==='mo'&&c!=null?'<div class="t-sub">'+(c>0?'còn '+c+' ngày':'đóng hôm nay')+'</div>':''); },sortVal:function(k){ return k.batDau; }},
+      {key:'gui',label:'Đã gửi',cls:'num',render:function(k){ return k.trangThai==='nhap'?'<span class="muted">—</span>':ksNhan(l).length; },sortable:false},
+      {key:'ph',label:'Phản hồi',w:'170px',render:function(k){ if(k.trangThai==='nhap') return '<span class="muted">—</span>'; var n=ksNhan(l).length; return U.prog(n?Math.round(k.phieu.length/n*100):0,null,k.phieu.length+'/'+n); },sortVal:function(k){ return k.phieu.length; }},
+      {key:'d',label:'Điểm TB',cls:'num',render:function(k){ return k.diemTB!=null?'<b>'+k.diemTB.toFixed(2).replace('.',',')+'</b><span class="muted">/5</span>':'<span class="muted">—</span>'; },sortVal:function(k){ return k.diemTB; }},
+      {key:'tt',label:'Trạng thái',render:function(k){ var s=LMS.ksTrangThai(k); return U.badge(s.label,s.tone); },sortable:false},
+      {key:'x',label:'',sortable:false,w:'40px',render:function(k){ return '<button class="icon-btn" data-m="'+k.id+'" aria-label="Thao tác">⋯</button>'; }}],
+    after:function(host){ host.querySelectorAll('[data-m]').forEach(function(b){ b.onclick=function(e){ e.stopPropagation(); ksMenu(b,l,LMS.byId('khaoSat',b.dataset.m)); }; }); }});
+  document.getElementById('ksNew').onclick=function(){ ksBuilder(l,null); };
+  if(st.ksMo){ var k0=LMS.byId('khaoSat',st.ksMo); st.ksMo=null; if(k0) setTimeout(function(){ ksKetQua(l,k0); },30); }
+}
+function ksMenu(b,l,k){
+  var s=LMS.ksTrangThai(k).key, n=k.phieu.length;
+  U.menu(b,[
+    s!=='nhap'?{label:'Xem kết quả',onClick:function(){ ksKetQua(l,k); }}:null,
+    {label:n?'Sửa thời gian, mô tả':'Sửa khảo sát',onClick:function(){ ksBuilder(l,k); }},
+    s==='nhap'?{label:'Phát hành',onClick:function(){ ksPhatHanh(l,k); }}:null,
+    s==='mo'?{label:'Nhắc học viên chưa phản hồi',onClick:function(){ ksNhac(l,k); }}:null,
+    s==='mo'?{label:'Đóng khảo sát ngay',onClick:function(){ k.trangThai='da-dong'; k.ketThuc=LMS.iso(LMS.TODAY); LMS.commit('Đóng khảo sát','Khảo sát',l.ma+' · '+k.ten); U.toast('Đã đóng khảo sát','ok'); renderDetail(); }}:null,
+    s==='dong'?{label:'Mở lại / gia hạn',onClick:function(){ ksGiaHan(l,k); }}:null,
+    {label:'Nhân bản',onClick:function(){ var c=JSON.parse(JSON.stringify(k)); c.id=LMS.nextId('ks'); c.ten=k.ten+' (bản sao)'; c.trangThai='nhap'; c.phieu=[]; c.nhac=[]; c.ngayGui=null; c.cauHoi.forEach(function(q,i){ q.id='q'+Date.now().toString(36)+i; }); db().khaoSat.unshift(LMS.ksDongBo(c)); LMS.commit('Nhân bản khảo sát','Khảo sát',l.ma+' · '+k.ten); U.toast('Đã tạo bản nháp','ok'); renderDetail(); }},
+    n?{label:'Xuất CSV phiếu trả lời',onClick:function(){ ksCsv(k); }}:null,
+    '-',
+    {label:'Xóa',danger:true,onClick:function(){ if(n){ U.blocked('Không thể xóa khảo sát',[n+' phiếu trả lời đã thu'],'Đóng khảo sát để ngừng nhận phiếu; dữ liệu được giữ cho báo cáo.'); return; } U.confirm({title:'Xóa khảo sát',message:'Xóa "'+k.ten+'"?',ok:'Xóa',danger:true}).then(function(y){ if(!y) return; db().khaoSat=db().khaoSat.filter(function(x){ return x.id!==k.id; }); LMS.commit('Xóa khảo sát','Khảo sát',l.ma+' · '+k.ten); renderDetail(); }); }}
+  ]);
+}
+function ksPhatHanh(l,k){
+  var loi=ksLoi(k); if(loi){ U.toast(loi,'bad'); return; }
+  if(k.ketThuc<LMS.iso(LMS.TODAY)){ U.toast('Ngày kết thúc đã qua, sửa lại thời gian trước khi phát hành','bad'); return; }
+  k.trangThai='dang-mo'; k.ngayGui=LMS.iso(LMS.TODAY);
+  if(k.thongBaoKhiMo && k.batDau<=LMS.iso(LMS.TODAY)) db().thongBao.push({id:LMS.nextId('tb'),lop:l.id,loai:'hoc-tap',tieuDe:'Mời tham gia khảo sát: '+k.ten,noiDung:'Anh/chị dành vài phút trả lời khảo sát "'+k.ten+'" trước ngày '+LMS.fmtDate(k.ketThuc)+'.'+(k.anDanh?' Phiếu ẩn danh.':''),nguoiNhan:ksNhan(l),ngay:new Date().toISOString(),nguoiGui:db().meta.user.ten,trangThai:'da-gui',kenh:{portal:true,email:true},ghim:false,yeuCauXacNhan:false,xem:{},xacNhan:{},dinhKem:[]});
+  LMS.ksDongBo(k); LMS.commit('Phát hành khảo sát','Khảo sát',l.ma+' · '+k.ten+' · '+ksNhan(l).length+' học viên');
+  U.toast(k.batDau>LMS.iso(LMS.TODAY)?'Khảo sát tự mở ngày '+LMS.fmtDate(k.batDau):'Đã phát hành tới '+ksNhan(l).length+' học viên'+(k.thongBaoKhiMo?', kèm thông báo mời tham gia':''),'ok'); renderDetail();
+}
+function ksNhac(l,k){ var chua=ksNhan(l).filter(function(h){ return !k.phieu.some(function(p){ return p.hv===h; }); }); if(!chua.length){ U.toast('Mọi học viên đã phản hồi'); return; }
+  U.confirm({title:'Nhắc phản hồi khảo sát',html:'Gửi thông báo và email nhắc tới <b>'+chua.length+'</b> học viên chưa phản hồi "'+esc(k.ten)+'"?'+(k.anDanh?'<div class="muted small" style="margin-top:6px">Khảo sát ẩn danh: hệ thống chỉ biết ai đã nộp phiếu, không gắn tên với câu trả lời.</div>':''),ok:'Gửi nhắc'}).then(function(y){ if(!y) return; k.nhac=(k.nhac||[]).concat([{luc:new Date().toISOString(),so:chua.length}]); db().thongBao.push({id:LMS.nextId('tb'),lop:l.id,loai:'tu-dong',tieuDe:'Nhắc phản hồi khảo sát: '+k.ten,noiDung:'Khảo sát đóng ngày '+LMS.fmtDate(k.ketThuc)+'.',nguoiNhan:chua,ngay:new Date().toISOString(),nguoiGui:db().meta.user.ten,trangThai:'da-gui',kenh:{portal:true,email:true}}); LMS.commit('Nhắc khảo sát','Khảo sát',l.ma+' · '+k.ten+' · '+chua.length); U.toast('Đã nhắc '+chua.length+' học viên','ok'); renderDetail(); }); }
+function ksGiaHan(l,k){ U.modal({title:'Mở lại / gia hạn khảo sát',size:'sm',body:'<div class="field"><label for="kt">Đóng lúc hết ngày</label><input class="inp" type="date" id="kt" name="kt" min="'+LMS.iso(LMS.TODAY)+'" value="'+LMS.iso(LMS.addDays(LMS.TODAY,3))+'"></div>',foot:[{label:'Hủy'},{label:'Mở lại',cls:'primary',onClick:function(a){ var v=U.formVals(a.body).kt; if(!v||v<LMS.iso(LMS.TODAY)){ U.fieldErr(a.body,'kt','Chọn ngày từ hôm nay'); return false; } k.ketThuc=v; k.trangThai='dang-mo'; LMS.commit('Gia hạn khảo sát','Khảo sát',l.ma+' · '+k.ten+' → '+LMS.fmtDate(v)); U.toast('Khảo sát mở đến hết '+LMS.fmtDate(v),'ok'); renderDetail(); }}]}); }
+function ksLoi(k){ if(!k.cauHoi.length) return 'Khảo sát chưa có câu hỏi'; var i=k.cauHoi.findIndex(function(q){ return !q.noiDung.trim() || ((q.loai==='lua-chon'||q.loai==='nhieu') && q.luaChon.filter(function(x){ return x.trim(); }).length<2); }); if(i>=0) return 'Câu '+(i+1)+': '+(!k.cauHoi[i].noiDung.trim()?'chưa nhập nội dung':'cần ít nhất 2 lựa chọn'); return ''; }
+function ksBuilder(l,src){
+  var locked=src && src.phieu && src.phieu.length>0;
+  var k=src?JSON.parse(JSON.stringify(src)):{id:LMS.nextId('ks'),ten:'',lop:l.id,moTa:'',batDau:LMS.iso(LMS.TODAY),ketThuc:LMS.iso(LMS.addDays(LMS.TODAY,7)),anDanh:true,trangThai:'nhap',cauHoi:[],phieu:[],nhac:[],thongBaoKhiMo:true,nhacTuDong:true,doiTuong:'dang-hoc',ngayGui:null};
+  var api=U.modal({title:(src?'Sửa khảo sát':'Tạo khảo sát')+' · '+l.ma,size:'lg',body:'<div></div>',foot:[{label:'Hủy'}].concat(k.trangThai==='nhap'?[{label:'Lưu nháp',onClick:function(){ return save(false); }},{label:'Lưu và phát hành',cls:'primary',onClick:function(){ return save(true); }}]:[{label:'Lưu',cls:'primary',onClick:function(){ return save(false); }}])});
+  function paint(){
+    var n=ksNhan(l).length, B=api.body;
+    B.innerHTML=(locked?'<div class="note warn">Khảo sát đã có '+src.phieu.length+' phiếu trả lời: chỉ sửa được tên, mô tả, ngày kết thúc. Muốn đổi câu hỏi, dùng Nhân bản để tạo khảo sát mới.</div>':'')+
+      '<div class="form-grid"><div class="field full"><label for="kTen">Tên khảo sát <span class="req">*</span></label><input class="inp" id="kTen" name="kTen" maxlength="150" value="'+esc(k.ten)+'" placeholder="VD: Khảo sát chất lượng buổi học"></div>'+
+      '<div class="field"><label for="kBD">Ngày bắt đầu</label><input class="inp" type="date" id="kBD" name="kBD" value="'+k.batDau+'"'+(locked?' disabled':'')+'></div><div class="field"><label for="kKT">Ngày kết thúc <span class="req">*</span></label><input class="inp" type="date" id="kKT" name="kKT" value="'+k.ketThuc+'"></div>'+
+      '<div class="field full"><label for="kMT">Mô tả (hiển thị cho học viên trước khi trả lời)</label><textarea id="kMT" name="kMT" rows="2">'+esc(k.moTa||'')+'</textarea></div>'+
+      '<div class="field full"><div class="opts"><label class="check"><input type="checkbox" id="kAD"'+(k.anDanh?' checked':'')+(locked?' disabled':'')+'> Ẩn danh người trả lời (giảng viên chỉ thấy tổng hợp)</label><label class="check"><input type="checkbox" id="kTB"'+(k.thongBaoKhiMo?' checked':'')+'> Gửi thông báo mời tham gia khi mở</label><label class="check"><input type="checkbox" id="kNH"'+(k.nhacTuDong?' checked':'')+'> Tự động nhắc người chưa phản hồi 1 ngày trước khi đóng</label></div><div class="hint">Gửi tới '+n+' học viên đang có trong lớp. Ngoài thời gian mở, học viên không gửi được phiếu.</div></div></div>'+
+      '<div class="row" style="margin:14px 0 8px"><h3 style="margin:0">Tiêu chí khảo sát · '+k.cauHoi.length+' câu hỏi</h3>'+(locked?'':'<span class="right row" style="gap:4px"><select class="sel" id="kMau" style="width:auto" aria-label="Dùng mẫu"><option value="">Thêm từ mẫu…</option>'+Object.keys(LMS.KS_MAU).map(function(m){ return '<option value="'+m+'">'+esc(LMS.KS_MAU[m].ten)+' ('+LMS.KS_MAU[m].cau.length+' câu)</option>'; }).join('')+'</select>'+Object.keys(KS_LOAI).map(function(x){ return '<button class="btn sm" data-add="'+x+'">+ '+KS_LOAI[x]+'</button>'; }).join('')+'</span>')+'</div>'+
+      (k.cauHoi.length?k.cauHoi.map(function(q,i){ var dis=locked?' disabled':''; return '<div class="ksq"><div class="row" style="gap:6px"><span class="q-n">'+(i+1)+'</span><input class="inp grow" data-qi="'+i+'" data-f="noiDung" value="'+esc(q.noiDung)+'" placeholder="Nội dung câu hỏi"'+dis+' aria-label="Nội dung câu '+(i+1)+'"><span class="badge">'+KS_LOAI[q.loai]+'</span>'+(locked?'':'<label class="check small"><input type="checkbox" data-qi="'+i+'" data-f="batBuoc"'+(q.batBuoc?' checked':'')+'> Bắt buộc</label><button class="icon-btn" data-up="'+i+'"'+(i?'':' disabled')+' aria-label="Lên">↑</button><button class="icon-btn" data-dn="'+i+'"'+(i<k.cauHoi.length-1?'':' disabled')+' aria-label="Xuống">↓</button><button class="icon-btn" data-cp="'+i+'" aria-label="Nhân bản câu">⧉</button><button class="icon-btn" data-del="'+i+'" aria-label="Xóa câu" style="color:var(--ems-danger)">✕</button>')+'</div>'+
+        (q.loai==='lua-chon'||q.loai==='nhieu'?'<div class="ksopt">'+q.luaChon.map(function(o,j){ return '<div class="row" style="gap:6px"><span class="muted">'+(q.loai==='nhieu'?'☐':'○')+'</span><input class="inp grow" data-qi="'+i+'" data-oj="'+j+'" value="'+esc(o)+'" placeholder="Lựa chọn '+(j+1)+'"'+dis+'>'+(locked?'':'<button class="icon-btn" data-odel="'+i+'-'+j+'" aria-label="Xóa lựa chọn"'+(q.luaChon.length<=2?' disabled':'')+'>✕</button>')+'</div>'; }).join('')+(locked?'':'<button class="btn sm ghost" data-oadd="'+i+'">+ Thêm lựa chọn</button>')+'</div>':q.loai==='thang'?'<div class="ksopt small muted">1 = Rất không đồng ý · 2 · 3 · 4 · 5 = Rất đồng ý</div>':'<div class="ksopt small muted">Học viên nhập câu trả lời, tối đa 1000 ký tự</div>')+'</div>'; }).join(''):'<div class="empty">Chưa có câu hỏi nào. Chọn loại câu hỏi hoặc thêm từ mẫu ở trên để bắt đầu.</div>');
+    B.querySelector('#kTen').oninput=function(e){ k.ten=e.target.value; };
+    B.querySelector('#kBD').onchange=function(e){ k.batDau=e.target.value; };
+    B.querySelector('#kKT').onchange=function(e){ k.ketThuc=e.target.value; };
+    B.querySelector('#kMT').oninput=function(e){ k.moTa=e.target.value; };
+    B.querySelector('#kAD').onchange=function(e){ k.anDanh=e.target.checked; };
+    B.querySelector('#kTB').onchange=function(e){ k.thongBaoKhiMo=e.target.checked; };
+    B.querySelector('#kNH').onchange=function(e){ k.nhacTuDong=e.target.checked; };
+    var mau=B.querySelector('#kMau'); if(mau) mau.onchange=function(e){ var m=LMS.KS_MAU[e.target.value]; if(!m) return; m.cau.forEach(function(c,i){ k.cauHoi.push({id:'q'+Date.now().toString(36)+i,noiDung:c[0],loai:c[1],luaChon:c[2]?c[2].slice():[],batBuoc:c[1]!=='tu-luan'}); }); if(!k.ten) k.ten=m.ten+' - '+l.ma; if(!k.moTa) k.moTa=m.moTa; paint(); };
+    B.querySelectorAll('[data-add]').forEach(function(b){ b.onclick=function(){ var t=b.dataset.add; k.cauHoi.push({id:'q'+Date.now().toString(36),noiDung:'',loai:t,luaChon:t==='lua-chon'||t==='nhieu'?['','']:[],batBuoc:t!=='tu-luan'}); paint(); var ins=B.querySelectorAll('[data-f=noiDung]'); ins[ins.length-1].focus(); }; });
+    B.querySelectorAll('[data-f=noiDung]').forEach(function(x){ x.oninput=function(){ k.cauHoi[+x.dataset.qi].noiDung=x.value; }; });
+    B.querySelectorAll('[data-f=batBuoc]').forEach(function(x){ x.onchange=function(){ k.cauHoi[+x.dataset.qi].batBuoc=x.checked; }; });
+    B.querySelectorAll('[data-oj]').forEach(function(x){ x.oninput=function(){ k.cauHoi[+x.dataset.qi].luaChon[+x.dataset.oj]=x.value; }; });
+    B.querySelectorAll('[data-oadd]').forEach(function(x){ x.onclick=function(){ k.cauHoi[+x.dataset.oadd].luaChon.push(''); paint(); }; });
+    B.querySelectorAll('[data-odel]').forEach(function(x){ x.onclick=function(){ var p=x.dataset.odel.split('-'); k.cauHoi[+p[0]].luaChon.splice(+p[1],1); paint(); }; });
+    B.querySelectorAll('[data-up]').forEach(function(x){ x.onclick=function(){ var i=+x.dataset.up, c=k.cauHoi.splice(i,1)[0]; k.cauHoi.splice(i-1,0,c); paint(); }; });
+    B.querySelectorAll('[data-dn]').forEach(function(x){ x.onclick=function(){ var i=+x.dataset.dn, c=k.cauHoi.splice(i,1)[0]; k.cauHoi.splice(i+1,0,c); paint(); }; });
+    B.querySelectorAll('[data-cp]').forEach(function(x){ x.onclick=function(){ var i=+x.dataset.cp, c=JSON.parse(JSON.stringify(k.cauHoi[i])); c.id='q'+Date.now().toString(36); k.cauHoi.splice(i+1,0,c); paint(); }; });
+    B.querySelectorAll('[data-del]').forEach(function(x){ x.onclick=function(){ k.cauHoi.splice(+x.dataset.del,1); paint(); }; });
+  }
+  function save(phatHanh){
+    var ok=true; k.ten=(k.ten||'').trim();
+    if(!k.ten){ U.fieldErr(api.body,'kTen','Nhập tên khảo sát'); ok=false; }
+    if(!k.ketThuc){ U.fieldErr(api.body,'kKT','Chọn ngày kết thúc'); ok=false; } else if(k.batDau && k.ketThuc<k.batDau){ U.fieldErr(api.body,'kKT','Ngày kết thúc phải từ ngày bắt đầu'); ok=false; }
+    if(k.ketThuc && l.ketThuc && k.ketThuc>LMS.iso(LMS.addDays(LMS.parse(l.ketThuc),30))){ U.fieldErr(api.body,'kKT','Không quá 30 ngày sau ngày kết thúc lớp'); ok=false; }
+    if(!ok) return false;
+    k.cauHoi.forEach(function(q){ q.noiDung=q.noiDung.trim(); q.luaChon=q.luaChon.map(function(o){ return o.trim(); }).filter(Boolean); });
+    if(phatHanh){ var loi=ksLoi(k); if(loi){ U.toast(loi,'bad'); return false; } }
+    var o=src?LMS.byId('khaoSat',src.id):null;
+    if(o){ if(locked){ o.ten=k.ten; o.moTa=k.moTa; o.ketThuc=k.ketThuc; o.thongBaoKhiMo=k.thongBaoKhiMo; o.nhacTuDong=k.nhacTuDong; if(o.trangThai==='da-dong' && k.ketThuc>=LMS.iso(LMS.TODAY)) o.trangThai='dang-mo'; } else { Object.keys(k).forEach(function(x){ o[x]=k[x]; }); } }
+    else { o=k; db().khaoSat.unshift(o); }
+    LMS.ksDongBo(o);
+    if(phatHanh){ LMS.commit(src?'Sửa khảo sát':'Tạo khảo sát','Khảo sát',l.ma+' · '+o.ten); ksPhatHanh(l,o); return; }
+    LMS.commit(src?'Sửa khảo sát':'Tạo khảo sát','Khảo sát',l.ma+' · '+o.ten+(o.trangThai==='nhap'?' · nháp':'')); U.toast(o.trangThai==='nhap'?'Đã lưu nháp':'Đã lưu','ok'); st.tab='ks'; renderDetail();
+  }
+  paint();
+}
+function ksKetQua(l,k){
+  var nhan=ksNhan(l), n=k.phieu.length, s=LMS.ksTrangThai(k), chua=nhan.filter(function(h){ return !k.phieu.some(function(p){ return p.hv===h; }); });
+  var h='<div class="row small muted" style="margin-bottom:8px">'+U.badge(s.label,s.tone)+'<span>'+LMS.fmtDate(k.batDau)+' – '+LMS.fmtDate(k.ketThuc)+'</span>'+(k.anDanh?'<span>· ẩn danh</span>':'')+((k.nhac||[]).length?'<span>· đã nhắc '+k.nhac.length+' lần</span>':'')+'</div>'+
+    kpiRow([['Đã gửi',nhan.length,''],['Phản hồi',n,nhan.length?Math.round(n/nhan.length*100)+'%':''],['Điểm hài lòng TB',k.diemTB!=null?k.diemTB.toFixed(2).replace('.',',')+'<span class="muted small">/5</span>':'—','các câu thang điểm'],['Chưa phản hồi',chua.length,'',chua.length&&s.key==='mo'?'warn':'']]);
+  if(!n) h+='<div class="empty">Chưa có phiếu trả lời</div>';
+  k.cauHoi.forEach(function(q,i){
+    var vals=k.phieu.map(function(p){ return p.tl[q.id]; }).filter(function(v){ return v!=null && v!=='' && !(Array.isArray(v)&&!v.length); });
+    h+='<div class="res-q"><div class="row" style="gap:6px"><span class="muted">'+(i+1)+'.</span><b>'+esc(q.noiDung)+'</b><span class="badge">'+KS_LOAI[q.loai]+'</span><span class="right muted small">'+vals.length+' trả lời</span></div>';
+    if(q.loai==='thang'){ var c=[0,0,0,0,0]; vals.forEach(function(v){ c[v-1]++; }); var avg=vals.length?vals.reduce(function(a,b){return a+b;},0)/vals.length:0; h+='<div class="row small" style="margin:4px 0"><span>Điểm TB <b>'+avg.toFixed(2).replace('.',',')+'</b>/5</span><span class="muted">· đồng ý (4–5): '+(vals.length?Math.round((c[3]+c[4])/vals.length*100):0)+'%</span>'+(avg&&avg<3.5?' '+U.badge('Cần cải thiện','warn'):'')+'</div><div data-hb="'+i+'"></div>'; q._c=[5,4,3,2,1].map(function(x){ return {label:x+' điểm',value:c[x-1],text:c[x-1]+' ('+(vals.length?Math.round(c[x-1]/vals.length*100):0)+'%)',tone:x>=4?'ok':x===3?'':'warn'}; }); }
+    else if(q.loai==='lua-chon'||q.loai==='nhieu'){ var cc=q.luaChon.map(function(){ return 0; }); vals.forEach(function(v){ (Array.isArray(v)?v:[v]).forEach(function(j){ if(cc[j]!=null) cc[j]++; }); }); q._c=q.luaChon.map(function(o,j){ return {label:o,value:cc[j],text:cc[j]+' ('+(vals.length?Math.round(cc[j]/vals.length*100):0)+'%)'}; }); h+='<div data-hb="'+i+'"></div>'; }
+    else { h+=vals.length?'<div class="ks-tl">'+vals.map(function(v,j){ var p=k.phieu.filter(function(x){ return x.tl[q.id]===v; })[0]; return '<div class="cmt">'+esc(v)+(k.anDanh?'':'<div class="t-sub">'+esc(LMS.name('hocVien',p.hv,'hoTen'))+'</div>')+'</div>'; }).join('')+'</div>':'<div class="muted small">Chưa có ý kiến</div>'; }
+    h+='</div>';
+  });
+  if(chua.length) h+='<details style="margin-top:12px"><summary><b>'+chua.length+' học viên chưa phản hồi</b></summary><div class="row" style="gap:4px;margin-top:6px">'+chua.map(function(x){ var hv=LMS.byId('hocVien',x); return '<span class="tag">'+esc(hv.hoTen)+'</span>'; }).join('')+'</div></details>';
+  var api=U.modal({title:k.ten,size:'lg',body:h,foot:[{label:'Đóng'}].concat(n?[{label:'Xuất CSV',onClick:function(){ ksCsv(k); return false; }}]:[]).concat(s.key==='mo'&&chua.length?[{label:'Nhắc '+chua.length+' học viên',cls:'primary',onClick:function(){ ksNhac(l,k); }}]:[])});
+  k.cauHoi.forEach(function(q,i){ var el=api.body.querySelector('[data-hb="'+i+'"]'); if(el && q._c) U.hbars(el,q._c,{max:Math.max(1,n)}); delete q._c; });
+}
+function ksCsv(k){ var head=['Thời điểm'].concat(k.anDanh?[]:['Mã HV','Họ tên']).concat(k.cauHoi.map(function(q,i){ return (i+1)+'. '+q.noiDung; })); csv('khao-sat-'+k.id+'.csv',[head].concat(k.phieu.map(function(p){ var hv=LMS.byId('hocVien',p.hv)||{}; return [LMS.fmtDT(p.luc)].concat(k.anDanh?[]:[hv.ma,hv.hoTen]).concat(k.cauHoi.map(function(q){ var v=p.tl[q.id]; if(v==null) return ''; if(q.loai==='lua-chon') return q.luaChon[v]; if(q.loai==='nhieu') return v.map(function(j){ return q.luaChon[j]; }).join('; '); return v; })); }))); }
+
+/* =================== thao tác trạng thái =================== */
+function changeStatus(btn,l){
+  var n=LMS.soHV(l.id), hp=LMS.hocPhanOfLop(l);
+  function missing(){ var m=[]; if(!l.giangVien.length) m.push('chưa phân công giảng viên'); if(!hp||!hp.bai.length) m.push('học phần chưa có bài giảng'); if(!l.khoa) m.push('chưa chọn khoa'); return m; }
+  function go(tt,label,extra){ var b=l.trangThai; if(extra) extra(); l.trangThai=tt; if(tt==='tuyen-sinh') l.tuDangKy=true; LMS.commit(label,'Lớp học',l.ma,{trangThai:LMS.TT_LOP[b][0]},{trangThai:LMS.TT_LOP[tt][0]}); U.toast(l.ma+': '+LMS.TT_LOP[tt][0],'ok'); render(); }
+  var items=[];
+  if(l.trangThai==='ke-hoach') items.push({label:'Mở tuyển sinh',onClick:function(){ var m=missing(); if(m.length){ U.blocked('Chưa thể mở tuyển sinh',m.map(function(x){return 'Lớp '+x;}),'Bổ sung ở tab Thông tin lớp.'); return; } go('tuyen-sinh','Mở tuyển sinh'); }});
+  if(l.trangThai==='ke-hoach'||l.trangThai==='tuyen-sinh') items.push({label:'Bắt đầu học',onClick:function(){ var m=missing(); if(!n) m.push('chưa có học viên ghi danh'); if(m.length){ U.blocked('Chưa thể bắt đầu học',m.map(function(x){return 'Lớp '+x;})); return; }
+    U.confirm({title:'Bắt đầu học '+l.ma,message:n+' học viên chờ khai giảng sẽ chuyển sang Đang học. Học phần, ngày bắt đầu sẽ bị khóa.',ok:'Bắt đầu học'}).then(function(ok){ if(ok) go('dang-hoc','Bắt đầu học',function(){ db().ghiDanh.forEach(function(g){ if(g.lop===l.id&&g.trangThai==='cho-khai-giang') g.trangThai='dang-hoc'; }); }); }); }});
+  if(l.trangThai==='dang-hoc') items.push({label:'Kết thúc lớp',onClick:function(){ var s=LMS.lopStats(l.id); var chua=LMS.buoiCuaLop(l.id).filter(function(b){return !b.huy && LMS.parse(b.ngay)>=LMS.TODAY;}).length; var warn=[]; if(chua) warn.push(chua+' buổi học chưa diễn ra sẽ bị hủy'); if(s.buoiChuaDD) warn.push(s.buoiChuaDD+' buổi chưa có điểm danh'); if(s.buoiChoXN) warn.push(s.buoiChoXN+' buổi chờ giảng viên xác nhận điểm danh'); if(s.coDiem<s.dangHoc) warn.push((s.dangHoc-s.coDiem)+' học viên chưa đủ điểm tổng kết');
+    U.confirm({title:'Kết thúc lớp '+l.ma,html:'Học viên đang học chuyển sang Hoàn thành; lớp chuyển sang chỉ xem.'+(warn.length?'<ul>'+warn.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':''),ok:'Kết thúc lớp',danger:!!warn.length}).then(function(ok){ if(ok) go('ket-thuc','Kết thúc lớp',function(){ db().ghiDanh.forEach(function(g){ if(g.lop===l.id&&g.trangThai==='dang-hoc') g.trangThai='hoan-thanh'; }); db().buoiHoc.forEach(function(b){ if(b.lop===l.id&&LMS.parse(b.ngay)>=LMS.TODAY) b.huy=true; }); }); }); }});
+  if(l.trangThai==='tuyen-sinh') items.push({label:'Tạm dừng tuyển sinh (về Lên kế hoạch)',onClick:function(){ go('ke-hoach','Tạm dừng tuyển sinh',function(){ l.tuDangKy=false; }); }});
+  if(!items.length){ U.toast('Lớp '+LMS.TT_LOP[l.trangThai][0].toLowerCase()+', không còn trạng thái để chuyển'); return; }
+  U.menu(btn,items);
+}
+function cancelLop(l){
+  var paid=db().thanhToan.filter(function(t){ return t.lop===l.id && t.trangThai==='da-thanh-toan'; }).length;
+  if(l.trangThai==='dang-hoc'){ U.blocked('Không hủy được lớp đang học',['Lớp '+l.ma+' đang học với '+LMS.soHV(l.id)+' học viên'],'Dùng Kết thúc lớp hoặc chuyển học viên sang lớp khác trước.'); return; }
+  reasonBox('Hủy lớp '+l.ma+(paid?' · '+paid+' học viên đã nộp phí sẽ cần hoàn tiền':''),'Hủy lớp',function(r){ var b=l.trangThai; l.trangThai='huy'; l.lyDoHuy=r; l.tuDangKy=false; db().ghiDanh.forEach(function(g){ if(g.lop===l.id&&g.trangThai!=='hoan-thanh') g.trangThai='thoi-hoc'; }); db().dangKy.forEach(function(x){ if(x.lop===l.id&&x.trangThai!=='da-duyet') x.trangThai='tu-choi'; }); LMS.commit('Hủy lớp','Lớp học',l.ma+' · '+r,{trangThai:LMS.TT_LOP[b][0]},{trangThai:'Đã hủy'}); U.toast('Đã hủy lớp '+l.ma+(paid?'. Xử lý hoàn tiền ở Thu học phí':''),'ok'); render(); },true);
+}
+function deleteLop(l){
+  var refs=LMS.refsOf('lop',l.id).concat(db().thanhToan.filter(function(t){return t.lop===l.id;}).length?[db().thanhToan.filter(function(t){return t.lop===l.id;}).length+' đơn thu học phí']:[]);
+  if(refs.length){ U.blocked('Không thể xóa lớp '+l.ma,refs,'Lớp đã phát sinh dữ liệu học tập. Dùng Hủy lớp hoặc Kết thúc lớp để giữ lịch sử.'); return; }
+  U.confirm({title:'Xóa lớp '+l.ma,message:'Lớp chưa có dữ liệu học tập. Xóa lớp và các buổi học đã lên lịch?',ok:'Xóa lớp',danger:true}).then(function(ok){ if(!ok) return; var d=db(); d.lop=d.lop.filter(function(x){return x.id!==l.id;}); d.buoiHoc=d.buoiHoc.filter(function(b){return b.lop!==l.id;}); delete d.tienDo[l.id]; LMS.commit('Xóa','Lớp học',l.ma+' · '+l.ten); U.toast('Đã xóa lớp '+l.ma,'ok'); st.view='list'; render(); });
+}
+function cloneLop(l){
+  var len=LMS.daysBetween(l.batDau,l.ketThuc), bd=LMS.addDays(LMS.TODAY,30);
+  var nl=JSON.parse(JSON.stringify(l)); nl.id=LMS.nextId('lop'); nl.ma=nextMa(); nl.ten=l.ten.replace(/K(\d+)/,function(m,k){ return 'K'+(+k+1); }); if(nl.ten===l.ten) nl.ten=l.ten+' (bản sao)'; nl.batDau=LMS.iso(bd); nl.ketThuc=LMS.iso(LMS.addDays(bd,len)); nl.trangThai='ke-hoach'; nl.tuDangKy=false; nl.cotDiem.forEach(function(c){ c.kyThi=null; }); delete nl.siSoSeed;
+  db().lop.push(nl); db().tienDo[nl.id]={}; LMS.commit('Nhân bản','Lớp học',l.ma+' → '+nl.ma); U.toast('Đã tạo '+nl.ma+' từ '+l.ma+'. Kiểm tra lại ngày và giảng viên.','ok'); openDetail(nl.id);
+}
+function csv(name,rows){ var txt='﻿'+rows.map(function(r){ return r.map(function(c){ c=String(c==null?'':c); return /[",;\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(','); }).join('\n');
+  try{ var u=URL.createObjectURL(new Blob([txt],{type:'text/csv'})); var a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(u);},1500); U.toast('Đã xuất '+name,'ok'); }
+  catch(e){ U.modal({title:name,size:'lg',body:'<textarea style="min-height:320px;font-family:var(--mono);font-size:12px" readonly>'+esc(txt)+'</textarea>'}); } }
+
+function render(){ if(st.view==='detail') renderDetail(); else renderList(); }
+render();
+LMS.onChange(render);
+})();
+</script>
+</body></html>

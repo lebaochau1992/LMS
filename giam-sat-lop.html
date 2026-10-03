@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giám sát lớp · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.lnk{background:none;border:0;padding:0;font:inherit;color:var(--ems-navy);cursor:pointer;font-weight:600;text-align:left}
+.lnk:hover{text-decoration:underline}
+.pk{min-width:150px}
+.pk .track{position:relative;height:8px;background:var(--ems-surface-2);border-radius:99px;overflow:visible}
+.pk .fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--ems-navy)}
+.pk .fill.warn{background:var(--ems-warning)} .pk .fill.bad{background:var(--ems-danger)} .pk .fill.ok{background:var(--ems-success)}
+.pk .mk{position:absolute;top:-4px;width:2px;height:16px;background:var(--ems-text);border-radius:1px}
+.pk .lb{display:flex;justify-content:space-between;font-size:12px;margin-top:4px;color:var(--ems-muted);font-variant-numeric:tabular-nums}
+.pk .lb b{color:var(--ems-text)}
+.reasons{font-size:12px;color:var(--ems-text-2);margin-top:3px;max-width:280px}
+tr.sel-row td{background:var(--ems-navy-soft)}
+.risk-sum{display:flex;gap:6px;flex-wrap:wrap}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc, T = LMS.TODAY;
+var app = document.getElementById('app');
+var st = { q: '', khoa: '', muc: '', kpi: '', lop: null, riskF: '' };
+var tbl = null, hvTbl = null;
+function D(){ return LMS.db; }
+function gvTen(id){ var g = LMS.byId('giangVien', id); return g ? g.hoTen : '—'; }
+var MUC = { 'na': ['Chưa đủ dữ liệu', '', 0], 'ok': ['Ổn định', 'ok', 1], 'td': ['Theo dõi', 'warn', 2], 'ct': ['Cần can thiệp', 'bad', 3] };
+var RISK = { cao: ['Cao', 'bad', 3], tb: ['Trung bình', 'warn', 2], thap: ['Thấp', 'ok', 1] };
+
+function analyze(lop){
+  var s = LMS.lopStats(lop.id);
+  var gds = LMS.ghiDanhLop(lop.id).filter(function(g){ return g.trangThai === 'dang-hoc'; });
+  var cao = 0, tb = 0;
+  gds.forEach(function(g){ var r = LMS.riskOf(lop.id, g.hv); if (!r) return; if (r.muc === 'cao') cao++; else if (r.muc === 'tb') tb++; });
+  var gap = s.tienDo != null ? s.keHoach - s.tienDo : null;
+  var reasons = [], muc;
+  if (s.buoiDaDay === 0 && s.keHoach < 10) { muc = 'na'; reasons.push(lop.trangThai === 'tuyen-sinh' ? 'Chưa khai giảng' : 'Chưa có buổi đã dạy'); }
+  else {
+    var ct = false, td = false;
+    if (gap != null && gap > 15) { ct = true; reasons.push('Tiến độ chậm ' + gap + ' điểm so với kế hoạch'); }
+    else if (gap != null && gap > 8) { td = true; reasons.push('Tiến độ chậm ' + gap + ' điểm'); }
+    if (s.chuyenCan != null && s.chuyenCan < 70) { ct = true; reasons.push('Chuyên cần ' + s.chuyenCan + '%'); }
+    else if (s.chuyenCan != null && s.chuyenCan < 80) { td = true; reasons.push('Chuyên cần ' + s.chuyenCan + '%'); }
+    if (s.buoiChuaDD >= 2) { ct = true; reasons.push(s.buoiChuaDD + ' buổi chưa có điểm danh'); }
+    else if (s.buoiChuaDD === 1) { td = true; reasons.push('1 buổi chưa có điểm danh'); }
+    if (s.buoiChoXN) { td = true; reasons.push(s.buoiChoXN + ' buổi chờ GV xác nhận điểm danh'); }
+    if (s.dangHoc && cao / s.dangHoc >= .15) { ct = true; reasons.push(cao + ' HV nguy cơ cao'); }
+    else if (cao > 0) { td = true; reasons.push(cao + ' HV nguy cơ cao'); }
+    muc = ct ? 'ct' : td ? 'td' : 'ok';
+  }
+  return { lop: lop, s: s, cao: cao, tb: tb, gap: gap, muc: muc, reasons: reasons, cham: gap != null && gap > 15 };
+}
+function lopGS(){ return D().lop.filter(function(l){ return l.trangThai === 'dang-hoc' || l.trangThai === 'tuyen-sinh'; }); }
+
+function pk(td, kh){
+  if (td == null) return '<span class="muted small">Chưa có dữ liệu</span>';
+  var tone = kh - td > 15 ? 'bad' : kh - td > 8 ? 'warn' : '';
+  return '<div class="pk" title="Tiến độ ' + td + '% · kế hoạch ' + kh + '%"><div class="track"><div class="fill ' + tone + '" style="width:' + Math.min(100, td) + '%"></div><div class="mk" style="left:calc(' + Math.min(100, kh) + '% - 1px)"></div></div><div class="lb"><span><b>' + td + '%</b> thực tế</span><span>KH ' + kh + '%</span></div></div>';
+}
+
+function render(){
+  var data = lopGS().map(analyze);
+  var dang = data.filter(function(a){ return a.lop.trangThai === 'dang-hoc'; });
+  var cham = data.filter(function(a){ return a.cham; }).length;
+  var chuaDD = data.reduce(function(s, a){ return s + a.s.buoiChuaDD + a.s.buoiChoXN; }, 0);
+  var cao = data.reduce(function(s, a){ return s + a.cao; }, 0);
+  var ts = data.length - dang.length;
+  var khoas = D().donVi.filter(function(d){ return d.laKhoa; });
+  app.innerHTML =
+    '<div class="page-head"><div><h1>Giám sát lớp</h1><div class="sub">' + data.length + ' lớp đang học và tuyển sinh · cập nhật ' + LMS.fmtDate(T) + '</div></div>' +
+    '<div class="actions"><button class="btn" id="btnBC">Báo cáo đào tạo</button></div></div>' +
+    '<div class="kpis">' +
+      kpi('', 'Lớp đang học', dang.length, ts ? '+ ' + ts + ' lớp đang tuyển sinh' : 'không có lớp tuyển sinh', '') +
+      kpi('cham', 'Lớp chậm tiến độ', cham, 'thấp hơn kế hoạch > 15 điểm', cham ? 'bad' : 'ok') +
+      kpi('dd', 'Buổi chưa chốt điểm danh', chuaDD, chuaDD ? 'chờ xác nhận hoặc thiếu dữ liệu' : 'đã chốt đầy đủ', chuaDD ? 'warn' : 'ok') +
+      kpi('cao', 'Học viên nguy cơ cao', cao, 'trên ' + dang.reduce(function(s, a){ return s + a.s.dangHoc; }, 0) + ' lượt ghi danh đang học', cao ? 'bad' : 'ok') +
+    '</div>' +
+    '<div class="panel"><div class="panel-head filters">' +
+      '<input class="inp" id="fq" placeholder="Tìm lớp theo mã, tên, giảng viên" value="' + esc(st.q) + '">' +
+      '<select class="sel" id="fkhoa">' + U.opts(khoas, 'id', 'ten', st.khoa, 'Tất cả khoa') + '</select>' +
+      '<select class="sel" id="fmuc">' + U.opts([{ v: 'ct', l: 'Cần can thiệp' }, { v: 'td', l: 'Theo dõi' }, { v: 'ok', l: 'Ổn định' }, { v: 'na', l: 'Chưa đủ dữ liệu' }], 'v', 'l', st.muc, 'Mọi mức cảnh báo') + '</select>' +
+      (st.kpi ? '<button class="btn sm ghost" id="clrKpi">Bỏ lọc: ' + (st.kpi === 'cham' ? 'chậm tiến độ' : 'có HV nguy cơ cao') + ' ✕</button>' : '') +
+    '</div><div id="tbl"></div></div><div id="detail"></div>';
+
+  var q = U.norm(st.q);
+  var rows = data.filter(function(a){
+    if (st.khoa && a.lop.khoa !== st.khoa) return false;
+    if (st.muc && a.muc !== st.muc) return false;
+    if (st.kpi === 'cham' && !a.cham) return false;
+    if (st.kpi === 'cao' && !a.cao) return false;
+    return !q || U.norm(a.lop.ma + ' ' + a.lop.ten + ' ' + a.lop.giangVien.map(gvTen).join(' ')).indexOf(q) >= 0;
+  });
+  tbl = U.table(document.getElementById('tbl'), {
+    rows: rows, pageSize: 20, sort: 'muc', dir: -1, empty: 'Không có lớp phù hợp',
+    onRowClick: function(a){ st.lop = a.lop.id; st.riskF = ''; tbl.render(); renderDetail(true); },
+    columns: [
+      { key: 'lop', label: 'Lớp', sortVal: function(a){ return a.lop.ma; }, render: function(a){ var t = LMS.TT_LOP[a.lop.trangThai]; return '<div class="t-main">' + U.hl(a.lop.ma, st.q) + ' · ' + U.hl(a.lop.ten, st.q) + '</div><div class="t-sub">' + esc(LMS.donViTen(a.lop.khoa)) + ' · ' + esc(LMS.trangThaiThoiGian(a.lop).label) + (a.lop.trangThai === 'tuyen-sinh' ? ' · ' + t[0] : '') + '</div>'; } },
+      { key: 'gv', label: 'Giảng viên', sortVal: function(a){ return gvTen(a.lop.giangVien[0]); }, render: function(a){ return a.lop.giangVien.map(function(g){ return '<div class="small">' + esc(gvTen(g)) + '</div>'; }).join(''); } },
+      { key: 'td', label: 'Tiến độ TB / kế hoạch', sortVal: function(a){ return a.gap; }, render: function(a){ return pk(a.s.tienDo, a.s.keHoach); } },
+      { key: 'cc', label: 'Chuyên cần TB', cls: 'num', sortVal: function(a){ return a.s.chuyenCan; }, render: function(a){ return !a.s.apDungDD ? '<span class="muted small">Không áp dụng (tự học)</span>' : a.s.chuyenCan == null ? '<span class="muted small">Chưa có dữ liệu</span>' : '<b class="' + (a.s.chuyenCan < 70 ? 'txt-bad' : '') + '" style="' + (a.s.chuyenCan < 70 ? 'color:var(--ems-danger)' : a.s.chuyenCan < 80 ? 'color:var(--ems-warning)' : '') + '">' + a.s.chuyenCan + '%</b>'; } },
+      { key: 'buoi', label: 'Buổi đã dạy', cls: 'num', sortVal: function(a){ return a.s.buoiDaDay; }, render: function(a){ return a.s.buoiDaDay + '/' + a.s.buoiTong + (a.s.buoiChuaDD + a.s.buoiChoXN ? '<div class="t-sub" style="color:var(--ems-' + (a.s.buoiChuaDD ? 'danger' : 'warning') + ')">' + (a.s.buoiChuaDD + a.s.buoiChoXN) + ' chưa chốt</div>' : ''); } },
+      { key: 'risk', label: 'HV nguy cơ', sortVal: function(a){ return a.cao * 100 + a.tb; }, render: function(a){ if (a.lop.trangThai !== 'dang-hoc') return '<span class="muted small">—</span>'; return '<div class="risk-sum">' + (a.cao ? U.badge('Cao ' + a.cao, 'bad') : '') + (a.tb ? U.badge('TB ' + a.tb, 'warn') : '') + (!a.cao && !a.tb ? '<span class="muted small">Không có</span>' : '') + '</div><div class="t-sub">/' + a.s.dangHoc + ' HV</div>'; } },
+      { key: 'muc', label: 'Mức cảnh báo', sortVal: function(a){ return MUC[a.muc][2] * 1000 + (a.cao || 0); }, render: function(a){ var m = MUC[a.muc]; return U.badge(m[0], m[1]) + (a.reasons.length ? '<div class="reasons">' + a.reasons.map(esc).join(' · ') + '</div>' : ''); } }
+    ],
+    after: function(host, view){ host.querySelectorAll('tbody tr[data-i]').forEach(function(tr){ var a = view[+tr.dataset.i]; if (a && a.lop.id === st.lop) tr.classList.add('sel-row'); }); }
+  });
+
+  var fq = document.getElementById('fq');
+  fq.oninput = function(){ st.q = fq.value.trim(); var pos = fq.selectionStart; render(); var n = document.getElementById('fq'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} };
+  document.getElementById('fkhoa').onchange = function(e){ st.khoa = e.target.value; render(); };
+  document.getElementById('fmuc').onchange = function(e){ st.muc = e.target.value; render(); };
+  var ck = document.getElementById('clrKpi'); if (ck) ck.onclick = function(){ st.kpi = ''; render(); };
+  document.getElementById('btnBC').onclick = function(){ LMS.go('bao-cao-dao-tao.html'); };
+  app.querySelectorAll('[data-kpi]').forEach(function(k){ k.onclick = function(){
+    var v = k.dataset.kpi;
+    if (v === 'dd') { LMS.go('buoi-hoc.html', { trangThai: 'can' }); return; }
+    st.kpi = st.kpi === v ? '' : v; render();
+  }; });
+  renderDetail(false);
+}
+function kpi(key, label, val, sub, tone){ return '<div class="kpi ' + tone + (key ? ' clickable' : '') + (key && st.kpi === key ? ' active' : '') + '"' + (key ? ' data-kpi="' + key + '"' : '') + '><div class="k-label">' + label + '</div><div class="k-val">' + val + '</div><div class="k-sub">' + sub + '</div></div>'; }
+
+/* ---------- chi tiết lớp ---------- */
+function hvRows(lop){
+  return LMS.ghiDanhLop(lop.id).filter(function(g){ return g.trangThai === 'dang-hoc'; }).map(function(g){
+    var hv = LMS.byId('hocVien', g.hv); if (!hv) return null;
+    var td = LMS.tienDoHV(lop.id, g.hv), cc = LMS.chuyenCanHV(lop.id, g.hv), rk = LMS.riskOf(lop.id, g.hv);
+    var qs = Object.keys(td.quiz || {}).map(function(k){ return td.quiz[k]; });
+    return { id: hv.id, hv: hv, td: td, cc: cc, rk: rk, quiz: qs.length ? Math.round(qs.reduce(function(a, b){ return a + b; }, 0) / qs.length * 10) / 10 : null, nQuiz: qs.length };
+  }).filter(Boolean);
+}
+function renderDetail(scroll){
+  var host = document.getElementById('detail');
+  var lop = st.lop ? LMS.byId('lop', st.lop) : null;
+  if (!lop || (lop.trangThai !== 'dang-hoc' && lop.trangThai !== 'tuyen-sinh')) { host.innerHTML = '<div class="panel"><div class="empty">Chọn một lớp trong bảng để xem chi tiết học viên</div></div>'; return; }
+  var a = analyze(lop), all = hvRows(lop);
+  var rows = all.filter(function(r){ return !st.riskF || (r.rk && r.rk.muc === st.riskF); });
+  var nCao = all.filter(function(r){ return r.rk && r.rk.muc === 'cao'; }).length, nTb = all.filter(function(r){ return r.rk && r.rk.muc === 'tb'; }).length;
+  host.innerHTML = '<div class="panel"><div class="panel-head"><div class="grow"><div class="eyebrow">Chi tiết lớp</div><h2>' + esc(lop.ma + ' · ' + lop.ten) + '</h2><div class="small muted">' + esc(lop.giangVien.map(gvTen).join(', ')) + ' · ' + LMS.fmtDate(lop.batDau) + ' – ' + LMS.fmtDate(lop.ketThuc) + ' · ' + a.s.dangHoc + ' HV · ' + U.badge(MUC[a.muc][0], MUC[a.muc][1]) + '</div></div>' +
+    '<div class="row"><button class="btn" data-openlop>Mở lớp</button><button class="btn" data-buoi>Lịch buổi học</button><button class="btn primary" data-nhac disabled>Nhắc học viên</button><button class="icon-btn" data-close aria-label="Đóng">✕</button></div></div>' +
+    '<div class="panel-head filters"><div class="seg" data-rf>' + [['', 'Tất cả (' + all.length + ')'], ['cao', 'Nguy cơ cao (' + nCao + ')'], ['tb', 'Trung bình (' + nTb + ')']].map(function(x){ return '<button data-v="' + x[0] + '"' + (st.riskF === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
+    '<button class="btn sm" data-selcao' + (nCao ? '' : ' disabled') + '>Chọn nhóm nguy cơ cao</button><span class="small muted right" data-selcnt>Chưa chọn học viên</span></div><div data-hvtbl></div></div>';
+  var nhac = host.querySelector('[data-nhac]'), cnt = host.querySelector('[data-selcnt]');
+  function onSel(ids){ nhac.disabled = !ids.length; cnt.textContent = ids.length ? 'Đã chọn ' + ids.length + ' học viên' : 'Chưa chọn học viên'; }
+  hvTbl = U.table(host.querySelector('[data-hvtbl]'), {
+    rows: rows, select: true, onSelect: onSel, pageSize: 15, sort: 'rk', dir: -1,
+    empty: lop.trangThai === 'tuyen-sinh' ? 'Lớp chưa khai giảng' : 'Không có học viên phù hợp',
+    columns: [
+      { key: 'hv', label: 'Học viên', sortVal: function(r){ return r.hv.hoTen; }, render: function(r){ return U.person(r.hv.hoTen, esc(r.hv.ma)); } },
+      { key: 'td', label: 'Tiến độ', sortVal: function(r){ return r.td.pct; }, render: function(r){ return U.prog(r.td.pct, null, r.td.done + '/' + r.td.tong) + '<div class="t-sub">' + (r.td.lastAt ? 'Học gần nhất ' + LMS.fmtDate(r.td.lastAt) : 'Chưa vào học') + '</div>'; } },
+      { key: 'cc', label: 'Chuyên cần', cls: 'num', sortVal: function(r){ return r.cc ? r.cc.pct : null; }, render: function(r){ return r.cc ? '<b>' + r.cc.pct + '%</b><div class="t-sub">' + r.cc.co + '/' + r.cc.tong + ' buổi</div>' : '<span class="muted small">Chưa có dữ liệu</span>'; } },
+      { key: 'vlt', label: 'Vắng liên tiếp', cls: 'num', sortVal: function(r){ return r.cc ? r.cc.vangLienTiep : null; }, render: function(r){ var v = r.cc ? r.cc.vangLienTiep : null; return v == null ? '—' : (v >= 2 ? '<b style="color:var(--ems-danger)">' + v + '</b>' : v); } },
+      { key: 'quiz', label: 'Quiz TB', cls: 'num', sortVal: function(r){ return r.quiz; }, render: function(r){ return r.quiz == null ? '<span class="muted">—</span>' : '<b' + (r.quiz < 5 ? ' style="color:var(--ems-danger)"' : '') + '>' + r.quiz.toLocaleString('vi-VN') + '</b><div class="t-sub">' + r.nQuiz + ' bài</div>'; } },
+      { key: 'rk', label: 'Nguy cơ', sortVal: function(r){ return r.rk ? r.rk.score : -1; }, render: function(r){ if (!r.rk) return '<span class="muted small">—</span>'; var m = RISK[r.rk.muc]; return U.badge(m[0], m[1]) + (r.rk.reasons.length ? '<div class="reasons">' + r.rk.reasons.map(esc).join(' · ') + '</div>' : ''); } }
+    ]
+  });
+  host.querySelector('[data-openlop]').onclick = function(){ LMS.go('lop-hoc.html', { lop: lop.id }); };
+  host.querySelector('[data-buoi]').onclick = function(){ LMS.go('buoi-hoc.html', { lop: lop.id }); };
+  host.querySelector('[data-close]').onclick = function(){ st.lop = null; render(); };
+  host.querySelectorAll('[data-rf] button').forEach(function(b){ b.onclick = function(){ st.riskF = b.dataset.v; renderDetail(false); }; });
+  host.querySelector('[data-selcao]').onclick = function(){
+    st.riskF = 'cao'; renderDetail(false);
+    var all2 = document.querySelector('[data-hvtbl] [data-all]'); if (all2) { all2.checked = true; all2.dispatchEvent(new Event('change')); }
+  };
+  nhac.onclick = function(){ openNhac(lop, hvTbl.selected().map(function(id){ return LMS.byId('hocVien', id); }).filter(Boolean)); };
+  if (scroll) host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function openNhac(lop, hvs){
+  if (!hvs.length) return;
+  var hp = LMS.hocPhanOfLop(lop);
+  var mau = 'Chào bạn, hệ thống ghi nhận tiến độ học tập học phần ' + (hp ? hp.ten : '') + ' của bạn đang chậm so với kế hoạch lớp ' + lop.ma + '. Đề nghị bạn hoàn thành các bài còn thiếu và tham gia đầy đủ các buổi học tiếp theo. Cần hỗ trợ, vui lòng phản hồi giảng viên phụ trách.';
+  U.modal({
+    title: 'Nhắc học viên · ' + lop.ma,
+    body: '<div class="small">Gửi tới <b>' + hvs.length + '</b> học viên: ' + esc(hvs.slice(0, 5).map(function(h){ return h.hoTen; }).join(', ')) + (hvs.length > 5 ? ' và ' + (hvs.length - 5) + ' người khác' : '') + '</div>' +
+      '<div class="field"><label>Kênh gửi</label><div class="row"><label class="check"><input type="checkbox" name="kenhApp" checked> Thông báo trên cổng học viên</label><label class="check"><input type="checkbox" name="kenhMail" checked> Email</label></div></div>' +
+      '<div class="field"><label>Nội dung <span class="req">*</span></label><textarea name="noiDung" rows="5" maxlength="1000">' + esc(mau) + '</textarea></div>',
+    foot: [{ label: 'Hủy', close: true }, { label: 'Gửi nhắc nhở', cls: 'primary', onClick: function(api){
+      var v = U.formVals(api.body);
+      U.fieldErr(api.body, 'noiDung', v.noiDung ? '' : 'Nhập nội dung'); if (!v.noiDung) return false;
+      if (!v.kenhApp && !v.kenhMail) { U.fieldErr(api.body, 'kenhApp', 'Chọn ít nhất một kênh'); return false; }
+      var db = D(); if (!db.thongBao) db.thongBao = [];
+      db.thongBao.unshift({ id: LMS.nextId('tb'), t: new Date().toISOString(), loai: 'nhac-hoc', lop: lop.id, hv: hvs.map(function(h){ return h.id; }), kenh: [v.kenhApp ? 'app' : null, v.kenhMail ? 'email' : null].filter(Boolean), noiDung: v.noiDung, nguoiGui: db.meta.user.ten });
+      LMS.commit('Nhắc học', 'Học viên', lop.ma + ' · ' + hvs.length + ' học viên', null, { soHV: hvs.length });
+      U.toast('Đã gửi nhắc nhở tới ' + hvs.length + ' học viên', 'ok');
+      hvTbl.clearSel();
+    } }]
+  });
+}
+
+var p = LMS.param('giam-sat-lop.html');
+if (p && p.lop) st.lop = p.lop;
+LMS.onChange(render);
+render();
+if (st.lop) renderDetail(true);
+})();
+</script>
+</body></html>

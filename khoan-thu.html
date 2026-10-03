@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danh mục khoản thu · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.kt-group td{background:var(--ems-surface-2);font-weight:600}
+.kt-group .tree-toggle{margin-right:4px}
+.kt-child td:nth-child(1){padding-left:34px}
+.kt-name{display:flex;align-items:center;gap:6px}
+.tag.link{cursor:pointer;color:var(--ems-navy);border-color:var(--ems-navy-line);background:var(--ems-navy-soft)}
+.tag.link:hover{text-decoration:underline}
+.calc{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:10px 12px;border-radius:var(--r-ctl);background:var(--ems-navy-soft);border:1px solid var(--ems-navy-line)}
+.calc b{font-size:16px;color:var(--ems-navy)}
+tr.ngung td{color:var(--ems-muted)}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U=LMS.ui, esc=U.esc;
+var VAT=[0,5,8,10];
+var st={q:'',loai:'',tt:'',closed:{}};
+var app=document.getElementById('app');
+
+function sauThue(k){ return Math.round((+k.donGia||0)*(1+(+k.vat||0)/100)); }
+function lopDung(id){ return LMS.db.lop.filter(function(l){ return l.khoanThu===id; }); }
+function donThuDung(id){ return (LMS.db.thanhToan||[]).filter(function(t){ return t.khoanThu===id; }); }
+function loaiList(){ var s={}; LMS.db.khoanThu.forEach(function(k){ if(k.loai) s[k.loai]=1; }); return Object.keys(s).sort(function(a,b){ return a.localeCompare(b,'vi'); }); }
+function ttBadge(k){ return k.trangThai==='ngung'?U.badge('Ngưng dùng',''):U.badge('Đang dùng','ok'); }
+function parseMoney(s){ var d=String(s||'').replace(/\D/g,''); return d?+d:0; }
+function fmtNum(n){ return n?Math.round(n).toLocaleString('vi-VN'):''; }
+
+function shell(){
+  app.innerHTML=
+   '<div class="page-head"><div><h1>Danh mục khoản thu</h1><div class="sub" id="sub"></div></div>'+
+   '<div class="actions"><button class="btn" id="goThu">Thu học phí</button><button class="btn primary" id="add">+ Thêm khoản thu</button></div></div>'+
+   '<div class="kpis" id="kpis"></div>'+
+   '<div class="panel"><div class="panel-head filters">'+
+     '<input class="inp" id="q" placeholder="Tìm theo mã, tên khoản thu">'+
+     '<select class="sel" id="fLoai"></select>'+
+     '<select class="sel" id="fTt"><option value="">Tất cả trạng thái</option><option value="dang-dung">Đang dùng</option><option value="ngung">Ngưng dùng</option></select>'+
+     '<button class="btn ghost sm" id="expAll">Mở rộng tất cả</button><button class="btn ghost sm" id="colAll">Thu gọn</button>'+
+   '</div><div id="tbl"></div></div>';
+  var q=document.getElementById('q');
+  q.oninput=function(){ st.q=q.value.trim(); renderTable(); };
+  document.getElementById('fLoai').onchange=function(e){ st.loai=e.target.value; renderTable(); };
+  document.getElementById('fTt').onchange=function(e){ st.tt=e.target.value; renderTable(); };
+  document.getElementById('add').onclick=function(){ edit(null); };
+  document.getElementById('goThu').onclick=function(){ LMS.go('thu-hoc-phi.html'); };
+  document.getElementById('expAll').onclick=function(){ st.closed={}; renderTable(); };
+  document.getElementById('colAll').onclick=function(){ loaiList().forEach(function(l){ st.closed[l]=1; }); renderTable(); };
+}
+
+function render(){
+  var db=LMS.db, ks=db.khoanThu;
+  var dung=ks.filter(function(k){ return k.trangThai!=='ngung'; }).length;
+  var gan=ks.filter(function(k){ return lopDung(k.id).length; }).length;
+  document.getElementById('sub').textContent=ks.length+' khoản thu · '+loaiList().length+' loại';
+  document.getElementById('kpis').innerHTML=
+    '<div class="kpi"><div class="k-label">Khoản thu</div><div class="k-val">'+ks.length+'</div><div class="k-sub">'+loaiList().length+' loại khoản thu</div></div>'+
+    '<div class="kpi ok"><div class="k-label">Đang dùng</div><div class="k-val">'+dung+'</div><div class="k-sub">'+(ks.length-dung)+' khoản ngưng dùng</div></div>'+
+    '<div class="kpi"><div class="k-label">Đang gắn với lớp</div><div class="k-val">'+gan+'</div><div class="k-sub">'+db.lop.filter(function(l){ return l.khoanThu; }).length+' lớp có thu phí</div></div>';
+  var fl=document.getElementById('fLoai'); fl.innerHTML=U.opts(loaiList(),null,null,st.loai,'Tất cả loại khoản thu');
+  renderTable();
+}
+
+function renderTable(){
+  var db=LMS.db, nq=U.norm(st.q);
+  var rows=db.khoanThu.filter(function(k){
+    if(st.loai && k.loai!==st.loai) return false;
+    if(st.tt && k.trangThai!==st.tt) return false;
+    if(nq && U.norm(k.ma+' '+k.ten).indexOf(nq)<0) return false;
+    return true;
+  });
+  var groups={}; rows.forEach(function(k){ (groups[k.loai||'Khác']=groups[k.loai||'Khác']||[]).push(k); });
+  var keys=Object.keys(groups).sort(function(a,b){ return a.localeCompare(b,'vi'); });
+  var h='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Mã</th><th>Tên khoản thu</th><th class="num">Đơn giá chưa thuế</th><th class="c">VAT</th><th class="num">Đơn giá sau thuế</th><th>Đang dùng ở</th><th>Trạng thái</th><th style="width:44px"></th></tr></thead><tbody>';
+  if(!keys.length) h+='<tr><td colspan="8"><div class="empty">'+(db.khoanThu.length?'Không có khoản thu phù hợp':'Chưa có dữ liệu')+'</div></td></tr>';
+  keys.forEach(function(g){
+    var open=!st.closed[g]||!!st.q;
+    var list=groups[g].sort(function(a,b){ return a.ma.localeCompare(b.ma); });
+    h+='<tr class="kt-group"><td colspan="7"><div class="kt-name"><button class="tree-toggle" data-tg="'+esc(g)+'" aria-label="'+(open?'Thu gọn':'Mở rộng')+'">'+(open?'▾':'▸')+'</button>'+esc(g)+' <span class="muted small" style="font-weight:400">· '+list.length+' khoản thu</span></div></td>'+
+       '<td class="c"><button class="icon-btn" data-addg="'+esc(g)+'" title="Thêm khoản thu vào loại '+esc(g)+'">+</button></td></tr>';
+    if(!open) return;
+    list.forEach(function(k){
+      var lops=lopDung(k.id);
+      h+='<tr class="kt-child'+(k.trangThai==='ngung'?' ngung':'')+'" data-id="'+k.id+'">'+
+        '<td class="mono">'+U.hl(k.ma,st.q)+'</td>'+
+        '<td><div class="t-main">'+U.hl(k.ten,st.q)+'</div></td>'+
+        '<td class="num">'+U.money(k.donGia)+'</td>'+
+        '<td class="c">'+k.vat+'%</td>'+
+        '<td class="num"><b>'+U.money(sauThue(k))+'</b></td>'+
+        '<td>'+(lops.length?lops.map(function(l){ return '<span class="tag link" data-lop="'+l.id+'" title="'+esc(l.ten)+'">'+esc(l.ma)+'</span>'; }).join(''):'<span class="muted small">Chưa gắn lớp</span>')+'</td>'+
+        '<td>'+ttBadge(k)+'</td>'+
+        '<td class="c"><button class="icon-btn" data-m="'+k.id+'" aria-label="Thao tác">⋯</button></td></tr>';
+    });
+  });
+  h+='</tbody></table></div><div class="pager"><span>'+rows.length+' khoản thu</span></div>';
+  var host=document.getElementById('tbl'); host.innerHTML=h;
+  host.querySelectorAll('[data-tg]').forEach(function(b){ b.onclick=function(){ var g=b.dataset.tg; if(st.closed[g]) delete st.closed[g]; else st.closed[g]=1; renderTable(); }; });
+  host.querySelectorAll('[data-addg]').forEach(function(b){ b.onclick=function(){ edit(null,b.dataset.addg); }; });
+  host.querySelectorAll('[data-lop]').forEach(function(t){ t.onclick=function(e){ e.stopPropagation(); LMS.go('lop-hoc.html',{lop:t.dataset.lop}); }; });
+  host.querySelectorAll('[data-m]').forEach(function(b){ b.onclick=function(e){ e.stopPropagation(); rowMenu(b, LMS.byId('khoanThu',b.dataset.m)); }; });
+  host.querySelectorAll('tr.kt-child').forEach(function(tr){ tr.style.cursor='pointer'; tr.onclick=function(e){ if(e.target.closest('button,.tag')) return; edit(LMS.byId('khoanThu',tr.dataset.id)); }; });
+}
+
+function rowMenu(btn,k){
+  U.menu(btn,[
+    {label:'Sửa khoản thu',onClick:function(){ edit(k); }},
+    k.trangThai==='ngung'?{label:'Kích hoạt',onClick:function(){ toggle(k); }}:{label:'Ngưng dùng',onClick:function(){ toggle(k); }},
+    {label:'Xem đơn thu liên quan',onClick:function(){ LMS.go('thu-hoc-phi.html',{khoanThu:k.id}); }},
+    '-',
+    {label:'Xóa',danger:true,onClick:function(){ del(k); }}
+  ]);
+}
+
+function edit(k,loaiMacDinh){
+  var isNew=!k, db=LMS.db;
+  var loais=loaiList(); var curLoai=k?k.loai:(loaiMacDinh||loais[0]||'');
+  var body='<div class="form-grid">'+
+    '<div class="field"><label>Mã khoản thu <span class="req">*</span></label><input class="inp mono" name="ma" maxlength="30" value="'+esc(k?k.ma:'')+'" placeholder="VD: HP-GP2"></div>'+
+    '<div class="field"><label>Loại khoản thu <span class="req">*</span></label><select class="sel" name="loaiSel">'+U.opts(loais,null,null,curLoai)+'<option value="__new">+ Loại mới…</option></select></div>'+
+    '<div class="field full" id="loaiNewWrap" hidden><label>Tên loại mới <span class="req">*</span></label><input class="inp" name="loaiNew" maxlength="60"></div>'+
+    '<div class="field full"><label>Tên khoản thu <span class="req">*</span></label><input class="inp" name="ten" maxlength="150" value="'+esc(k?k.ten:'')+'"></div>'+
+    '<div class="field"><label>Đơn giá chưa thuế (₫) <span class="req">*</span></label><input class="inp num" name="donGia" inputmode="numeric" value="'+esc(k?fmtNum(k.donGia):'')+'"></div>'+
+    '<div class="field"><label>Thuế suất VAT <span class="req">*</span></label><select class="sel" name="vat">'+VAT.map(function(v){ return '<option value="'+v+'"'+((k?k.vat:0)===v?' selected':'')+'>'+v+'%</option>'; }).join('')+'</select></div>'+
+    '<div class="field full"><div class="calc"><span class="muted small">Đơn giá sau thuế</span><b id="calcVal">—</b><span class="muted small" id="calcVat"></span></div></div>'+
+    (isNew?'':'<div class="field full"><label>Trạng thái</label><div>'+ttBadge(k)+'</div></div>')+
+  '</div>'+
+  (k&&lopDung(k.id).length?'<div class="note info">Đang gắn với '+lopDung(k.id).length+' lớp. Đơn giá mới áp dụng cho đơn thu tạo sau khi lưu; đơn đã tạo giữ nguyên số tiền.</div>':'');
+  U.modal({title:isNew?'Thêm khoản thu':'Sửa khoản thu '+k.ma, body:body,
+    onOpen:function(api){
+      var r=api.body, sel=r.querySelector('[name=loaiSel]'), wrap=r.querySelector('#loaiNewWrap');
+      if(!loais.length){ sel.value='__new'; wrap.hidden=false; }
+      sel.onchange=function(){ wrap.hidden=sel.value!=='__new'; if(!wrap.hidden) r.querySelector('[name=loaiNew]').focus(); };
+      var dg=r.querySelector('[name=donGia]'), vat=r.querySelector('[name=vat]');
+      function calc(){ var n=parseMoney(dg.value), v=+vat.value; r.querySelector('#calcVal').textContent=n?U.money(Math.round(n*(1+v/100))):'—'; r.querySelector('#calcVat').textContent=n?('Thuế '+U.money(Math.round(n*v/100))):''; }
+      dg.oninput=calc; vat.onchange=calc; dg.onblur=function(){ var n=parseMoney(dg.value); dg.value=fmtNum(n); };
+      calc();
+      var ma=r.querySelector('[name=ma]'); ma.oninput=function(){ var p=ma.selectionStart; ma.value=ma.value.toUpperCase().replace(/\s+/g,'-'); ma.setSelectionRange(p,p); };
+    },
+    foot:[{label:'Hủy',close:true},{label:isNew?'Thêm khoản thu':'Lưu thay đổi',cls:'primary',onClick:function(api){
+      var r=api.body, v=U.formVals(r), ok=true;
+      ['ma','ten','donGia','loaiNew'].forEach(function(n){ U.fieldErr(r,n,''); });
+      var ma=v.ma.toUpperCase();
+      if(!ma){ U.fieldErr(r,'ma','Nhập mã khoản thu'); ok=false; }
+      else if(!/^[A-Z0-9][A-Z0-9_\-.]*$/.test(ma)){ U.fieldErr(r,'ma','Mã chỉ gồm chữ không dấu, số, "-", "_", "."'); ok=false; }
+      else if(LMS.db.khoanThu.some(function(x){ return x.ma.toUpperCase()===ma && (!k||x.id!==k.id); })){ U.fieldErr(r,'ma','Mã đã tồn tại'); ok=false; }
+      if(!v.ten){ U.fieldErr(r,'ten','Nhập tên khoản thu'); ok=false; }
+      var loai=v.loaiSel==='__new'?v.loaiNew:v.loaiSel;
+      if(!loai){ U.fieldErr(r,'loaiNew','Nhập tên loại'); ok=false; }
+      var dg=parseMoney(v.donGia);
+      if(!(dg>0)){ U.fieldErr(r,'donGia','Đơn giá phải lớn hơn 0'); ok=false; }
+      var vat=+v.vat; if(VAT.indexOf(vat)<0){ ok=false; }
+      if(!ok) return false;
+      var db=LMS.db;
+      if(isNew){
+        var n={id:LMS.nextId('kt'),ma:ma,ten:v.ten,loai:loai,donGia:dg,vat:vat,trangThai:'dang-dung'};
+        db.khoanThu.push(n);
+        LMS.commit('Tạo','Khoản thu',ma+' · '+v.ten+' · '+U.money(sauThue(n)),null,n);
+        U.toast('Đã thêm khoản thu '+ma,'ok');
+      } else {
+        var truoc={ma:k.ma,ten:k.ten,loai:k.loai,donGia:k.donGia,vat:k.vat};
+        k.ma=ma; k.ten=v.ten; k.loai=loai; k.donGia=dg; k.vat=vat;
+        LMS.commit('Sửa','Khoản thu',ma+' · '+v.ten,truoc,{ma:ma,ten:v.ten,loai:loai,donGia:dg,vat:vat});
+        U.toast('Đã lưu khoản thu '+ma,'ok');
+      }
+      render();
+    }}]
+  });
+}
+
+function toggle(k){
+  if(k.trangThai==='ngung'){
+    k.trangThai='dang-dung';
+    LMS.commit('Kích hoạt','Khoản thu',k.ma+' · '+k.ten,{trangThai:'ngung'},{trangThai:'dang-dung'});
+    U.toast('Đã kích hoạt '+k.ma,'ok'); render(); return;
+  }
+  var lops=lopDung(k.id).filter(function(l){ return l.trangThai==='tuyen-sinh'||l.trangThai==='dang-hoc'||l.trangThai==='ke-hoach'; });
+  var cho=donThuDung(k.id).filter(function(t){ return t.trangThai==='cho-thanh-toan'; }).length;
+  var html='<p style="margin:0 0 8px">Ngưng dùng khoản thu <b>'+esc(k.ma)+' · '+esc(k.ten)+'</b>?</p><ul style="margin:0;padding-left:18px">'+
+    '<li>Không chọn được khoản thu này khi tạo lớp hoặc tạo đơn thu mới.</li>'+
+    (lops.length?'<li>'+lops.length+' lớp đang mở vẫn giữ khoản thu: '+lops.map(function(l){ return esc(l.ma); }).join(', ')+'.</li>':'')+
+    (cho?'<li>'+cho+' đơn chờ thanh toán vẫn được ghi nhận bình thường.</li>':'')+'</ul>';
+  U.confirm({title:'Ngưng dùng khoản thu',html:html,ok:'Ngưng dùng',danger:true}).then(function(y){
+    if(!y) return;
+    k.trangThai='ngung';
+    LMS.commit('Ngưng dùng','Khoản thu',k.ma+' · '+k.ten,{trangThai:'dang-dung'},{trangThai:'ngung'});
+    U.toast('Đã ngưng dùng '+k.ma,'ok'); render();
+  });
+}
+
+function del(k){
+  var refs=LMS.refsOf('khoanThu',k.id).slice();
+  var n=donThuDung(k.id).length; if(n) refs.push(n+' đơn thu học phí');
+  if(refs.length){ U.blocked('Không thể xóa khoản thu '+k.ma, refs, k.trangThai==='ngung'?'Khoản thu đã ở trạng thái Ngưng dùng.':'Dùng "Ngưng dùng" để khoản thu không còn được chọn cho lớp và đơn thu mới.'); return; }
+  U.confirm({title:'Xóa khoản thu',html:'Xóa khoản thu <b>'+esc(k.ma)+' · '+esc(k.ten)+'</b>? Thao tác không hoàn tác được.',ok:'Xóa',danger:true}).then(function(y){
+    if(!y) return;
+    var db=LMS.db; db.khoanThu=db.khoanThu.filter(function(x){ return x.id!==k.id; });
+    LMS.commit('Xóa','Khoản thu',k.ma+' · '+k.ten,k,null);
+    U.toast('Đã xóa khoản thu '+k.ma,'ok'); render();
+  });
+}
+
+shell(); render();
+LMS.onChange(render);
+})();
+</script>
+</body></html>

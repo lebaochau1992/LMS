@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đề thi · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="edot.css">
+<style>
+.pick{flex-shrink:0;max-height:340px;overflow-y:auto;border:1px solid var(--ems-border);border-radius:var(--r-ctl)}
+.pick label{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:8px;align-items:start;padding:8px 10px;border-bottom:1px solid var(--ems-border);font-size:13px;cursor:pointer}
+.pick label:last-child{border-bottom:0}
+.pick label:hover{background:var(--ems-surface-2)}
+.pick label.on{background:var(--ems-navy-soft)}
+.pick .meta{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.mx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.mx{grid-template-columns:1fr}}
+.mx .field .hint b{color:var(--ems-text)}
+.sumline{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px;padding:10px 12px;background:var(--ems-surface-2);border-radius:var(--r-ctl)}
+.qv{border:1px solid var(--ems-border);border-radius:var(--r-ctl);padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.qv .qh{display:flex;gap:8px;align-items:flex-start}
+.qv .qh .n{font-weight:700;color:var(--ems-muted);min-width:24px;font-variant-numeric:tabular-nums}
+.qv .qh .c{flex:1}
+.qv ol{margin:0;padding-left:44px;list-style:upper-alpha;font-size:13px;color:var(--ems-text-2)}
+.qv li.ok{color:var(--ems-success);font-weight:600}
+</style>
+</head><body>
+<div class="page" id="app"></div>
+<script src="lms-core.js"></script>
+<script>
+(function(){ 'use strict';
+var U = LMS.ui, esc = U.esc;
+var LOAI = { 'mot-dap-an': 'Một đáp án', 'nhieu-dap-an': 'Nhiều đáp án', 'tu-luan': 'Tự luận' };
+var DK = { 'De': ['Dễ', 'ok'], 'TrungBinh': ['Trung bình', 'navy'], 'Kho': ['Khó', 'bad'] };
+var TT = { 'nhap': ['Nháp', 'warn'], 'xuat-ban': ['Đã xuất bản', 'ok'] };
+var app = document.getElementById('app');
+var st = { q: '', nh: '', tt: '' }, tbl;
+
+function db(){ return LMS.db; }
+function deList(){ return db().deThi; }
+function nhOf(d){ return LMS.byId('nganHang', d.nh); }
+function hpOfNh(nh){ return nh ? LMS.byId('hocPhan', nh.hocPhan) : null; }
+function kyCua(d){ return db().kyThi.filter(function(k){ return k.de === d.id; }); }
+function qs(d){ return d.cauHoi.map(function(id){ return LMS.byId('cauHoi', id); }).filter(Boolean); }
+function dkCount(list){ var c = { De: 0, TrungBinh: 0, Kho: 0, tl: 0 }; list.forEach(function(q){ c[q.doKho]++; if (q.loai === 'tu-luan') c.tl++; }); return c; }
+function shuffle(a, seed){ var s = seed || Date.now(); function r(){ s = (s * 9301 + 49297) % 233280; return s / 233280; } for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function num(v){ return String(v).replace('.', ','); }
+
+function shell(){
+  app.innerHTML =
+    '<div class="page-head"><div><h1>Đề thi</h1><div class="sub" id="sub"></div></div><div class="actions"><button class="btn" id="bNH">Ngân hàng câu hỏi</button><button class="btn primary" id="bAdd">Dựng đề thi</button></div></div>' +
+    '<div class="kpis" id="kpis"></div>' +
+    '<div class="panel"><div class="panel-head filters"><input class="inp" id="fQ" placeholder="Tìm theo mã, tên đề…"><select class="sel" id="fNH"></select><select class="sel" id="fTT"><option value="">Tất cả trạng thái</option><option value="nhap">Nháp</option><option value="xuat-ban">Đã xuất bản</option></select></div><div id="tbl"></div></div>';
+  document.getElementById('bAdd').onclick = function(){ buildDialog(null); };
+  document.getElementById('bNH').onclick = function(){ LMS.go('ngan-hang-cau-hoi.html'); };
+  document.getElementById('fQ').oninput = function(e){ st.q = e.target.value; tbl.render(true); };
+  document.getElementById('fNH').onchange = function(e){ st.nh = e.target.value; tbl.render(true); };
+  document.getElementById('fTT').onchange = function(e){ st.tt = e.target.value; tbl.render(true); };
+  var host = document.getElementById('tbl');
+  tbl = U.table(host, {
+    empty: 'Chưa có dữ liệu', onRowClick: function(d){ viewDialog(d); },
+    rows: function(){ var nq = U.norm(st.q.trim()); return deList().filter(function(d){ if (st.nh && d.nh !== st.nh) return false; if (st.tt && d.trangThai !== st.tt) return false; return !nq || U.norm(d.ma + ' ' + d.ten).indexOf(nq) >= 0; }); },
+    columns: [
+      { key: 'ma', label: 'Mã đề', render: function(d){ return '<span class="mono">' + U.hl(d.ma, st.q) + '</span>'; } },
+      { key: 'ten', label: 'Tên đề', render: function(d){ return '<div class="t-main">' + U.hl(d.ten, st.q) + '</div>' + (d.tronCau ? '<div class="t-sub">Trộn thứ tự câu</div>' : ''); } },
+      { key: 'nh', label: 'Ngân hàng → Học phần', sortVal: function(d){ return LMS.name('nganHang', d.nh); }, render: function(d){ var n = nhOf(d), h = hpOfNh(n); return n ? '<a href="#" class="mono" data-nh="' + esc(n.id) + '">' + esc(n.ma) + '</a><div class="t-sub">' + esc(h ? h.ten : '—') + '</div>' : '<span class="muted">—</span>'; } },
+      { key: 'so', label: 'Số câu', cls: 'num', sortVal: function(d){ return d.cauHoi.length; }, render: function(d){ var c = dkCount(qs(d)); return '<b>' + d.cauHoi.length + '</b><div class="t-sub" style="white-space:nowrap">D ' + c.De + ' · TB ' + c.TrungBinh + ' · K ' + c.Kho + '</div>'; } },
+      { key: 'thoiLuong', label: 'Thời lượng', cls: 'num', render: function(d){ return d.thoiLuong + ' phút'; } },
+      { key: 'thang', label: 'Thang / Đạt', cls: 'num', render: function(d){ return d.thang + ' / ' + num(d.diemDat); } },
+      { key: 'ky', label: 'Kỳ thi đang dùng', sortVal: function(d){ return kyCua(d).length; }, render: function(d){ var k = kyCua(d); return k.length ? k.map(function(x){ var s = LMS.kyThiStatus(x); return '<a href="#" class="tag" data-ky="' + esc(x.id) + '" title="' + esc(x.ten + ' · ' + s.label) + '">' + esc(x.ma) + '</a>'; }).join('') : '<span class="muted">Chưa dùng</span>'; } },
+      { key: 'trangThai', label: 'Trạng thái', render: function(d){ return U.badge(TT[d.trangThai][0], TT[d.trangThai][1]); } },
+      { key: 'act', label: '', sortable: false, w: '40px', render: function(d){ return '<button class="icon-btn" data-more="' + esc(d.id) + '" aria-label="Thao tác">⋯</button>'; } }
+    ]
+  });
+  host.addEventListener('click', function(e){
+    var a = e.target.closest('[data-nh]'); if (a) { e.preventDefault(); LMS.go('ngan-hang-cau-hoi.html', { nh: a.dataset.nh }); return; }
+    var k = e.target.closest('[data-ky]'); if (k) { e.preventDefault(); LMS.go('ky-thi.html', { ky: k.dataset.ky }); return; }
+    var m = e.target.closest('[data-more]'); if (m) rowMenu(m, LMS.byId('deThi', m.dataset.more));
+  });
+}
+function render(){
+  var ds = deList(), xb = ds.filter(function(d){ return d.trangThai === 'xuat-ban'; }).length, used = ds.filter(function(d){ return kyCua(d).length; }).length;
+  document.getElementById('sub').textContent = ds.length + ' đề · ' + xb + ' đã xuất bản';
+  document.getElementById('kpis').innerHTML =
+    '<div class="kpi"><div class="k-label">Tổng số đề</div><div class="k-val">' + ds.length + '</div><div class="k-sub">' + db().nganHang.length + ' ngân hàng nguồn</div></div>' +
+    '<div class="kpi ok"><div class="k-label">Đã xuất bản</div><div class="k-val">' + xb + '</div><div class="k-sub">Sẵn sàng gán kỳ thi</div></div>' +
+    '<div class="kpi' + (ds.length - xb ? ' warn' : '') + '"><div class="k-label">Nháp</div><div class="k-val">' + (ds.length - xb) + '</div><div class="k-sub">Chưa dùng được cho kỳ thi</div></div>' +
+    '<div class="kpi"><div class="k-label">Đang dùng trong kỳ thi</div><div class="k-val">' + used + '</div><div class="k-sub">' + db().kyThi.length + ' kỳ thi</div></div>';
+  document.getElementById('fNH').innerHTML = U.opts(db().nganHang, 'id', function(n){ return n.ma + ' · ' + LMS.name('hocPhan', n.hocPhan); }, st.nh, 'Tất cả ngân hàng');
+  tbl.render();
+}
+
+function rowMenu(anchor, d){
+  var xb = d.trangThai === 'xuat-ban';
+  U.menu(anchor, [
+    { label: 'Xem đề', onClick: function(){ viewDialog(d); } },
+    { label: 'Sửa đề', disabled: xb, title: 'Hủy xuất bản để sửa', onClick: function(){ buildDialog(d); } },
+    xb ? { label: 'Hủy xuất bản', onClick: function(){ unpublish(d); } } : { label: 'Xuất bản', onClick: function(){ publish(d); } },
+    { label: 'Sao chép thành đề mới', onClick: function(){ copy(d); } },
+    '-',
+    { label: 'Xóa đề', danger: true, onClick: function(){ del(d); } }
+  ]);
+}
+function publish(d){
+  if (!d.cauHoi.length) { U.toast('Đề chưa có câu hỏi', 'bad'); return; }
+  var inactive = qs(d).filter(function(q){ return q.trangThai !== 'hoat-dong'; });
+  var go = function(){ d.trangThai = 'xuat-ban'; LMS.commit('Xuất bản', 'Đề thi', d.ma + ' · ' + d.ten, { trangThai: 'nhap' }, { trangThai: 'xuat-ban' }); U.toast('Đã xuất bản đề ' + d.ma, 'ok'); render(); };
+  if (inactive.length) U.confirm({ title: 'Xuất bản đề', html: 'Đề có <b>' + inactive.length + '</b> câu đang ngưng dùng hoặc là phiên bản cũ. Vẫn xuất bản?', ok: 'Xuất bản' }).then(function(ok){ if (ok) go(); });
+  else U.confirm({ title: 'Xuất bản đề', html: 'Xuất bản đề <b>' + esc(d.ma) + '</b> (' + d.cauHoi.length + ' câu)? Sau khi xuất bản, đề không sửa được cho đến khi hủy xuất bản.', ok: 'Xuất bản' }).then(function(ok){ if (ok) go(); });
+}
+function unpublish(d){
+  var ks = kyCua(d), started = ks.filter(function(k){ return LMS.kyThiStatus(k).key !== 'sap'; });
+  if (started.length) { U.blocked('Không thể hủy xuất bản ' + d.ma, started.map(function(k){ return 'Kỳ thi ' + k.ma + ' · ' + k.ten + ' (' + LMS.kyThiStatus(k).label + ')'; }), 'Đề đã dùng trong kỳ thi đã/đang diễn ra. Dùng “Sao chép thành đề mới” để chỉnh sửa.'); return; }
+  var html = 'Chuyển đề <b>' + esc(d.ma) + '</b> về Nháp để chỉnh sửa?' + (ks.length ? '<div class="note warn" style="margin-top:10px">Đề đang gán cho ' + ks.length + ' kỳ thi sắp diễn ra: ' + ks.map(function(k){ return esc(k.ma); }).join(', ') + '. Cần xuất bản lại trước giờ mở thi.</div>' : '');
+  U.confirm({ title: 'Hủy xuất bản', html: html, ok: 'Hủy xuất bản' }).then(function(ok){ if (!ok) return; d.trangThai = 'nhap'; LMS.commit('Hủy xuất bản', 'Đề thi', d.ma, { trangThai: 'xuat-ban' }, { trangThai: 'nhap' }); U.toast('Đề đã chuyển về Nháp', 'ok'); render(); });
+}
+function uniqMa(base){ var m = base, i = 2; while (deList().some(function(x){ return x.ma.toUpperCase() === m.toUpperCase(); })) m = base + '-' + (i++); return m; }
+function copy(d){
+  var n = JSON.parse(JSON.stringify(d)); n.id = LMS.nextId('de'); n.ma = uniqMa(d.ma + '-BS'); n.ten = d.ten + ' (bản sao)'; n.trangThai = 'nhap';
+  n.cauHoi = n.cauHoi.map(function(id){ var q = LMS.byId('cauHoi', id); while (q && q.thayBang && LMS.byId('cauHoi', q.thayBang)) q = LMS.byId('cauHoi', q.thayBang); return q ? q.id : id; });
+  deList().push(n); LMS.commit('Sao chép', 'Đề thi', d.ma + ' → ' + n.ma);
+  U.toast('Đã tạo ' + n.ma + ' (Nháp, dùng phiên bản câu hỏi mới nhất)', 'ok'); render(); buildDialog(n);
+}
+function del(d){
+  var refs = LMS.refsOf('deThi', d.id);
+  if (refs.length) { U.blocked('Không thể xóa ' + d.ma, refs, 'Đề đang được gán cho kỳ thi. Gỡ đề khỏi kỳ thi hoặc giữ lại để lưu trữ.'); return; }
+  U.confirm({ title: 'Xóa đề thi', html: 'Xóa đề <b>' + esc(d.ma) + ' · ' + esc(d.ten) + '</b>? Câu hỏi trong ngân hàng không bị ảnh hưởng.', ok: 'Xóa', danger: true }).then(function(ok){ if (!ok) return; db().deThi = deList().filter(function(x){ return x.id !== d.id; }); LMS.commit('Xóa', 'Đề thi', d.ma, d, null); U.toast('Đã xóa đề', 'ok'); render(); });
+}
+
+/* ---------- xem đề ---------- */
+function viewDialog(d){
+  var n = nhOf(d), h = hpOfNh(n), list = qs(d), c = dkCount(list), ks = kyCua(d);
+  var body = '<dl class="kv"><dt>Mã đề</dt><dd class="mono">' + esc(d.ma) + '</dd><dt>Ngân hàng</dt><dd>' + esc(n ? n.ten : '—') + '</dd><dt>Học phần</dt><dd>' + esc(h ? h.ma + ' · ' + h.ten : '—') + '</dd><dt>Cấu trúc</dt><dd>' + list.length + ' câu · Dễ ' + c.De + ' · Trung bình ' + c.TrungBinh + ' · Khó ' + c.Kho + (c.tl ? ' · ' + c.tl + ' câu tự luận' : '') + '</dd><dt>Thời lượng</dt><dd>' + d.thoiLuong + ' phút' + (d.tronCau ? ' · trộn thứ tự câu' : '') + '</dd><dt>Thang điểm</dt><dd>' + d.thang + ' · điểm đạt ' + num(d.diemDat) + '</dd><dt>Trạng thái</dt><dd>' + U.badge(TT[d.trangThai][0], TT[d.trangThai][1]) + '</dd><dt>Kỳ thi sử dụng</dt><dd>' + (ks.length ? ks.map(function(k){ return esc(k.ma + ' · ' + k.ten); }).join('<br>') : '<span class="muted">Chưa dùng</span>') + '</dd></dl><hr class="sep">';
+  body += list.length ? '<div class="stack" style="gap:8px">' + list.map(function(q, i){
+    var da = String(q.dapAn || '').split(','), opt = q.loai === 'tu-luan' ? '' : '<ol>' + ['A', 'B', 'C', 'D'].map(function(L, j){ var t = (q.phuongAn || [])[j]; return '<li class="' + (da.indexOf(L) >= 0 ? 'ok' : '') + '">' + (t && t !== L ? esc(t) : '<span class="muted">Phương án ' + L + '</span>') + (da.indexOf(L) >= 0 ? ' ✓' : '') + '</li>'; }).join('') + '</ol>';
+    return '<div class="qv"><div class="qh"><span class="n">' + (i + 1) + '.</span><div class="c">' + esc(q.noiDung) + '</div><span class="row" style="gap:4px;flex-wrap:nowrap">' + U.badge(LOAI[q.loai], q.loai === 'tu-luan' ? 'info' : '') + U.badge(DK[q.doKho][0], DK[q.doKho][1]) + '<span class="tag">v' + (q.phienBan || 1) + '</span></span></div>' + opt + '</div>';
+  }).join('') + '</div>' : '<div class="empty">Đề chưa có câu hỏi</div>';
+  var foot = [{ label: 'Đóng' }];
+  if (d.trangThai === 'nhap') foot.push({ label: 'Sửa đề', onClick: function(){ setTimeout(function(){ buildDialog(d); }, 0); } }, { label: 'Xuất bản', cls: 'primary', onClick: function(){ setTimeout(function(){ publish(d); }, 0); } });
+  U.modal({ title: d.ten, size: 'lg', body: body, foot: foot, noFocus: true });
+}
+
+/* ---------- dựng đề ---------- */
+function buildDialog(d){
+  var nhs = db().nganHang.filter(function(n){ return n.trangThai !== 'ngung' || (d && d.nh === n.id); });
+  var sel = d ? d.cauHoi.slice() : [], nhId = d ? d.nh : (st.nh || '');
+  var mode = 'manual', f = { q: '', dk: '', loai: '' };
+  var body = '<div class="form-grid">' +
+    '<div class="field"><label>Mã đề <span class="req">*</span></label><input class="inp mono" name="ma" value="' + esc(d ? d.ma : '') + '" placeholder="VD: DE-BIOM2101-GK2"></div>' +
+    '<div class="field"><label>Ngân hàng câu hỏi <span class="req">*</span></label><select class="sel" name="nh">' + U.opts(nhs, 'id', function(n){ return n.ma + ' · ' + LMS.name('hocPhan', n.hocPhan); }, nhId, '— Chọn ngân hàng —') + '</select></div>' +
+    '<div class="field full"><label>Tên đề <span class="req">*</span></label><input class="inp" name="ten" value="' + esc(d ? d.ten : '') + '"></div>' +
+    '<div class="field"><label>Thời lượng (phút) <span class="req">*</span></label><input class="inp" type="number" min="5" max="300" name="thoiLuong" value="' + (d ? d.thoiLuong : 45) + '"></div>' +
+    '<div class="field"><label>Thang điểm · Điểm đạt <span class="req">*</span></label><div class="row" style="flex-wrap:nowrap"><select class="sel" name="thang">' + U.opts([10, 100], null, null, d ? d.thang : 10) + '</select><input class="inp grow" type="number" step="0.5" min="0" name="diemDat" value="' + (d ? d.diemDat : 5) + '" aria-label="Điểm đạt"></div></div>' +
+    '<div class="field full"><label class="check" style="font-weight:500"><input type="checkbox" name="tronCau"' + (!d || d.tronCau ? ' checked' : '') + '> Trộn thứ tự câu khi phát đề cho từng thí sinh</label></div>' +
+    '</div><hr class="sep">' +
+    '<div class="row"><h3 class="grow">Câu hỏi trong đề</h3><div class="seg" data-seg><button type="button" data-v="manual">Chọn thủ công</button><button type="button" data-v="matrix">Sinh theo ma trận</button></div></div>' +
+    '<div data-area></div><div class="sumline" data-sum></div>';
+  var m = U.modal({ title: d ? 'Sửa đề thi · ' + d.ma : 'Dựng đề thi', size: 'lg', body: body, foot: [{ label: 'Hủy' }, { label: 'Lưu nháp', onClick: function(api){ return save('nhap'); } }, { label: 'Lưu và xuất bản', cls: 'primary', onClick: function(api){ return save('xuat-ban'); } }] });
+  var B = m.body, area = B.querySelector('[data-area]');
+  function bankQs(){ return nhId ? db().cauHoi.filter(function(q){ return q.nh === nhId && ((q.trangThai === 'hoat-dong') || sel.indexOf(q.id) >= 0); }) : []; }
+  function drawSum(){
+    var list = sel.map(function(id){ return LMS.byId('cauHoi', id); }).filter(Boolean), c = dkCount(list);
+    B.querySelector('[data-sum]').innerHTML = '<b>Đã chọn ' + list.length + ' câu</b><span class="muted">Dễ ' + c.De + ' · Trung bình ' + c.TrungBinh + ' · Khó ' + c.Kho + (c.tl ? ' · ' + c.tl + ' tự luận' : '') + '</span>' + (list.length ? '<button type="button" class="btn sm ghost right" data-clear>Bỏ chọn tất cả</button>' : '');
+    var cl = B.querySelector('[data-clear]'); if (cl) cl.onclick = function(){ sel = []; draw(); };
+  }
+  function drawManual(){
+    if (!nhId) { area.innerHTML = '<div class="empty">Chọn ngân hàng câu hỏi để lấy câu hỏi</div>'; return; }
+    var nh = LMS.byId('nganHang', nhId), hp = hpOfNh(nh);
+    area.innerHTML = '<div class="filters" style="margin-bottom:8px"><input class="inp" data-f="q" placeholder="Lọc nội dung…" value="' + esc(f.q) + '"><select class="sel" data-f="dk">' + U.opts(Object.keys(DK).map(function(k){ return { v: k, l: DK[k][0] }; }), 'v', 'l', f.dk, 'Mọi độ khó') + '</select><select class="sel" data-f="loai">' + U.opts(Object.keys(LOAI).map(function(k){ return { v: k, l: LOAI[k] }; }), 'v', 'l', f.loai, 'Mọi loại') + '</select><button type="button" class="btn sm" data-allv>Chọn tất cả đang lọc</button></div><div class="pick" data-list></div>';
+    var list = area.querySelector('[data-list]');
+    function drawList(){
+      var nq = U.norm(f.q.trim());
+      var rows = bankQs().filter(function(q){ if (f.dk && q.doKho !== f.dk) return false; if (f.loai && q.loai !== f.loai) return false; return !nq || U.norm(q.noiDung).indexOf(nq) >= 0; });
+      list.innerHTML = rows.map(function(q){ var on = sel.indexOf(q.id) >= 0, b = hp && hp.bai.find(function(x){ return x.id === q.bai; }); return '<label class="' + (on ? 'on' : '') + '"><input type="checkbox" data-id="' + esc(q.id) + '"' + (on ? ' checked' : '') + '><span>' + esc(q.noiDung) + '<div class="t-sub muted small">' + esc(b ? b.ten.replace(/ – .*$/, '') : '') + (q.trangThai !== 'hoat-dong' ? ' · ' + (q.trangThai === 'luu-tru' ? 'phiên bản cũ' : 'ngưng dùng') : '') + '</div></span><span class="meta">' + U.badge(DK[q.doKho][0], DK[q.doKho][1]) + (q.loai !== 'mot-dap-an' ? U.badge(LOAI[q.loai], q.loai === 'tu-luan' ? 'info' : '') : '') + '</span></label>'; }).join('') || '<div class="empty">Không có câu hỏi phù hợp</div>';
+      list.querySelectorAll('[data-id]').forEach(function(cb){ cb.onchange = function(){ var id = cb.dataset.id, i = sel.indexOf(id); if (cb.checked && i < 0) sel.push(id); if (!cb.checked && i >= 0) sel.splice(i, 1); cb.closest('label').classList.toggle('on', cb.checked); drawSum(); }; });
+      area.querySelector('[data-allv]').onclick = function(){ rows.forEach(function(q){ if (sel.indexOf(q.id) < 0) sel.push(q.id); }); drawList(); drawSum(); };
+    }
+    area.querySelectorAll('[data-f]').forEach(function(el){ el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', function(){ f[el.dataset.f] = el.value; drawList(); }); });
+    drawList();
+  }
+  function drawMatrix(){
+    if (!nhId) { area.innerHTML = '<div class="empty">Chọn ngân hàng câu hỏi để sinh đề theo ma trận</div>'; return; }
+    var pool = db().cauHoi.filter(function(q){ return q.nh === nhId && q.trangThai === 'hoat-dong'; });
+    var av = { De: 0, TrungBinh: 0, Kho: 0 }; pool.forEach(function(q){ av[q.doKho]++; });
+    area.innerHTML = '<div class="mx">' + ['De', 'TrungBinh', 'Kho'].map(function(k){ return '<div class="field"><label>Số câu ' + DK[k][0].toLowerCase() + '</label><input class="inp" type="number" min="0" name="mx_' + k + '" value="0"><div class="hint">Có sẵn <b>' + av[k] + '</b> câu</div></div>'; }).join('') + '</div>' +
+      '<div class="row" style="margin-top:10px"><label class="check"><input type="checkbox" data-tl checked> Gồm câu tự luận</label><button type="button" class="btn primary sm right" data-gen>Sinh đề</button></div><div data-mxerr></div>';
+    var sug = Math.min(12, pool.length); if (sug) { area.querySelector('[name=mx_De]').value = Math.min(av.De, Math.round(sug * .3)); area.querySelector('[name=mx_TrungBinh]').value = Math.min(av.TrungBinh, Math.round(sug * .5)); area.querySelector('[name=mx_Kho]').value = Math.min(av.Kho, Math.round(sug * .2)); }
+    area.querySelector('[data-gen]').onclick = function(){
+      var tl = area.querySelector('[data-tl]').checked, errs = [], out = [];
+      ['De', 'TrungBinh', 'Kho'].forEach(function(k){
+        var want = Math.max(0, parseInt(area.querySelector('[name=mx_' + k + ']').value, 10) || 0);
+        var cand = pool.filter(function(q){ return q.doKho === k && (tl || q.loai !== 'tu-luan'); });
+        if (want > cand.length) errs.push(DK[k][0] + ': cần ' + want + ', ngân hàng chỉ có ' + cand.length + ' câu');
+        else out = out.concat(shuffle(cand.slice()).slice(0, want).map(function(q){ return q.id; }));
+      });
+      var eb = area.querySelector('[data-mxerr]');
+      if (errs.length) { eb.innerHTML = '<div class="note bad" style="margin-top:10px">Không đủ câu hỏi trong ngân hàng:<br>' + errs.map(esc).join('<br>') + '</div>'; return; }
+      if (!out.length) { eb.innerHTML = '<div class="note bad" style="margin-top:10px">Nhập số câu cần sinh.</div>'; return; }
+      sel = out; mode = 'manual'; draw(); U.toast('Đã sinh ' + out.length + ' câu theo ma trận. Rà soát danh sách trước khi lưu.', 'ok');
+    };
+  }
+  function draw(){ B.querySelectorAll('[data-seg] button').forEach(function(b){ b.classList.toggle('on', b.dataset.v === mode); }); if (mode === 'manual') drawManual(); else drawMatrix(); drawSum(); }
+  B.querySelectorAll('[data-seg] button').forEach(function(b){ b.onclick = function(){ mode = b.dataset.v; draw(); }; });
+  B.querySelector('[name=nh]').onchange = function(e){
+    var nv = e.target.value;
+    if (sel.length && nv !== nhId) { sel = []; U.toast('Đã bỏ các câu đã chọn của ngân hàng cũ'); }
+    nhId = nv; var nh = LMS.byId('nganHang', nhId), h = hpOfNh(nh);
+    var ten = B.querySelector('[name=ten]'), ma = B.querySelector('[name=ma]');
+    if (h && !ten.value.trim()) ten.value = 'Đề kiểm tra ' + h.ten;
+    if (h && !ma.value.trim()) ma.value = uniqMa('DE-' + h.ma + '-' + (deList().filter(function(x){ return x.nh === nhId; }).length + 1));
+    draw();
+  };
+  draw();
+
+  function save(tt){
+    var v = U.formVals(B), ok = true; v.ma = (v.ma || '').toUpperCase();
+    ['ma', 'nh', 'ten', 'thoiLuong', 'diemDat'].forEach(function(k){ U.fieldErr(B, k, ''); });
+    if (!v.ma) { U.fieldErr(B, 'ma', 'Nhập mã đề'); ok = false; }
+    else if (!/^[A-Z0-9_.\-]+$/.test(v.ma)) { U.fieldErr(B, 'ma', 'Mã chỉ gồm chữ không dấu, số, “-”, “_”'); ok = false; }
+    else if (deList().some(function(x){ return x !== d && x.ma.toUpperCase() === v.ma; })) { U.fieldErr(B, 'ma', 'Mã đề đã tồn tại'); ok = false; }
+    if (!nhId) { U.fieldErr(B, 'nh', 'Chọn ngân hàng'); ok = false; }
+    if (!v.ten) { U.fieldErr(B, 'ten', 'Nhập tên đề'); ok = false; }
+    var tl = parseInt(v.thoiLuong, 10); if (!(tl >= 5 && tl <= 300)) { U.fieldErr(B, 'thoiLuong', 'Từ 5 đến 300 phút'); ok = false; }
+    var thang = +v.thang, dd = parseFloat(v.diemDat); if (!(dd > 0 && dd <= thang)) { U.fieldErr(B, 'diemDat', 'Điểm đạt trong khoảng (0; ' + thang + ']'); ok = false; }
+    if (!sel.length) { U.toast('Đề cần ít nhất 1 câu hỏi', 'bad'); ok = false; }
+    if (!ok) return false;
+    var data = { ma: v.ma, ten: v.ten, nh: nhId, cauHoi: sel.slice(), thoiLuong: tl, thang: thang, diemDat: dd, tronCau: !!v.tronCau, trangThai: tt };
+    if (d) { var b = { ma: d.ma, soCau: d.cauHoi.length, trangThai: d.trangThai }; Object.keys(data).forEach(function(k){ d[k] = data[k]; }); LMS.commit('Sửa', 'Đề thi', d.ma + ' · ' + d.cauHoi.length + ' câu', b, { ma: d.ma, soCau: d.cauHoi.length, trangThai: d.trangThai }); }
+    else { data.id = LMS.nextId('de'); deList().push(data); LMS.commit('Tạo', 'Đề thi', data.ma + ' · ' + data.cauHoi.length + ' câu' + (tt === 'xuat-ban' ? ' · xuất bản' : '')); }
+    U.toast(tt === 'xuat-ban' ? 'Đã lưu và xuất bản đề ' + v.ma : 'Đã lưu nháp đề ' + v.ma, 'ok');
+    render();
+  }
+}
+
+shell(); render();
+var p = LMS.param('de-thi.html');
+if (p && p.nh) { st.nh = p.nh; render(); }
+if (p && p.de) { var dd = LMS.byId('deThi', p.de); if (dd) viewDialog(dd); }
+LMS.onChange(render);
+})();
+</script>
+</body></html>
