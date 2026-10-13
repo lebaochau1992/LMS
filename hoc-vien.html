@@ -428,7 +428,7 @@ function openHoSo(id,tab,editMode){
       var cls=g.trangThai==='dang-hoc'?'on':g.trangThai==='cho-khai-giang'?'wait':g.trangThai==='hoan-thanh'?'done':'';
       var tdHtml=g.trangThai==='cho-khai-giang'?'<span class="muted">Chưa bắt đầu</span>':U.prog(td.pct,null,td.done+'/'+td.tong);
       return '<div class="tl-item '+cls+'"><div class="tl-card">'+
-        '<div><div class="t-main">'+esc(l.ma)+' · '+esc(l.ten)+'</div><div class="muted small">'+esc(hp?hp.ma+' · '+hp.ten+' ('+hp.soTC+' TC)':'')+' · '+esc(LMS.donViTen(l.khoa))+'</div></div>'+
+        '<div><div class="t-main">'+esc(l.ma)+' · '+esc(l.ten)+'</div><div class="muted small">'+esc(hp?hp.ma+' · '+hp.ten:'')+' · '+esc(LMS.donViTen(l.khoa))+'</div></div>'+
         '<div class="row" style="align-items:flex-start">'+U.badge(tg[0],tg[1])+'<button class="btn sm" data-lop="'+l.id+'">Mở lớp</button></div>'+
         '<div class="tl-meta"><div><span class="lb">Thời gian lớp</span>'+LMS.fmtDate(l.batDau)+' – '+LMS.fmtDate(l.ketThuc)+'</div><div><span class="lb">Ngày ghi danh</span>'+LMS.fmtDate(g.ngay)+'</div><div><span class="lb">Tiến độ bài giảng</span>'+tdHtml+'</div><div><span class="lb">Điểm tổng kết</span>'+(dk==null?'<span class="muted">Chưa đủ điểm</span>':'<b class="num">'+dk.toFixed(1)+'</b> '+(dk>=l.diemDat?U.badge('Đạt','ok'):U.badge('Chưa đạt','bad')))+'</div></div>'+
         (g.lyDo?'<div class="muted small" style="grid-column:1/-1">Ghi chú: '+esc(g.lyDo)+'</div>':'')+

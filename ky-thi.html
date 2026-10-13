@@ -119,7 +119,7 @@ function congBo(k){
 }
 
 /* =================== FORM =================== */
-function gtCands(){ return db().taiKhoan.filter(function(t){ return t.trangThai === 'hoat-dong' && (t.nhom.indexOf('nq9') >= 0 || t.nhom.indexOf('nq3') >= 0 || t.loai === 'gv'); }); }
+function gtCands(){ return db().taiKhoan.filter(function(t){ return t.trangThai === 'hoat-dong' && (t.nhom.indexOf('nq9') >= 0 || t.nhom.indexOf('nq3') >= 0 || t.nhom.indexOf('nq4') >= 0); }); }
 function gtVaiTro(t){ return t.nhom.indexOf('nq9') >= 0 ? 'Giám thị' : t.nhom.indexOf('nq3') >= 0 ? 'Khảo thí' : 'Giảng viên'; }
 function gtTen(k){ return (k.giamThi || []).map(function(id){ var t = LMS.byId('taiKhoan', id); return t ? t.hoTen : ''; }).filter(Boolean).join(', '); }
 function nextMa(){ var mx = 0; kys().forEach(function(k){ var m = /^KT(\d+)$/.exec(k.ma); if (m) mx = Math.max(mx, +m[1]); }); return 'KT' + String(mx + 1).padStart(3, '0'); }

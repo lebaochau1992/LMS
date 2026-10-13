@@ -2,7 +2,7 @@
    Nguồn duy nhất cho menu của index.html. Sửa trên giao diện (Cấu hình menu) rồi Xuất file .js để thay file này.
    Mỗi mục: id (duy nhất), label (tên hiển thị), path (file HTML cùng thư mục), icon, hidden (ẩn khỏi menu). */
 window.MENU_PAGES = [
-  'bang-dieu-khien.html', 'chuong-trinh.html', 'hoc-phan.html', 'lop-hoc.html', 'buoi-hoc.html', 'giam-sat-lop.html',
+  'bang-dieu-khien.html', 'chuong-trinh.html', 'hoc-phan.html', 'lop-hoc.html', 'theo-doi-hoc-tap.html', 'giam-sat-lop.html',
   'hoi-dap.html', 'bao-cao-dao-tao.html', 'thu-vien.html', 'khao-sat.html', 'ngan-hang-cau-hoi.html', 'de-thi.html',
   'ky-thi.html', 'cham-bai.html', 'bai-tap.html', 'giam-sat-thi.html', 'phan-tich-cau-hoi.html', 'khoan-thu.html', 'thu-hoc-phi.html', 'hoc-vien.html',
   'giang-vien.html', 'tai-khoan.html', 'nhom-quyen.html', 'don-vi.html', 'nhat-ky.html', 'nhom-theo-doi.html'
@@ -16,7 +16,7 @@ window.MENU_CONFIG = [
     { id: 'chuong-trinh', label: 'Chương trình đào tạo', path: 'chuong-trinh.html', icon: 'tree' },
     { id: 'hoc-phan', label: 'Học phần', path: 'hoc-phan.html', icon: 'book' },
     { id: 'lop-hoc', label: 'Lớp học', path: 'lop-hoc.html', icon: 'class' },
-    { id: 'buoi-hoc', label: 'Lịch buổi học', path: 'buoi-hoc.html', icon: 'calendar' },
+    { id: 'theo-doi-hoc-tap', label: 'Theo dõi học tập', path: 'theo-doi-hoc-tap.html', icon: 'chart' },
     { id: 'giam-sat-lop', label: 'Giám sát lớp', path: 'giam-sat-lop.html', icon: 'pulse' },
     { id: 'hoi-dap', label: 'Hỏi đáp / Thảo luận', path: 'hoi-dap.html', icon: 'chat' },
     { id: 'bao-cao-dao-tao', label: 'Báo cáo đào tạo', path: 'bao-cao-dao-tao.html', icon: 'report' }

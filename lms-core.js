@@ -1,13 +1,14 @@
+try{ if(window.top!==window.self) document.documentElement.classList.add('in-frame'); }catch(e){ document.documentElement.classList.add('in-frame'); }
 /* EGO LMS · Cổng quản trị (bản demo) — dữ liệu dùng chung + thư viện giao diện
    Mọi màn hình đọc/ghi cùng một kho dữ liệu (localStorage) nên thao tác ở màn này phản ánh ngay ở màn khác. */
 (function () {
   'use strict';
-  var KEY = 'egoLmsDemo.db.v13';
+  var KEY = 'egoLmsDemo.db.v22';
   var DD_MAC_DINH = { nguong: 70, muon: 15, hanXN: 48, tuDongChot: true };
   var KS_MAU = {
     'giua-ky': { ten: 'Khảo sát giữa kỳ', moTa: 'Lấy ý kiến giữa học phần để điều chỉnh cách dạy.', cau: [['Mục tiêu học phần được giới thiệu rõ ràng', 'thang'], ['Tốc độ giảng dạy phù hợp với khả năng tiếp thu', 'thang'], ['Tài liệu, video bài giảng đầy đủ và dễ truy cập', 'thang'], ['Mức độ khó của nội dung đến thời điểm này', 'lua-chon', ['Quá dễ', 'Phù hợp', 'Khó', 'Quá khó']], ['Nội dung anh/chị muốn giảng viên giảng kỹ hơn', 'nhieu', ['Lý thuyết kinh lạc', 'Vị trí huyệt', 'Kỹ thuật châm', 'Ca lâm sàng']], ['Góp ý cho nửa sau học phần', 'tu-luan']] },
     'cuoi-ky': { ten: 'Đánh giá cuối học phần', moTa: 'Đánh giá chất lượng học phần sau khi kết thúc.', cau: [['Nội dung bài giảng phù hợp với chuẩn đầu ra', 'thang'], ['Giảng viên truyền đạt dễ hiểu, có ví dụ lâm sàng', 'thang'], ['Giảng viên phản hồi câu hỏi kịp thời', 'thang'], ['Hình thức kiểm tra, đánh giá phản ánh đúng năng lực', 'thang'], ['Cổng học trực tuyến hoạt động ổn định', 'thang'], ['Mức độ hài lòng chung với học phần', 'thang'], ['Hình thức học mong muốn cho học phần tiếp theo', 'lua-chon', ['Trực tuyến hoàn toàn', 'Kết hợp trực tuyến và trực tiếp', 'Trực tiếp tại Học viện']], ['Điều anh/chị thấy hữu ích nhất', 'tu-luan'], ['Đề xuất cải tiến cho học phần', 'tu-luan']] },
-    'buoi-hoc': { ten: 'Đánh giá buổi học', moTa: 'Phiếu ngắn sau buổi học trực tuyến.', cau: [['Buổi học đạt được mục tiêu đã nêu', 'thang'], ['Chất lượng âm thanh, hình ảnh phòng học trực tuyến', 'thang'], ['Thời lượng buổi học', 'lua-chon', ['Quá ngắn', 'Vừa đủ', 'Quá dài']], ['Nội dung chưa rõ sau buổi học', 'tu-luan']] },
+    'buoi-hoc': { ten: 'Đánh giá bài giảng', moTa: 'Phiếu ngắn sau khi học xong một nhóm bài.', cau: [['Bài giảng đạt được mục tiêu đã nêu', 'thang'], ['Chất lượng âm thanh, hình ảnh của video', 'thang'], ['Thời lượng mỗi bài', 'lua-chon', ['Quá ngắn', 'Vừa đủ', 'Quá dài']], ['Nội dung chưa rõ sau khi học', 'tu-luan']] },
     'giang-vien': { ten: 'Đánh giá giảng viên', moTa: 'Đánh giá phương pháp và thái độ giảng dạy.', cau: [['Giảng viên chuẩn bị bài chu đáo', 'thang'], ['Giảng viên truyền đạt rõ ràng, dễ hiểu', 'thang'], ['Giảng viên khuyến khích học viên đặt câu hỏi', 'thang'], ['Giảng viên đúng giờ, đảm bảo thời lượng', 'thang'], ['Nhận xét khác về giảng viên', 'tu-luan']] }
   };
   var KS_NX = ['Video minh họa kỹ thuật châm rõ, mong có thêm video thực hành trên mô hình.', 'Nên bổ sung câu hỏi ôn tập cuối mỗi bài.', 'Giảng viên nhiệt tình, trả lời câu hỏi nhanh.', 'Một số video tải chậm vào buổi tối.', 'Tài liệu PDF nên có mục lục để tra cứu nhanh.', 'Mong có thêm ca lâm sàng để thảo luận nhóm.', 'Nên mở thêm buổi hỏi đáp trước kỳ thi.', 'Hình ảnh giải phẫu trong slide cần rõ hơn.'];
@@ -32,7 +33,7 @@
     function pick(a) { return a[Math.floor(R() * a.length)]; }
     function int(a, b) { return a + Math.floor(R() * (b - a + 1)); }
     var T = TODAY;
-    var db = { meta: { version: 13, seededAt: iso(T), user: { ten: 'admin02', hoTen: 'Lê Bảo Châu', email: 'chaulb@vutm.edu.vn' } } };
+    var db = { meta: { version: 22, seededAt: iso(T), user: { ten: 'admin02', hoTen: 'Lê Bảo Châu', email: 'chaulb@vutm.edu.vn' } } };
 
     db.donVi = [
       { id: 'dv1', ma: 'BGD', ten: 'Ban Giám đốc', cha: null, laKhoa: false },
@@ -81,25 +82,35 @@
     [['Phát âm tên huyệt – kinh Thủ thái âm Phế.mp3', 'Audio', 'Châm cứu 1', 2100, 185], ['Hướng dẫn tư thế khi châm – thuyết minh.mp3', 'Audio', 'Châm cứu 1', 3400, 312], ['Sơ đồ đường kinh Phế.png', 'Ảnh', 'Châm cứu 1', 460, 0], ['Vị trí huyệt Hợp cốc.jpg', 'Ảnh', 'Châm cứu 1', 380, 0], ['Tiêu bản xương sọ.jpg', 'Ảnh', 'Giải phẫu 1', 910, 0], ['Video thực hành kỹ thuật châm.mp4', 'Video', 'Châm cứu 1', 256000, 1260]].forEach(function (x, k) { db.thuVien.push({ id: 'fm' + (k + 1), ten: x[0], loai: x[1], thuMuc: x[2], kb: x[3], giay: x[4] || null, hash: 'hm' + (k + 1), ngay: iso(addDays(T, -30 - k * 4)), nguoiTai: 'thuyanh' }); });
     addFile('Âm thanh thiền dưỡng sinh.mp3', 'Audio', 'Chưa phân thư mục', 5400);
 
-    db.chuongTrinh = [
-      { id: 'ct1', ma: 'YHCT', ten: 'Y học cổ truyền – Đại học', cha: null, khoa: 'dv6', hocPhan: [], trangThai: 'hoat-dong' },
-      { id: 'ct2', ma: 'KTN_CC', ten: 'Khối kiến thức Châm cứu', cha: 'ct1', khoa: 'dv6', hocPhan: [], trangThai: 'hoat-dong' },
-      { id: 'ct3', ma: 'CC1', ten: 'Châm cứu 1', cha: 'ct2', khoa: 'dv6', hocPhan: ['hp1'], trangThai: 'hoat-dong' },
-      { id: 'ct4', ma: 'CC2', ten: 'Châm cứu 2', cha: 'ct2', khoa: 'dv6', hocPhan: ['hp2'], trangThai: 'hoat-dong' },
-      { id: 'ct5', ma: 'KTN_GP', ten: 'Khối kiến thức Giải phẫu', cha: 'ct1', khoa: 'dv7', hocPhan: [], trangThai: 'hoat-dong' },
-      { id: 'ct6', ma: 'GP1', ten: 'Giải phẫu 1', cha: 'ct5', khoa: 'dv7', hocPhan: ['hp3'], trangThai: 'hoat-dong' },
-      { id: 'ct7', ma: 'GP2', ten: 'Giải phẫu 2', cha: 'ct5', khoa: 'dv7', hocPhan: ['hp4'], trangThai: 'hoat-dong' },
-      { id: 'ct8', ma: 'KTN_DL', ten: 'Khối kiến thức Dược', cha: 'ct1', khoa: 'dv8', hocPhan: [], trangThai: 'hoat-dong' },
-      { id: 'ct9', ma: 'TVDL', ten: 'Thực vật – Dược liệu', cha: 'ct8', khoa: 'dv8', hocPhan: ['hp5'], trangThai: 'hoat-dong' },
-      { id: 'ct10', ma: 'DHCT', ten: 'Dược học cổ truyền', cha: 'ct8', khoa: 'dv8', hocPhan: ['hp6'], trangThai: 'hoat-dong' }
-    ];
+    /* Khung chương trình trực tuyến: chương trình → nhóm học phần → học phần mở lớp trên cổng.
+       Chỉ gồm học phần lý thuyết học trực tuyến; khung đầy đủ (tín chỉ, học kỳ, thực hành) nằm ở hệ thống quản lý đào tạo. */
+    db.chuongTrinh = [];
+    var ctSeq = 10;
+    function taoCT(goc, nhoms) {
+      goc.cha = null; goc.loai = 'chuong-trinh'; goc.hocPhan = []; goc.trangThai = 'hoat-dong'; db.chuongTrinh.push(goc);
+      nhoms.forEach(function (g) {
+        var gn = { id: g.id || ('ct' + (++ctSeq)), ma: g.ma, ten: g.ten, cha: goc.id, khoa: g.khoa || goc.khoa, hocPhan: [], trangThai: 'hoat-dong', loai: 'nhom' };
+        db.chuongTrinh.push(gn);
+        g.mon.forEach(function (m) { db.chuongTrinh.push({ id: m.id || ('ct' + (++ctSeq)), ma: m.ma, ten: m.ten, cha: gn.id, khoa: m.khoa || gn.khoa, hocPhan: m.hp ? [m.hp] : [], trangThai: 'hoat-dong', loai: 'hoc-phan', hocSau: m.sau || [] }); });
+      });
+    }
+    taoCT({ id: 'ct1', ma: 'YHCT', ten: 'Y học cổ truyền – Đại học', khoa: 'dv6', maQLDT: '7720115', congKhai: true, doiTuong: 'Sinh viên, học viên liên thông ngành Y học cổ truyền', moTa: 'Các học phần lý thuyết của ngành Y học cổ truyền được tổ chức học trực tuyến. Thực hành, lâm sàng học tại Học viện và bệnh viện theo kế hoạch của Phòng Đào tạo.' }, [
+      { id: 'ct5', ma: 'GP', ten: 'Giải phẫu', khoa: 'dv7', mon: [{ id: 'ct6', ma: 'GP1', ten: 'Giải phẫu 1', hp: 'hp3' }, { id: 'ct7', ma: 'GP2', ten: 'Giải phẫu 2', hp: 'hp4', sau: ['ct6'] }] },
+      { ma: 'YL', ten: 'Lý luận Y học cổ truyền', mon: [{ ma: 'YL1', ten: 'Y lý Y học cổ truyền' }, { ma: 'CDH', ten: 'Chẩn đoán học Y học cổ truyền' }] },
+      { id: 'ct8', ma: 'DL', ten: 'Dược liệu – Dược cổ truyền', khoa: 'dv8', mon: [{ id: 'ct9', ma: 'TVDL', ten: 'Thực vật – Dược liệu', hp: 'hp5' }, { id: 'ct10', ma: 'DHCT', ten: 'Dược học cổ truyền', hp: 'hp6', sau: ['ct9'] }] },
+      { id: 'ct2', ma: 'CC', ten: 'Châm cứu', mon: [{ id: 'ct3', ma: 'CC1', ten: 'Châm cứu 1', hp: 'hp1', sau: ['ct6'] }, { id: 'ct4', ma: 'CC2', ten: 'Châm cứu 2', hp: 'hp2', sau: ['ct3'] }, { ma: 'XBBH', ten: 'Xoa bóp bấm huyệt (lý thuyết)' }] }
+    ]);
+    taoCT({ id: 'ctd', ma: 'DUOC', ten: 'Dược học – Đại học', khoa: 'dv8', maQLDT: '7720201', congKhai: false, doiTuong: 'Sinh viên ngành Dược học', moTa: 'Chương trình đang chuẩn bị học liệu trực tuyến cho các học phần lý thuyết; chưa mở lớp trên cổng.' }, [
+      { ma: 'DLY', ten: 'Dược lý – Hóa dược', mon: [{ ma: 'DLY1', ten: 'Dược lý 1' }, { ma: 'HD1', ten: 'Hóa dược 1' }] },
+      { ma: 'QLD', ten: 'Pháp chế – Quản lý dược', mon: [{ ma: 'PCD', ten: 'Pháp chế dược' }, { ma: 'KTD', ten: 'Quản lý và kinh tế dược' }] }
+    ]);
 
     /* tài khoản, nhóm quyền */
     db.nhomQuyen = [
       { id: 'nq1', ma: 'GRP-ADMIN', ten: 'Quản trị hệ thống', moTa: 'Toàn quyền, gồm cấu hình phân quyền và nhật ký.', pham: 'toan-bo', quyen: 'all' },
-      { id: 'nq2', ma: 'GRP-DT', ten: 'Chuyên viên đào tạo', moTa: 'Chương trình, học phần, lớp học, ghi danh.', pham: 'toan-bo', quyen: ['bang-dieu-khien', 'chuong-trinh', 'hoc-phan', 'lop-hoc', 'buoi-hoc', 'giam-sat-lop', 'bao-cao', 'hoc-vien', 'thu-vien'] },
+      { id: 'nq2', ma: 'GRP-DT', ten: 'Chuyên viên đào tạo', moTa: 'Chương trình, học phần, lớp học, ghi danh.', pham: 'don-vi', quyen: ['bang-dieu-khien', 'chuong-trinh', 'hoc-phan', 'lop-hoc', 'theo-doi-hoc-tap', 'giam-sat-lop', 'bao-cao', 'hoc-vien', 'thu-vien'] },
       { id: 'nq3', ma: 'GRP-KT', ten: 'Chuyên viên khảo thí', moTa: 'Ngân hàng câu hỏi, đề thi, kỳ thi, chấm bài.', pham: 'toan-bo', quyen: ['ngan-hang-cau-hoi', 'de-thi', 'ky-thi', 'cham-bai', 'giam-sat-thi', 'phan-tich-cau-hoi'] },
-      { id: 'nq4', ma: 'GRP-GV', ten: 'Giảng viên', moTa: 'Lớp được phân công: buổi học, điểm danh, hỏi đáp, chấm bài.', pham: 'lop-phan-cong', quyen: ['lop-hoc', 'buoi-hoc', 'hoi-dap', 'cham-bai', 'bai-tap'] },
+      { id: 'nq4', ma: 'GRP-GV', ten: 'Giảng viên', moTa: 'Lớp được phân công: theo dõi học tập, hỏi đáp, chấm bài.', pham: 'lop-phan-cong', quyen: ['lop-hoc', 'theo-doi-hoc-tap', 'hoi-dap', 'cham-bai', 'bai-tap'] },
       { id: 'nq5', ma: 'GRP-TC', ten: 'Kế toán học phí', moTa: 'Khoản thu, thu học phí, đối soát.', pham: 'toan-bo', quyen: ['khoan-thu', 'thu-hoc-phi'] },
       { id: 'nq6', ma: 'GRP-KHOA', ten: 'Quản lý khoa', moTa: 'Xem báo cáo, lớp, học viên thuộc khoa.', pham: 'don-vi', quyen: ['bang-dieu-khien', 'lop-hoc', 'giam-sat-lop', 'bao-cao', 'hoc-vien'] },
       { id: 'nq7', ma: 'GRP-ATTT', ten: 'An toàn thông tin', moTa: 'Tra cứu nhật ký, phân quyền; không sửa dữ liệu nghiệp vụ.', pham: 'toan-bo', quyen: ['nhat-ky', 'nhom-quyen', 'tai-khoan'] },
@@ -107,21 +118,24 @@
       { id: 'nq9', ma: 'GRP-GT', ten: 'Giám thị', moTa: 'Giám sát ca thi được phân công: kích hoạt, xử lý sự cố thí sinh, lập biên bản.', pham: 'ky-thi-phan-cong', quyen: ['giam-sat-thi'] }
     ];
     db.taiKhoan = [
-      { id: 'tk1', ten: 'admin02', hoTen: 'Lê Bảo Châu', email: 'chaulb@vutm.edu.vn', loai: 'nv', nhom: ['nq1'], donVi: 'dv5', trangThai: 'hoat-dong', lanCuoi: new Date(T.getTime() + 8 * 3600000).toISOString() },
+      { id: 'tk1', ten: 'admin02', hoTen: 'Lê Bảo Châu', email: 'chaulb@vutm.edu.vn', loai: 'qt', admin: true, nhom: ['nq1'], donVi: 'dv5', trangThai: 'hoat-dong', lanCuoi: new Date(T.getTime() + 8 * 3600000).toISOString() },
       { id: 'tk2', ten: 'daotao01', hoTen: 'Phạm Thị Hồng', email: 'hongpt@vutm.edu.vn', loai: 'nv', nhom: ['nq2'], donVi: 'dv2', trangThai: 'hoat-dong', lanCuoi: addDays(T, -1).toISOString() },
       { id: 'tk3', ten: 'khaothi01', hoTen: 'Trần Minh Đức', email: 'ductm@vutm.edu.vn', loai: 'nv', nhom: ['nq3'], donVi: 'dv3', trangThai: 'hoat-dong', lanCuoi: addDays(T, -2).toISOString() },
       { id: 'tk4', ten: 'ketoan01', hoTen: 'Nguyễn Thu Trang', email: 'trangnt@vutm.edu.vn', loai: 'nv', nhom: ['nq5'], donVi: 'dv4', trangThai: 'hoat-dong', lanCuoi: addDays(T, -3).toISOString() },
       { id: 'tk6', ten: 'giamthi01', hoTen: 'Hoàng Văn Nam', email: 'namhv@vutm.edu.vn', loai: 'nv', nhom: ['nq9'], donVi: 'dv3', trangThai: 'hoat-dong', lanCuoi: addDays(T, -1).toISOString() },
       { id: 'tk7', ten: 'giamthi02', hoTen: 'Lý Thu Hà', email: 'halt@vutm.edu.vn', loai: 'nv', nhom: ['nq9'], donVi: 'dv3', trangThai: 'hoat-dong', lanCuoi: addDays(T, -4).toISOString() },
-      { id: 'tk5', ten: 'truongkhoa.yhls', hoTen: 'PGS.TS Đặng Văn Hùng', email: 'hungdv@vutm.edu.vn', loai: 'nv', nhom: ['nq6'], donVi: 'dv6', trangThai: 'hoat-dong', lanCuoi: addDays(T, -5).toISOString() }
+      { id: 'tk5', ten: 'truongkhoayhls', hoTen: 'PGS.TS Đặng Văn Hùng', email: 'hungdv@vutm.edu.vn', loai: 'nv', nhom: ['nq6'], donVi: 'dv6', trangThai: 'hoat-dong', lanCuoi: addDays(T, -5).toISOString() }
     ];
 
-    var GV = [['Nguyễn Thanh An', 'annt', 'dv6'], ['Đỗ Thị Thúy Anh', 'thuyanh', 'dv6'], ['Cao Thị Vân Anh', 'vananh.cao', 'dv6'], ['Nguyễn Võ Hoàng Anh', 'hoanganh', 'dv6'], ['Vũ Thị Lan Anh', 'lananh.vu', 'dv7'], ['Bùi Thị Lan Anh', 'lananh.bui', 'dv7'], ['Đinh Nguyễn An', 'andn', 'dv8'], ['Nguyễn Thị Vân Anh', 'vananh.nguyen', 'dv8']];
+    var GV = [['Nguyễn Thanh An', 'annt', 'dv6'], ['Đỗ Thị Thúy Anh', 'thuyanh', 'dv6'], ['Cao Thị Vân Anh', 'vananhcao', 'dv6'], ['Nguyễn Võ Hoàng Anh', 'hoanganh', 'dv6'], ['Vũ Thị Lan Anh', 'lananhvu', 'dv7'], ['Bùi Thị Lan Anh', 'lananhbui', 'dv7'], ['Đinh Nguyễn An', 'andn', 'dv8'], ['Nguyễn Thị Vân Anh', 'vananhnguyen', 'dv8']];
     db.giangVien = GV.map(function (g, i) {
       var tkId = null;
-      if (i < 7) { tkId = 'tkg' + (i + 1); db.taiKhoan.push({ id: tkId, ten: g[1], hoTen: g[0], email: g[1] + '@vutm.edu.vn', loai: 'gv', nhom: ['nq4'], donVi: g[2], trangThai: 'hoat-dong', lanCuoi: addDays(T, -int(0, 6)).toISOString() }); }
+      if (i < 7) { tkId = 'tkg' + (i + 1); db.taiKhoan.push({ id: tkId, ten: g[1], hoTen: g[0], email: g[1] + '@vutm.edu.vn', loai: 'nv', nhom: ['nq4'], donVi: g[2], trangThai: 'hoat-dong', lanCuoi: addDays(T, -int(0, 6)).toISOString() }); }
       return { id: 'gv' + (i + 1), ma: 'GV' + String(i + 11).padStart(4, '0'), hoTen: g[0], email: g[1] + '@vutm.edu.vn', sdt: '09' + int(10000000, 99999999), donVi: g[2], taiKhoan: tkId, trangThai: 'hoat-dong' };
     });
+    /* hồ sơ nhân sự phòng ban (đồng bộ từ hệ thống nhân sự) */
+    db.nhanSu = [['Phạm Thị Hồng', 'hongpt', 'dv2', 'tk2'], ['Trần Minh Đức', 'ductm', 'dv3', 'tk3'], ['Nguyễn Thu Trang', 'trangnt', 'dv4', 'tk4'], ['Hoàng Văn Nam', 'namhv', 'dv3', 'tk6'], ['Lý Thu Hà', 'halt', 'dv3', 'tk7'], ['PGS.TS Đặng Văn Hùng', 'hungdv', 'dv6', 'tk5'], ['Vũ Minh Quân', 'quanvm', 'dv5', null], ['Đỗ Thị Mai', 'maidt', 'dv2', null], ['Ngô Thanh Tùng', 'tungnt', 'dv4', null]].map(function (n, i) { return { id: 'ns' + (i + 1), ma: 'NS' + String(i + 1).padStart(4, '0'), hoTen: n[0], email: n[1] + '@vutm.edu.vn', donVi: n[2], taiKhoan: n[3] }; });
+    db.giangVien.push({ id: 'gv9', ma: 'GV0019', hoTen: 'Trần Quốc Bình', email: 'binhtq@vutm.edu.vn', sdt: '0912345680', donVi: 'dv8', taiKhoan: null, trangThai: 'hoat-dong' });
 
     /* học viên */
     var HO = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Vũ', 'Võ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương', 'Lý', 'Phan', 'Trịnh', 'Mai', 'Đinh', 'Tạ', 'Quách'];
@@ -449,7 +463,7 @@
     var l5 = db.lop.find(function (l) { return l.id === 'lop5'; }); var gk5 = l5.cotDiem[1].kyThi;
     l5.cotDiem = [{ ten: 'Chuyên cần', ts: 10, nguon: 'diem-danh' }, { ten: 'Bài tập', ts: 20, nguon: 'bai-tap', baiTap: [bt4.id], gop: 'trung-binh', khongNop: 'tinh-0' }, { ten: 'Kiểm tra giữa kỳ', ts: 30, nguon: 'ky-thi', kyThi: gk5 }, { ten: 'Thi cuối kỳ', ts: 40, nguon: 'ky-thi', kyThi: null }];
     db.kyThi.forEach(function (k) { if (k.id === gk5) k.cot = 2; });
-    bt4.chuyenDiem = { cot: 1, luc: addDays(T, -6).toISOString(), nguoi: 'lananh.vu' };
+    bt4.chuyenDiem = { cot: 1, luc: addDays(T, -6).toISOString(), nguoi: 'lananhvu' };
 
     /* thông báo lớp */
     db.thongBao = [];
@@ -466,7 +480,7 @@
     mkTB('lop2', { tieuDe: 'Đổi phòng học trực tuyến buổi tới', loai: 'lich-hoc', truoc: 2, gio: 16, xem: .45, noiDung: 'Buổi học tới chuyển sang Phòng học trực tuyến 02, giờ học không đổi. Học viên vào phòng trước 10 phút để điểm danh.' });
     mkTB('lop2', { tieuDe: 'Nhắc hạn nộp bài tập ôn tập bài 8–10', loai: 'bai-tap', trangThai: 'hen-gio', sau: 1, noiDung: 'Bài tập ôn tập bài 8–10 hết hạn nộp vào 23:59 ngày mai. Học viên chưa nộp hoàn thành đúng hạn.' });
     mkTB('lop2', { tieuDe: 'Nghỉ học dịp lễ', loai: 'lich-hoc', trangThai: 'nhap', noiDung: 'Lớp nghỉ học theo lịch nghỉ lễ của Học viện; buổi học bù sẽ thông báo sau.' });
-    mkTB('lop5', { tieuDe: 'Tài liệu ôn tập giữa kỳ Giải phẫu 1', loai: 'hoc-tap', truoc: 6, xem: .7, dinhKem: [], noiDung: 'Tài liệu ôn tập đã được đính kèm trong bài 4, học viên tải về ôn trước buổi kiểm tra.', nguoiGui: 'lananh.vu' });
+    mkTB('lop5', { tieuDe: 'Tài liệu ôn tập giữa kỳ Giải phẫu 1', loai: 'hoc-tap', truoc: 6, xem: .7, dinhKem: [], noiDung: 'Tài liệu ôn tập đã được đính kèm trong bài 4, học viên tải về ôn trước buổi kiểm tra.', nguoiGui: 'lananhvu' });
     mkTB('lop3', { tieuDe: 'Kiểm tra giữa kỳ trực tuyến', loai: 'thi', truoc: 3, xem: .9, xacNhan: true, xn: .75, noiDung: 'Kiểm tra giữa kỳ học phần Châm cứu 2 làm bài trực tuyến, có giám sát. Học viên nhận mã vào thi từ giám thị khi bắt đầu ca thi.' });
 
     /* khảo sát: câu hỏi và phiếu trả lời thật để tính kết quả */
@@ -490,31 +504,127 @@
       mkKS({ id: 'ks2', ten: 'Đánh giá học phần Châm cứu 1 - K26', lop: 'lop1', mau: 'cuoi-ky', bd: -45, kt: -35, trangThai: 'da-dong', n: 25, lech: .6 }),
       mkKS({ id: 'ks3', ten: 'Khảo sát giữa kỳ Châm cứu 1 - K27', lop: 'lop2', mau: 'giua-ky', bd: -5, kt: 4, trangThai: 'dang-mo', n: 17, lech: .4, moTa: 'Ý kiến của anh/chị giúp giảng viên điều chỉnh cách dạy ở nửa sau học phần. Phiếu ẩn danh, mất khoảng 3 phút.' }),
       { id: 'ks4', ten: 'Mức độ hài lòng với cổng học trực tuyến', lop: null, guiDi: 184, phanHoi: 96, diemTB: 3.7, trangThai: 'dang-mo', cauHoi: 10 },
-      mkKS({ id: 'ks5', ten: 'Đánh giá buổi học trực tuyến tuần 4', lop: 'lop2', mau: 'buoi-hoc', bd: 1, kt: 6, trangThai: 'nhap' })
+      mkKS({ id: 'ks5', ten: 'Đánh giá bài giảng tuần 4', lop: 'lop2', mau: 'buoi-hoc', bd: 1, kt: 6, trangThai: 'nhap' })
     ];
     db.dangKy.push({ id: 'dk-l2-1', lop: 'lop2', hv: db.ghiDanh.filter(function (g) { return g.lop === 'lop2'; })[4].hv, ngay: iso(addDays(T, -18)), trangThai: 'da-duyet' });
     db.hocVien.filter(function (h) { return !db.ghiDanh.some(function (g) { return g.hv === h.id; }); }).slice(0, 3).forEach(function (h, i) { db.dangKy.push({ id: 'dk-l8-' + i, lop: 'lop8', hv: h.id, ngay: iso(addDays(T, -1 - i)), trangThai: i === 2 ? 'tu-choi' : 'cho-duyet', lyDo: i === 2 ? 'Chưa đủ điều kiện tiên quyết học phần Giải phẫu 1' : undefined }); });
     db.nhatKy = [];
     var LOG0 = [['admin02', 'Tạo', 'Lớp học', 'Lớp Giải phẫu 2 - K27', -9], ['daotao01', 'Sửa', 'Học phần', 'Giải phẫu 1 · cập nhật tiêu chí hoàn thành', -8], ['khaothi01', 'Xuất bản', 'Đề thi', 'Đề kiểm tra giữa kỳ Giải phẫu 1', -6], ['annt', 'Điểm danh', 'Buổi học', 'Lớp Châm cứu 1 - K26 · Buổi 18', -41], ['ketoan01', 'Xác nhận thanh toán', 'Thanh toán', 'DH260901 · 4.500.000 ₫', -5], ['admin02', 'Cấp tài khoản', 'Học viên', '12 tài khoản học viên', -4], ['khaothi01', 'Công bố điểm', 'Kỳ thi', 'Kiểm tra giữa kỳ Châm cứu 1 - K27', -3], ['admin02', 'Sửa', 'Nhóm quyền', 'Quản lý khoa · thêm quyền Báo cáo', -2]];
     LOG0.forEach(function (l, i) { var t = addDays(T, l[4]); t.setHours(8 + i, 10 + i * 3); db.nhatKy.push({ id: 'nk' + (i + 1), t: t.toISOString(), user: l[0], hanhDong: l[1], doiTuong: l[2], tomTat: l[3], truoc: null, sau: null }); });
+    /* nhật ký tự học: ngày có học và số phút mỗi ngày của từng học viên trong từng lớp */
+    db.cauHinhNhip = { gianDoan: 7, ngung: 14, deu: 3, nhacTuDong: true };
+    db.hoatDong = {};
+    db.ghiDanh.forEach(function (g) {
+      var lop = db.lop.filter(function (l) { return l.id === g.lop; })[0], t = lop && (db.tienDo[lop.id] || {})[g.hv];
+      if (!lop || !t || g.trangThai === 'cho-khai-giang') return;
+      if (!t.done) { t.lastAt = null; return; }
+      var hh = 7; (lop.id + ':' + g.hv).split('').forEach(function (c) { hh = (hh * 31 + c.charCodeAt(0)) % 2147483647; });
+      var rnd = function () { hh = (hh * 48271) % 2147483647; return hh / 2147483647; };
+      for (var wu = 0; wu < 6; wu++) rnd();
+      var bd = parse(lop.batDau), kieu = rnd(), end;
+      if (lop.trangThai === 'ket-thuc') end = addDays(parse(lop.ketThuc), -Math.floor(rnd() * 6));
+      else { end = parse(t.lastAt); if (g.hv !== 'hv99' && rnd() < .1) end = addDays(T, -(15 + Math.floor(rnd() * 16))); }
+      if (end < bd) end = bd; if (end > T) end = T;
+      var m = {}, n = Math.max(0, Math.round((end - bd) / DAY));
+      for (var d = 0; d <= n; d++) {
+        var p = kieu < .55 ? .5 : kieu < .78 ? .17 : (d % 9 < 2 ? .85 : .03);
+        if (rnd() < p) m[iso(addDays(bd, d))] = 15 + Math.floor(rnd() * 70);
+      }
+      m[iso(end)] = m[iso(end)] || 20 + Math.floor(rnd() * 50);
+      t.lastAt = iso(end);
+      (db.hoatDong[lop.id] = db.hoatDong[lop.id] || {})[g.hv] = m;
+    });
+    /* thư mục thư viện: mỗi thư mục do một đơn vị quản lý; để trống đơn vị = dùng chung toàn Học viện */
+    (function () {
+      var seen = {}, n = 0; db.thuMuc = [];
+      db.thuVien.forEach(function (f) {
+        var pth = f.thuMuc; if (!pth || pth === 'Chưa phân thư mục' || seen[pth]) return; seen[pth] = 1; n++;
+        var hp = db.hocPhan.filter(function (h) { return h.ten === pth; })[0];
+        var nut = hp && db.chuongTrinh.filter(function (c) { return (c.hocPhan || []).indexOf(hp.id) >= 0; })[0], goc = nut;
+        while (goc && goc.cha) goc = db.chuongTrinh.filter(function (c) { return c.id === goc.cha; })[0];
+        db.thuMuc.push({ id: 'tm' + n, duongDan: pth, donVi: hp ? hp.khoa : null, chuongTrinh: goc ? goc.id : null, moTa: hp ? 'Học liệu của học phần ' + hp.ma : 'Tài liệu hướng dẫn dùng chung' });
+      });
+      db.cauHinhMedia = { Video: 'https://media.vutm.edu.vn/video', PDF: 'https://media.vutm.edu.vn/tai-lieu', 'Ảnh': 'https://media.vutm.edu.vn/anh', Audio: 'https://media.vutm.edu.vn/am-thanh' };
+    })();
     return db;
   }
 
   /* ---------------- lưu trữ ---------------- */
-  var db;
-  function load() { try { var s = localStorage.getItem(KEY); if (s) { var o = JSON.parse(s); if (o && o.meta && o.meta.version === 13) return o; } } catch (e) { } return null; }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { } }
-  db = load();
-  if (!db) { db = seed(); }
+  var db, full, hidden = {}, phamVi = { all: true, ids: {}, ten: 'Toàn Học viện', donVi: null };
+  /* ----- phạm vi dữ liệu theo đơn vị – phòng ban – khoa -----
+     Quản trị hệ thống, Admin hệ thống hoặc nhóm quyền có phạm vi "Toàn Học viện": thấy toàn bộ.
+     Các tài khoản nhân sự khác: thấy dữ liệu của đơn vị mình và mọi đơn vị trực thuộc. */
+  function phamViCua(t, d) {
+    d = d || full;
+    if (!t || t.loai === 'qt' || t.admin) return { all: true, ids: {}, ten: 'Toàn Học viện', donVi: null, lyDo: t ? (t.admin ? 'Admin hệ thống' : 'Quản trị hệ thống') : '' };
+    var nh = (t.nhom || []).map(function (id) { return (d.nhomQuyen || []).filter(function (n) { return n.id === id; })[0]; }).filter(Boolean);
+    var toan = nh.filter(function (n) { return n.pham === 'toan-bo' || n.pham === 'ky-thi-phan-cong'; })[0];
+    if (toan) return { all: true, ids: {}, ten: 'Toàn Học viện', donVi: null, lyDo: 'Nhóm quyền ' + toan.ten + (toan.pham === 'ky-thi-phan-cong' ? ' · theo ca thi được phân công' : '') };
+    var ids = {}, n = 0, dv = (d.donVi || []).filter(function (x) { return x.id === t.donVi; })[0];
+    if (dv) (function walk(id) { if (ids[id]) return; ids[id] = 1; n++; d.donVi.forEach(function (x) { if (x.cha === id) walk(x.id); }); })(dv.id);
+    return { all: false, ids: ids, donVi: dv ? dv.id : null, ten: dv ? dv.ten + (n > 1 ? ' và ' + (n - 1) + ' đơn vị trực thuộc' : '') : 'Chưa gắn đơn vị', lyDo: dv ? 'Theo đơn vị của tài khoản' : 'Tài khoản chưa gắn đơn vị nên chưa xem được dữ liệu' };
+  }
+  /* thư mục quản lý một đường dẫn: thư mục trùng đường dẫn, nếu không có thì lấy thư mục cha gần nhất */
+  function thuMucCua(path, list) {
+    list = list || (db && db.thuMuc) || []; if (!path || path === 'Chưa phân thư mục') return null;
+    var parts = String(path).split('/');
+    while (parts.length) { var pth = parts.join('/'), m = list.filter(function (x) { return x.duongDan === pth; })[0]; if (m) return m; parts.pop(); }
+    return null;
+  }
+  var SCOPED = ['donVi', 'lop', 'hocPhan', 'chuongTrinh', 'ghiDanh', 'dangKy', 'thanhToan', 'buoiHoc', 'kyThi', 'hoiDap', 'khaoSat', 'baiTap', 'thongBao', 'nganHang', 'cauHoi', 'deThi', 'baiLam', 'phienThi', 'baiNop', 'thuVien', 'thuMuc'];
+  function dungView() {
+    var t = (full.taiKhoan || []).filter(function (x) { return x.ten === full.meta.user.ten; })[0];
+    phamVi = phamViCua(t, full); hidden = {};
+    if (/\/cong-hoc-vien\//.test(location.pathname)) phamVi = { all: true, ids: {}, ten: 'Toàn Học viện', donVi: null };
+    if (phamVi.all) { db = full; return; }
+    var ok = function (id) { return !!phamVi.ids[id]; }, set = function (a) { var m = {}; a.forEach(function (x) { m[x.id] = 1; }); return m; };
+    var v = {};
+    v.donVi = full.donVi.filter(function (x) { return ok(x.id); });
+    v.lop = full.lop.filter(function (l) { return ok(l.khoa); }); var L = set(v.lop);
+    v.hocPhan = full.hocPhan.filter(function (h) { return ok(h.khoa) || v.lop.some(function (l) { return l.hocPhan === h.id; }); }); var H = set(v.hocPhan);
+    var C = {}, ct = full.chuongTrinh, con = function (id) { return ct.filter(function (c) { return c.cha === id; }); };
+    (function mark(list) { list.forEach(function (c) { var kids = con(c.id); mark(kids); var la = c.loai === 'hoc-phan' || (!kids.length && c.cha); if (la && (c.hocPhan || []).length) { if (c.hocPhan.some(function (h) { return H[h]; })) C[c.id] = 1; } else if (ok(c.khoa) || kids.some(function (k) { return C[k.id]; })) C[c.id] = 1; }); })(ct.filter(function (c) { return !c.cha; }));
+    v.lop.forEach(function (l) { var x = l.chuongTrinh; while (x && !C[x]) { C[x] = 1; var o = ct.filter(function (c) { return c.id === x; })[0]; x = o && o.cha; } });
+    v.chuongTrinh = ct.filter(function (c) { return C[c.id]; });
+    var theoLop = function (k, f) { v[k] = (full[k] || []).filter(function (x) { var l = x[f || 'lop']; return !l || (Array.isArray(l) ? l.some(function (i) { return L[i]; }) : L[l]); }); };
+    ['ghiDanh', 'dangKy', 'thanhToan', 'buoiHoc', 'kyThi', 'hoiDap', 'khaoSat', 'thongBao'].forEach(function (k) { theoLop(k); });
+    v.baiTap = (full.baiTap || []).filter(function (b) { return b.lop ? L[b.lop] : (!b.hocPhan || H[b.hocPhan]); });
+    v.nganHang = full.nganHang.filter(function (n) { return !n.hocPhan || H[n.hocPhan]; }); var N = set(v.nganHang);
+    v.cauHoi = full.cauHoi.filter(function (q) { return N[q.nh]; });
+    v.deThi = full.deThi.filter(function (x) { return N[x.nh]; });
+    var K = set(v.kyThi), B = set(v.baiTap);
+    v.baiLam = full.baiLam.filter(function (x) { return K[x.ky]; });
+    v.phienThi = (full.phienThi || []).filter(function (x) { return K[x.ky]; });
+    v.baiNop = (full.baiNop || []).filter(function (x) { return B[x.bt]; });
+    v.thuMuc = (full.thuMuc || []).filter(function (m) { return !m.donVi || ok(m.donVi); });
+    v.thuVien = full.thuVien.filter(function (f) { var m = thuMucCua(f.thuMuc, full.thuMuc); return !m || !m.donVi || ok(m.donVi) || f.nguoiTai === full.meta.user.ten; });
+    db = {}; Object.keys(full).forEach(function (k) { db[k] = full[k]; });
+    SCOPED.forEach(function (k) { if (!full[k]) return; var keep = set(v[k]); hidden[k] = full[k].filter(function (x) { return !keep[x.id]; }); db[k] = v[k]; });
+  }
+  function load() { try { var s = localStorage.getItem(KEY); if (s) { var o = JSON.parse(s); if (o && o.meta && o.meta.version === 22) return o; } } catch (e) { } return null; }
+  function save() {
+    if (db !== full) Object.keys(db).forEach(function (k) { full[k] = hidden[k] ? hidden[k].concat(db[k]) : db[k]; });
+    var js = JSON.stringify(full);
+    try { localStorage.setItem(KEY, js); luuLoi = false; }
+    catch (e) { donKhoCu(); try { localStorage.setItem(KEY, js); luuLoi = false; } catch (e2) { luuLoi = true; setTimeout(function () { try { toast('Trình duyệt hết dung lượng lưu trữ nên thay đổi chưa được lưu. Xóa dữ liệu trang của trình duyệt rồi tải lại.', 'bad'); } catch (x) { } }, 0); } }
+  }
+  /* dọn kho dữ liệu của các phiên bản demo cũ để không chiếm hết dung lượng localStorage */
+  var luuLoi = false;
+  function donKhoCu() { try { var bo = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/^egoLmsDemo\.db\.v\d+$/.test(k) && k !== KEY) bo.push(k); } bo.forEach(function (k) { localStorage.removeItem(k); }); } catch (e) { } }
+  donKhoCu();
+  full = load();
+  if (!full) { full = seed(); }
+  db = full;
   var dbCa = dongBoCaMoPhong(), dbBuoi = dongBoBuoi();
   if (dbCa || dbBuoi || !load()) save();
-  function reset() { db = seed(); dongBoCaMoPhong(); dongBoBuoi(); save(); LMS.db = db; }
+  dungView();
+  function reset() { full = seed(); db = full; dongBoCaMoPhong(); dongBoBuoi(); save(); dungView(); LMS.db = db; LMS.phamVi = phamVi; }
 
   /* ---------------- truy vấn ---------------- */
   function byId(coll, id) { var a = db[coll] || []; for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
   function nextId(p) { return p + Date.now().toString(36) + Math.floor(Math.random() * 1000); }
   function name(coll, id, key) { var o = byId(coll, id); return o ? o[key || 'ten'] || o.hoTen : '—'; }
-  function donViTen(id) { return name('donVi', id); }
+  function donViTen(id) { var o = (full.donVi || []).filter(function (x) { return x.id === id; })[0]; return o ? o.ten : '—'; }
   function hocPhanOfLop(lop) { return byId('hocPhan', lop.hocPhan); }
   function ghiDanhLop(lopId, all) { return db.ghiDanh.filter(function (g) { return g.lop === lopId && (all || g.trangThai === 'dang-hoc' || g.trangThai === 'hoan-thanh'); }); }
   function soHV(lopId) { return db.ghiDanh.filter(function (g) { return g.lop === lopId && g.trangThai !== 'thoi-hoc'; }).length; }
@@ -569,6 +679,7 @@
     var x = bai[i % bai.length], t = typeof x === 'string' ? x : x.ten;
     return i < bai.length ? t : 'Thực hành, ôn tập: ' + t.replace(/^Bài \d+\s*[–-]\s*/, '');
   }
+  function ctGoc(id) { var c = byId('chuongTrinh', id), n = 0; while (c && c.cha && n++ < 20) c = byId('chuongTrinh', c.cha); return c; }
   function ganChuDe(lopId) {
     /* chủ đề các buổi theo thứ tự bài giảng của học phần (dùng khi chèn buổi mô phỏng vào lịch có sẵn) */
     var hp = hocPhanOfLop(byId('lop', lopId)); if (!hp || !hp.bai.length) return;
@@ -631,12 +742,33 @@
   }
   var CC_CANH_BAO = 80, CC_NGUY_CO = 70;
   function coDiemDanh(lop) { return !!lop && lop.hinhThuc === 'truc-tuyen-gv' && (lop.giangVien || []).length > 0; }
+  /* ---------- nhịp tự học ---------- */
+  function cfgNhip() { if (!db.cauHinhNhip) db.cauHinhNhip = { gianDoan: 7, ngung: 14, deu: 3, nhacTuDong: true }; return db.cauHinhNhip; }
+  var NHIP = { deu: ['Học đều', 'ok'], thua: ['Học thưa', ''], 'gian-doan': ['Gián đoạn', 'warn'], ngung: ['Ngưng học', 'bad'], chua: ['Chưa bắt đầu', 'bad'], xong: ['Đã học xong', 'navy'] };
+  function nhipHoc(lopId, hvId) {
+    var lop = byId('lop', lopId); if (!lop) return null;
+    var t = (db.tienDo[lopId] || {})[hvId] || {}, src = ((db.hoatDong || {})[lopId] || {})[hvId] || {}, m = {}, k;
+    for (k in src) m[k] = src[k];
+    if (t.lastAt) { k = String(t.lastAt).slice(0, 10); if (!m[k]) m[k] = 30; }
+    var cf = cfgNhip(), bd = parse(lop.batDau), moc = parse(iso(TODAY)), kt = parse(lop.ketThuc); if (moc > kt) moc = kt;
+    if (moc < bd) return null;
+    var days = Object.keys(m).filter(function (d) { return parse(d) <= moc; }).sort();
+    var o = { ngay: m, soNgay: days.length, lanCuoi: days.length ? days[days.length - 1] : null, n7: 0, n14: 0, n28: 0, phut7: 0, phutTong: 0, kcTB: null, kcMax: null };
+    o.nghi = o.lanCuoi ? Math.max(0, Math.round((moc - parse(o.lanCuoi)) / DAY)) : null;
+    var tuan = {}, gaps = [];
+    days.forEach(function (d, i) { var ago = Math.round((moc - parse(d)) / DAY); if (ago < 7) { o.n7++; o.phut7 += m[d]; } if (ago < 14) o.n14++; if (ago < 28) o.n28++; o.phutTong += m[d]; tuan[Math.floor(Math.max(0, (parse(d) - bd) / DAY) / 7)] = 1; if (i) gaps.push(Math.round((parse(d) - parse(days[i - 1])) / DAY)); });
+    if (gaps.length) { o.kcTB = Math.round(gaps.reduce(function (a, b) { return a + b; }, 0) / gaps.length * 10) / 10; o.kcMax = Math.max.apply(null, gaps.concat(o.nghi || 0)); } else if (o.nghi != null) o.kcMax = o.nghi;
+    o.tuanTong = Math.max(1, Math.floor((moc - bd) / DAY / 7) + 1); o.tuanCo = Object.keys(tuan).length; o.pctTuan = Math.round(o.tuanCo / o.tuanTong * 100);
+    o.tuanNghi = 0; for (var w = o.tuanTong - 1; w >= 0 && !tuan[w]; w--) o.tuanNghi++;
+    var hp = hocPhanOfLop(lop), tot = hp ? hp.bai.length : 0;
+    var key = tot && (t.done || 0) >= tot ? 'xong' : !o.lanCuoi ? 'chua' : lop.trangThai === 'ket-thuc' ? (o.pctTuan >= 60 ? 'deu' : 'thua') : o.nghi >= cf.ngung ? 'ngung' : o.nghi >= cf.gianDoan ? 'gian-doan' : o.n14 >= cf.deu * 2 ? 'deu' : 'thua';
+    o.nhom = { key: key, label: NHIP[key][0], tone: NHIP[key][1] };
+    return o;
+  }
+  /* chuyên cần tự học = tỷ lệ số tuần có vào học trên số tuần đã qua của lớp */
   function chuyenCanHV(lopId, hvId) {
-    if (!coDiemDanh(byId('lop', lopId))) return null;
-    var bs = buoiCuaLop(lopId).filter(function (b) { return !b.huy && b.diemDanh && b.diemDanh[hvId]; });
-    if (!bs.length) return null;
-    var co = bs.filter(function (b) { return b.diemDanh[hvId] === 'co'; }).length, phep = bs.filter(function (b) { return b.diemDanh[hvId] === 'phep'; }).length;
-    return { co: co, phep: phep, vang: bs.length - co - phep, tong: bs.length, pct: Math.round(co / bs.length * 100), vangLienTiep: (function () { var c = 0; for (var i = bs.length - 1; i >= 0; i--) { if (bs[i].diemDanh[hvId] === 'vang') c++; else break; } return c; })() };
+    var n = nhipHoc(lopId, hvId); if (!n) return null;
+    return { co: n.tuanCo, phep: 0, vang: n.tuanTong - n.tuanCo, tong: n.tuanTong, pct: n.pctTuan, vangLienTiep: n.tuanNghi };
   }
   function tienDoHV(lopId, hvId) {
     var lop = byId('lop', lopId); var hp = hocPhanOfLop(lop); var t = (db.tienDo[lopId] || {})[hvId];
@@ -706,19 +838,20 @@
     /* chỉ tính học viên còn theo học (đang học, hoàn thành, bảo lưu); học viên thôi học không kéo tỷ lệ của lớp */
     var tinh = {}; db.ghiDanh.forEach(function (g) { if (g.lop === lopId && g.trangThai !== 'thoi-hoc' && g.trangThai !== 'cho-khai-giang') tinh[g.hv] = 1; });
     var co = 0, phep = 0, vang = 0, tong = 0; ddDone.forEach(function (b) { Object.keys(b.diemDanh).forEach(function (k) { if (!tinh[k]) return; tong++; var v = b.diemDanh[k]; if (v === 'co') co++; else if (v === 'phep') phep++; else vang++; }); });
-    var duoiNguong = 0; if (apDung) Object.keys(tinh).forEach(function (h) { var c = chuyenCanHV(lopId, h); if (c && c.pct < CC_CANH_BAO) duoiNguong++; });
+    var duoiNguong = 0, ccSum = 0, ccN = 0, nhip = { deu: 0, thua: 0, 'gian-doan': 0, ngung: 0, chua: 0, xong: 0 }, phut7 = 0;
+    gds.forEach(function (g) { if (g.trangThai === 'bao-luu') return; var n = nhipHoc(lopId, g.hv); if (!n) return; nhip[n.nhom.key]++; phut7 += n.phut7; ccSum += n.pctTuan; ccN++; if (n.pctTuan < CC_CANH_BAO) duoiNguong++; });
     var tdSum = 0; gds.forEach(function (g) { tdSum += tienDoHV(lopId, g.hv).pct; });
     var coDiem = 0, dat = 0; gds.forEach(function (g) { var d = diemTongKet(lop, g.hv); if (d != null) { coDiem++; if (d >= lop.diemDat) dat++; } });
-    return { lop: lop, hp: hp, soHV: soHV(lopId), dangHoc: gds.length, soBai: hp ? hp.bai.length : 0, buoiTong: bs.length, buoiDaDay: past.length, buoiDaChot: ddDone.length, buoiChotXN: daChot.length, buoiChoXN: ddDone.length - daChot.length, buoiChuaDD: past.length - ddDone.length, apDungDD: apDung, luotDD: tong, coMat: co, vangPhep: phep, vangKhongPhep: vang, hvDuoiNguong: duoiNguong, chuyenCan: apDung && tong ? Math.round(co / tong * 100) : null, tienDo: gds.length ? Math.round(tdSum / gds.length) : null, keHoach: keHoachPct(lop), coDiem: coDiem, dat: dat };
+    return { lop: lop, hp: hp, soHV: soHV(lopId), dangHoc: gds.length, soBai: hp ? hp.bai.length : 0, buoiTong: 0, buoiDaDay: 0, buoiDaChot: 0, buoiChotXN: 0, buoiChoXN: 0, buoiChuaDD: 0, apDungDD: true, luotDD: ccN, coMat: 0, vangPhep: 0, vangKhongPhep: 0, hvDuoiNguong: duoiNguong, chuyenCan: ccN ? Math.round(ccSum / ccN) : null, nhip: nhip, nhipN: ccN, phut7TB: ccN ? Math.round(phut7 / ccN) : 0, tienDo: gds.length ? Math.round(tdSum / gds.length) : null, keHoach: keHoachPct(lop), coDiem: coDiem, dat: dat };
   }
   function riskOf(lopId, hvId) {
     var lop = byId('lop', lopId); if (lop.trangThai !== 'dang-hoc') return null;
     var reasons = [], score = 0;
     var cc = chuyenCanHV(lopId, hvId); var td = tienDoHV(lopId, hvId); var kh = keHoachPct(lop);
-    if (cc && cc.vangLienTiep >= 2) { score += 35; reasons.push('Vắng ' + cc.vangLienTiep + ' buổi liên tiếp'); }
-    if (cc && cc.pct < CC_CANH_BAO) { score += 25; reasons.push('Chuyên cần ' + cc.pct + '%'); }
+    if (cc && cc.vangLienTiep >= 2) { score += 35; reasons.push('Không vào học ' + cc.vangLienTiep + ' tuần liên tiếp'); }
+    if (cc && cc.pct < CC_CANH_BAO) { score += 25; reasons.push('Chỉ học ' + cc.co + '/' + cc.tong + ' tuần'); }
     if (kh >= 15 && td.pct < kh * .5) { score += 30; reasons.push('Tiến độ ' + td.pct + '% (kế hoạch ' + kh + '%)'); }
-    if (td.lastAt && daysBetween(td.lastAt, TODAY) >= 7) { score += 15; reasons.push('Không học ' + daysBetween(td.lastAt, TODAY) + ' ngày'); }
+    if (!(cc && cc.vangLienTiep >= 2) && td.lastAt && daysBetween(td.lastAt, TODAY) >= 7) { score += 15; reasons.push('Không học ' + daysBetween(td.lastAt, TODAY) + ' ngày'); }
     var qs = Object.keys(td.quiz).map(function (k) { return td.quiz[k]; }); if (qs.length >= 2) { var avg = qs.reduce(function (a, b) { return a + b; }, 0) / qs.length; if (avg < 5) { score += 20; reasons.push('Điểm quiz TB ' + avg.toFixed(1)); } }
     return { score: Math.min(100, score), reasons: reasons, muc: score >= 50 ? 'cao' : score >= 25 ? 'tb' : 'thap' };
   }
@@ -885,7 +1018,7 @@
   /* ---------------- đồng bộ giữa các màn hình ---------------- */
   var listeners = [];
   function notify() { try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'lms-data-changed' }, '*'); } catch (e) { } }
-  window.addEventListener('storage', function (e) { if (e.key === KEY) { var n = load(); if (n) { db = n; LMS.db = n; listeners.forEach(function (f) { f(); }); } } });
+  window.addEventListener('storage', function (e) { if (e.key === KEY) { var n = load(); if (n) { full = n; dungView(); LMS.db = db; LMS.phamVi = phamVi; listeners.forEach(function (f) { f(); }); } } });
   function onChange(fn) { listeners.push(fn); }
 
   /* điều hướng giữa màn hình (trong khung index hoặc mở trực tiếp) */
@@ -945,8 +1078,9 @@
     var m = document.createElement('div'); m.className = 'menu';
     items.forEach(function (it) { if (it === '-') { m.appendChild(document.createElement('hr')); return; } if (!it) return; var b = document.createElement('button'); b.textContent = it.label; if (it.danger) b.className = 'danger'; if (it.disabled) { b.disabled = true; b.style.opacity = .45; b.title = it.title || ''; } b.onclick = function () { m.remove(); openMenu = null; it.onClick(); }; m.appendChild(b); });
     document.body.appendChild(m);
-    var r = anchor.getBoundingClientRect(); var left = Math.min(window.innerWidth - m.offsetWidth - 8, r.right - m.offsetWidth + window.scrollX); var top = r.bottom + 4 + window.scrollY;
-    if (r.bottom + m.offsetHeight > window.innerHeight) top = r.top - m.offsetHeight - 4 + window.scrollY;
+    var z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1, q = anchor.getBoundingClientRect(), r = { top: q.top / z, bottom: q.bottom / z, right: q.right / z }, vw = window.innerWidth / z, vh = window.innerHeight / z, sx = window.scrollX / z, sy = window.scrollY / z;
+    var left = Math.min(vw - m.offsetWidth - 8, r.right - m.offsetWidth) + sx; var top = r.bottom + 4 + sy;
+    if (r.bottom + m.offsetHeight > vh) top = r.top - m.offsetHeight - 4 + sy;
     m.style.left = Math.max(8, left) + 'px'; m.style.top = top + 'px';
     openMenu = m;
     setTimeout(function () { document.addEventListener('mousedown', function h(e) { if (!m.contains(e.target)) { m.remove(); if (openMenu === m) openMenu = null; document.removeEventListener('mousedown', h); } }); }, 0);
@@ -1038,11 +1172,21 @@
   try { var th = localStorage.getItem('egoLmsDemo.theme'); if (th) document.documentElement.setAttribute('data-theme', th); } catch (e) { }
   window.addEventListener('message', function (e) { if (e.data && e.data.type === 'lms-theme') { if (e.data.theme) document.documentElement.setAttribute('data-theme', e.data.theme); else document.documentElement.removeAttribute('data-theme'); } if (e.data && e.data.type === 'lms-reload') location.reload(); });
 
+  function thanhPhamVi() {
+    if (phamVi.all || !document.body || document.getElementById('pvBar')) return;
+    var pg = document.querySelector('.page'); if (!pg) return;
+    var b = document.createElement('div'); b.id = 'pvBar'; b.className = 'pv-bar';
+    b.innerHTML = '<b>Phạm vi dữ liệu:</b> <span></span>'; b.querySelector('span').textContent = phamVi.ten + ' · chỉ hiển thị dữ liệu thuộc đơn vị này';
+    pg.parentNode.insertBefore(b, pg);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', thanhPhamVi); else setTimeout(thanhPhamVi, 0);
+
   var LMS = window.LMS = {
-    db: db, save: save, reset: reset, commit: commit, log: log, onChange: onChange, go: go, param: param,
+    db: db, thuMucCua: function (path) { return thuMucCua(path, full.thuMuc); }, phamVi: phamVi, phamViCua: function (t) { return phamViCua(t, full); }, dangNhap: function (ten) { var t = (full.taiKhoan || []).filter(function (x) { return x.ten === ten && x.loai !== 'hv' && x.trangThai !== 'ngung'; })[0]; if (!t) return false; full.meta.user = { ten: t.ten, hoTen: t.hoTen, email: t.email }; if (db !== full) db.meta = full.meta; save(); return !luuLoi; }, taiKhoanDangNhap: function () { return (full.taiKhoan || []).filter(function (x) { return x.loai !== 'hv'; }); },
+    save: save, reset: reset, commit: commit, log: log, onChange: onChange, go: go, param: param,
     TODAY: TODAY, iso: iso, parse: parse, addDays: addDays, fmtDate: fmtDate, fmtDT: fmtDT, daysBetween: daysBetween, THU: THU,
-    byId: byId, nextId: nextId, name: name, donViTen: donViTen, hocPhanOfLop: hocPhanOfLop, ghiDanhLop: ghiDanhLop, soHV: soHV, buoiCuaLop: buoiCuaLop, buoiStatus: buoiStatus, phuongAnCH: phuongAnCH, cfgDD: cfgDD, ddTuDong: ddTuDong, ddAuto: ddAuto, hvBuoi: hvBuoi, buoiMoc: buoiMoc, thoiLuongBuoi: thoiLuongBuoi, hanXacNhan: hanXacNhan, danhSoBuoi: danhSoBuoi, dongBoBuoi: dongBoBuoi, ketThucBuoi: ketThucBuoi, hm2m: hm2m, m2hm: m2hm,
-    chuyenCanHV: chuyenCanHV, tienDoHV: tienDoHV, keHoachPct: keHoachPct, diemCot: diemCot, diemTongKet: diemTongKet, trangThaiThoiGian: trangThaiThoiGian, TT_LOP: TT_LOP,
+    byId: byId, ctGoc: ctGoc, nextId: nextId, name: name, donViTen: donViTen, hocPhanOfLop: hocPhanOfLop, ghiDanhLop: ghiDanhLop, soHV: soHV, buoiCuaLop: buoiCuaLop, buoiStatus: buoiStatus, phuongAnCH: phuongAnCH, cfgDD: cfgDD, ddTuDong: ddTuDong, ddAuto: ddAuto, hvBuoi: hvBuoi, buoiMoc: buoiMoc, thoiLuongBuoi: thoiLuongBuoi, hanXacNhan: hanXacNhan, danhSoBuoi: danhSoBuoi, dongBoBuoi: dongBoBuoi, ketThucBuoi: ketThucBuoi, hm2m: hm2m, m2hm: m2hm,
+    chuyenCanHV: chuyenCanHV, nhipHoc: nhipHoc, cfgNhip: cfgNhip, NHIP: NHIP, tienDoHV: tienDoHV, keHoachPct: keHoachPct, diemCot: diemCot, diemTongKet: diemTongKet, trangThaiThoiGian: trangThaiThoiGian, TT_LOP: TT_LOP,
     lopStats: lopStats, riskOf: riskOf, kyThiStatus: kyThiStatus, fileUsage: fileUsage, walkKhoi: walkKhoi, baiFiles: baiFiles, syncBai: syncBai, tieuChiBai: tieuChiBai, coDiemDanh: coDiemDanh, KS_MAU: KS_MAU, KS_NX: KS_NX, ksDongBo: ksDongBo, ksTrangThai: ksTrangThai, CC_CANH_BAO: CC_CANH_BAO, CC_NGUY_CO: CC_NGUY_CO, hdDaTraLoi: hdDaTraLoi, hdChoTL: hdChoTL, SK: SK, phienKy: phienKy, thoiLuongKy: thoiLuongKy, conLai: conLai, diemRuiRo: diemRuiRo, suKien: suKien, taoPhien: function (ky) { taoPhien(ky, Date.now()); }, refsOf: refsOf,
     btDoiTuong: btDoiTuong, nopCuaHV: nopCuaHV, btHanCuoi: btHanCuoi, btHetHan: btHetHan, diemBaiTap: diemBaiTap, btStatus: btStatus, btStats: btStats,
     ui: { esc: esc, norm: norm, hl: hl, money: money, badge: badge, prog: prog, person: person, initials: initials, opts: opts, toast: toast, modal: modal, confirm: confirmBox, blocked: blocked, menu: menu, table: table, barChart: barChart, lineChart: lineChart, hbars: hbars, formVals: formVals, fieldErr: fieldErr }

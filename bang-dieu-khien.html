@@ -10,7 +10,7 @@
 .dash-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .dash-grid .span2{grid-column:span 2}
 @media (max-width:1100px){.dash-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-grid .span2{grid-column:span 2}}
-@media (max-width:700px){.dash-grid{grid-template-columns:1fr}.dash-grid .span2{grid-column:auto}}
+@media (max-width:700px){.dash-grid{grid-template-columns:minmax(0,1fr)}.dash-grid .span2{grid-column:auto}}
 .funnel{display:flex;flex-direction:column;gap:8px}
 .funnel .st{display:grid;grid-template-columns:130px 1fr 52px;gap:10px;align-items:center;font-size:13px}
 .funnel .st .fb{height:22px;border-radius:5px;background:var(--ems-chart-1)}
@@ -59,10 +59,10 @@ function render(){
   var tdS=0, khS=0, nL=0; var classRows = dang.map(function(l){ var s=LMS.lopStats(l.id); if(s.tienDo!=null){ tdS+=s.tienDo; khS+=s.keHoach; nL++; } return s; });
   var tdTB = nL ? Math.round(tdS/nL) : null, khTB = nL ? Math.round(khS/nL) : null;
 
-  /* chuyên cần 4 tuần gần nhất */
-  var from = LMS.addDays(T,-28), co=0, tong=0, conHoc={}; db.ghiDanh.forEach(function(g){ if(g.trangThai!=='thoi-hoc') conHoc[g.lop+':'+g.hv]=1; });
-  db.buoiHoc.forEach(function(b){ var l=LMS.byId('lop',b.lop); if(!l||!inScope(l)||!b.diemDanh) return; var d=LMS.parse(b.ngay); if(d<from||d>=T) return; Object.keys(b.diemDanh).forEach(function(k){ if(!conHoc[b.lop+':'+k]) return; tong++; if(b.diemDanh[k]==='co') co++; }); });
-  var cc = pct(co,tong);
+  /* nhịp tự học của học viên các lớp đang học */
+  var conHoc={}, nhip={deu:0,thua:0,'gian-doan':0,ngung:0,chua:0,xong:0}, nNhip=0;
+  db.ghiDanh.forEach(function(g){ if(g.trangThai!=='dang-hoc') return; var l=LMS.byId('lop',g.lop); if(!l||!inScope(l)||l.trangThai!=='dang-hoc') return; conHoc[g.lop+':'+g.hv]=1; var n=LMS.nhipHoc(g.lop,g.hv); if(n){ nhip[n.nhom.key]++; nNhip++; } });
+  var co=nhip.deu+nhip.xong, tong=nNhip, cc = pct(co,tong), canNhac=nhip.ngung+nhip['gian-doan']+nhip.chua;
 
   /* tỷ lệ đạt (có điểm tổng kết) */
   var coDiem=0, dat=0, diems=[];
@@ -80,17 +80,17 @@ function render(){
   var hl = ksW ? (ksS/ksW).toFixed(1).replace('.',',') : null;
 
   var khoaOpts = db.donVi.filter(function(d){ return d.laKhoa; });
-  var ctOpts = db.chuongTrinh.filter(function(c){ return !db.chuongTrinh.some(function(x){ return x.id===c.cha && false; }); });
+  var ctOpts = db.chuongTrinh.filter(function(c){ return !c.cha; });
 
   var h = '';
-  h += '<div class="page-head"><div><h1>Bảng điều khiển đào tạo</h1><div class="sub">Số liệu tính trực tiếp từ dữ liệu lớp, buổi học, điểm và thanh toán · cập nhật '+LMS.fmtDT(now)+'</div></div>'+
+  h += '<div class="page-head"><div><h1>Bảng điều khiển đào tạo</h1><div class="sub">Số liệu tính trực tiếp từ dữ liệu lớp, nhật ký tự học, điểm và thanh toán · cập nhật '+LMS.fmtDT(now)+'</div></div>'+
        '<div class="actions filters"><select class="sel" id="fKhoa" aria-label="Khoa">'+U.opts(khoaOpts,'id','ten',st.khoa,'Tất cả khoa')+'</select><select class="sel" id="fCt" aria-label="Chương trình">'+U.opts(ctOpts,'id',function(c){ return (c.cha?'— ':'')+c.ten; },st.ct,'Tất cả chương trình')+'</select></div></div>';
 
   var kpis = [
     { l:'Học viên đang học', v: soHV.toLocaleString('vi-VN'), s: dang.length+' lớp đang học', go:'hoc-vien.html' },
     { l:'Lớp đang mở', v: dang.length+sap.length, s: sap30.length ? sap30.length+' lớp khai giảng trong 30 ngày' : 'Không có lớp sắp khai giảng', go:'lop-hoc.html' },
     { l:'Tiến độ học tập TB', v: tdTB==null?'—':tdTB+'%', s: tdTB==null?'Chưa có dữ liệu':'Kế hoạch theo thời gian '+khTB+'%', tone: tdTB!=null && tdTB < khTB-10 ? 'warn':'', go:'giam-sat-lop.html' },
-    { l:'Chuyên cần 4 tuần', v: cc==null?'—':cc+'%', s: cc==null?'Chưa có buổi điểm danh':co+'/'+tong+' lượt có mặt', tone: cc!=null&&cc<80?'warn':'', go:'buoi-hoc.html' },
+    { l:'Học viên học đều', v: cc==null?'—':cc+'%', s: cc==null?'Chưa có dữ liệu học':co+'/'+tong+' lượt ghi danh · '+canNhac+' cần nhắc', tone: cc!=null&&cc<50?'warn':'', go:'theo-doi-hoc-tap.html' },
     { l:'Tỷ lệ đạt', v: coDiem? pct(dat,coDiem)+'%':'—', s: coDiem? dat+'/'+coDiem+' học viên có điểm tổng kết':'Chưa có điểm tổng kết', go:'bao-cao-dao-tao.html' },
     { l:'Học viên nguy cơ cao', v: risk.length, s: soHV? (Math.round(risk.length/soHV*1000)/10).toString().replace('.',',')+'% học viên đang học':'—', tone: risk.length? 'bad':'ok', go:'nhom-theo-doi.html' },
     { l:'Học phí đã thu', v: phai? U.money(da).replace(' ₫',''):'—', s: phai? pct(da,phai)+'% của '+U.money(phai):'Chưa có khoản phải thu', tone: phai && pct(da,phai)<80 ? 'warn':'', go:'thu-hoc-phi.html' },
@@ -102,11 +102,11 @@ function render(){
   h += '<div class="panel"><div class="panel-head"><h2>Tiến độ theo khoa</h2><span class="muted small right">so với kế hoạch</span></div><div class="panel-body" id="cKhoa"></div></div>';
   h += '<div class="panel"><div class="panel-head"><h2>Tiến độ lớp so với kế hoạch</h2><span class="muted small right">vạch = kế hoạch</span></div><div class="panel-body" id="cLop"></div></div>';
   h += '<div class="panel"><div class="panel-head"><h2>Phễu học tập</h2><span class="muted small right">lớp đang học</span></div><div class="panel-body" id="cFunnel"></div></div>';
-  h += '<div class="panel"><div class="panel-head"><h2>Chuyên cần theo tuần</h2></div><div class="panel-body" id="cCC"></div></div>';
+  h += '<div class="panel"><div class="panel-head"><h2>Tỷ lệ học viên vào học theo tuần</h2></div><div class="panel-body" id="cCC"></div></div>';
   h += '<div class="panel"><div class="panel-head"><h2>Phổ điểm tổng kết</h2><span class="muted small right">thang 10</span></div><div class="panel-body" id="cDiem"></div></div>';
   h += '<div class="panel"><div class="panel-head"><h2>Việc cần xử lý</h2></div><div class="panel-body" style="padding-block:4px" id="cTodo"></div></div>';
   h += '<div class="panel span2"><div class="panel-head"><h2>Học viên nguy cơ bỏ học</h2><button class="btn sm right" data-go="nhom-theo-doi.html">Xem tất cả</button></div><div id="cRisk"></div></div>';
-  h += '<div class="panel"><div class="panel-head"><h2>Lịch 14 ngày tới</h2><button class="btn sm right" data-go="buoi-hoc.html">Lịch buổi học</button></div><div class="panel-body" id="cLich"></div></div>';
+  h += '<div class="panel"><div class="panel-head"><h2>Mốc 14 ngày tới</h2><button class="btn sm right" data-go="theo-doi-hoc-tap.html">Theo dõi học tập</button></div><div class="panel-body" id="cLich"></div></div>';
   h += '</div>';
   document.getElementById('app').innerHTML = h;
 
@@ -125,12 +125,12 @@ function render(){
   var fl = ['Ghi danh','Bắt đầu học','Hoàn thành ≥ 50%','Hoàn thành 100%','Quiz TB ≥ 5 (≥50%)'];
   document.getElementById('cFunnel').innerHTML = f[0] ? '<div class="funnel">'+f.map(function(v,i){ return '<div class="st"><span>'+fl[i]+'</span><div class="bar" style="height:22px;background:transparent"><div class="fb" style="width:'+Math.max(2,Math.round(v/f[0]*100))+'%"></div></div><b>'+v+'</b></div>'; }).join('')+'</div><div class="muted small" style="margin-top:8px">Tỷ lệ chuyển từ ghi danh sang hoàn thành ≥ 50%: '+pct(f[2],f[0])+'%</div>' : '<div class="empty">Chưa có dữ liệu</div>';
 
-  /* chuyên cần theo tuần (8 tuần) */
+  /* tỷ lệ học viên có vào học theo tuần (8 tuần) */
   var labels=[], vals=[];
-  for(var w=7; w>=0; w--){ var a=LMS.addDays(T,-7*(w+1)), b=LMS.addDays(T,-7*w), c1=0, t1=0;
-    db.buoiHoc.forEach(function(x){ var l=LMS.byId('lop',x.lop); if(!l||!inScope(l)||!x.diemDanh) return; var d=LMS.parse(x.ngay); if(d<a||d>=b) return; Object.keys(x.diemDanh).forEach(function(k){ if(!conHoc[x.lop+':'+k]) return; t1++; if(x.diemDanh[k]==='co') c1++; }); });
+  for(var w=7; w>=0; w--){ var a=LMS.addDays(T,-7*(w+1)+1), b=LMS.addDays(T,-7*w), c1=0, t1=0;
+    Object.keys(conHoc).forEach(function(k){ var x=k.split(':'), l=LMS.byId('lop',x[0]); if(LMS.parse(l.batDau)>b) return; t1++; var m=((db.hoatDong||{})[x[0]]||{})[x[1]]||{}; for(var d=0;d<7;d++){ if(m[LMS.iso(LMS.addDays(a,d))]){ c1++; break; } } });
     labels.push(LMS.fmtDate(a).slice(0,5)); vals.push(t1?Math.round(c1/t1*100):null); }
-  if(vals.some(function(v){return v!=null;})) U.lineChart(document.getElementById('cCC'),{labels:labels,values:vals,unit:'%',min:60,max:100,refLine:LMS.CC_CANH_BAO,refLabel:'ngưỡng '+LMS.CC_CANH_BAO+'%',title:'Chuyên cần theo tuần'}); else document.getElementById('cCC').innerHTML='<div class="empty">Chưa có buổi điểm danh</div>';
+  if(vals.some(function(v){return v!=null;})) U.lineChart(document.getElementById('cCC'),{labels:labels,values:vals,unit:'%',min:40,max:100,refLine:LMS.CC_CANH_BAO,refLabel:'mục tiêu '+LMS.CC_CANH_BAO+'%',title:'Tỷ lệ học viên vào học theo tuần'}); else document.getElementById('cCC').innerHTML='<div class="empty">Chưa có dữ liệu học</div>';
 
   /* phổ điểm */
   if(diems.length){ var bins=['<4','4–5','5–6','6–7','7–8','8–9','9–10'], cnt=[0,0,0,0,0,0,0]; diems.forEach(function(d){ var i = d<4?0:d<5?1:d<6?2:d<7?3:d<8?4:d<9?5:6; cnt[i]++; });
@@ -140,10 +140,8 @@ function render(){
 
   /* việc cần xử lý */
   var todo=[];
-  var chuaDD = db.buoiHoc.filter(function(b){ var l=LMS.byId('lop',b.lop); return l&&inScope(l)&&LMS.buoiStatus(b).key==='chua-dd'; }).length;
-  if(chuaDD) todo.push({tone:'bad',n:chuaDD,t:'buổi học chưa có điểm danh (thiếu nhật ký phòng học)',go:'buoi-hoc.html',p:{trangThai:'chua-dd'}});
-  var choXN = db.buoiHoc.filter(function(b){ var l=LMS.byId('lop',b.lop); return l&&inScope(l)&&LMS.buoiStatus(b).key==='cho-xn'; }).length;
-  if(choXN) todo.push({tone:'warn',n:choXN,t:'buổi học chờ giảng viên xác nhận điểm danh',go:'buoi-hoc.html',p:{trangThai:'cho-xn'}});
+  if(nhip.ngung) todo.push({tone:'bad',n:nhip.ngung,t:'học viên ngưng học từ '+LMS.cfgNhip().ngung+' ngày',go:'theo-doi-hoc-tap.html',p:{nhom:'ngung'}});
+  if(nhip.chua) todo.push({tone:'warn',n:nhip.chua,t:'học viên chưa bắt đầu học',go:'theo-doi-hoc-tap.html',p:{nhom:'chua'}});
   var cham = db.baiLam.filter(function(b){ var k=LMS.byId('kyThi',b.ky); var l=k&&LMS.byId('lop',k.lop); return b.trangThai==='cho-cham' && l && inScope(l); }).length;
   if(cham) todo.push({tone:'warn',n:cham,t:'bài thi chờ chấm',go:'cham-bai.html'});
   var btList=(db.baiTap||[]).filter(function(b){ var l=LMS.byId('lop',b.lop); return l&&inScope(l)&&b.trangThai!=='nhap'; });
@@ -175,7 +173,8 @@ function render(){
 
   /* lịch 14 ngày */
   var ev=[];
-  db.buoiHoc.forEach(function(b){ var l=LMS.byId('lop',b.lop); if(!l||!inScope(l)||b.huy) return; var d=LMS.daysBetween(T,b.ngay); if(d>=0&&d<=14) ev.push({d:b.ngay,t:b.gio,lbl:l.ma+' · '+b.ten,sub:b.hinhThuc+' · '+b.phong,k:'b'}); });
+  (db.baiTap||[]).forEach(function(b){ var l=LMS.byId('lop',b.lop); if(!l||!inScope(l)||b.trangThai!=='da-giao'||!b.hanNop) return; var d=LMS.daysBetween(T,String(b.hanNop).slice(0,10)); if(d>=0&&d<=14) ev.push({d:String(b.hanNop).slice(0,10),t:LMS.fmtDT(b.hanNop).slice(11),lbl:'Hạn nộp '+b.ma+' · '+b.ten,sub:l.ma+' · '+l.ten,k:'b'}); });
+  db.lop.forEach(function(l){ if(!inScope(l)||l.trangThai!=='tuyen-sinh') return; var d=LMS.daysBetween(T,l.batDau); if(d>=0&&d<=14) ev.push({d:l.batDau,t:'',lbl:'Khai giảng '+l.ma,sub:l.ten,k:'b'}); });
   db.kyThi.forEach(function(k){ var l=LMS.byId('lop',k.lop); if(!l||!inScope(l)) return; var d=LMS.daysBetween(T,new Date(k.moLuc)); if(d>=0&&d<=14) ev.push({d:LMS.iso(new Date(k.moLuc)),t:LMS.fmtDT(k.moLuc).slice(11),lbl:k.ten,sub:'Ca thi',k:'k'}); });
   ev.sort(function(a,b){ return (a.d+a.t)<(b.d+b.t)?-1:1; });
   document.getElementById('cLich').innerHTML = ev.length ? '<div class="stack" style="gap:8px">'+ev.slice(0,8).map(function(e){ var dd=LMS.parse(e.d); return '<div class="row" style="flex-wrap:nowrap;align-items:flex-start"><div style="min-width:56px" class="small"><b>'+LMS.THU[dd.getDay()]+'</b> '+LMS.fmtDate(e.d).slice(0,5)+'<div class="muted">'+esc(e.t)+'</div></div><div style="min-width:0">'+(e.k==='k'?U.badge('Thi','warn')+' ':'')+'<span class="t-main">'+esc(e.lbl)+'</span><div class="t-sub">'+esc(e.sub)+'</div></div></div>'; }).join('')+(ev.length>8?'<div class="muted small">… và '+(ev.length-8)+' lịch khác</div>':'')+'</div>' : '<div class="empty">Không có lịch trong 14 ngày tới</div>';

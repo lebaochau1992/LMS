@@ -5,26 +5,50 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="edot.css">
 <style>
-.lib{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start}
+.lib{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:900px){.lib{grid-template-columns:minmax(0,1fr)}}
-.folders{padding:6px}
-.fold{display:flex;align-items:center;gap:6px;width:100%;border:0;background:transparent;padding:7px 8px;border-radius:var(--r-ctl);font:500 13px var(--font);color:var(--ems-text);cursor:pointer;text-align:left}
+.cdn{border:1px solid var(--ems-border);border-radius:8px;background:var(--ems-surface)}
+.cdn summary{padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ems-text-2)}
+.cdn .in{padding:4px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.side-h{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 4px;font-size:12px;color:var(--ems-muted);font-weight:600}
+.side-h button{border:0;background:transparent;color:var(--ems-navy);font:600 12px var(--font);cursor:pointer;padding:0}
+.side-h button:hover{text-decoration:underline}
+.folders{padding:4px 6px 8px}
+.fold{display:flex;align-items:center;gap:6px;width:100%;border:0;background:transparent;padding:6px 6px 6px 8px;border-radius:var(--r-ctl);font:500 13px var(--font);color:var(--ems-text);cursor:pointer;text-align:left}
 .fold:hover{background:var(--ems-surface-2)}
 .fold.on{background:var(--ems-navy-soft);color:var(--ems-navy);font-weight:600}
-.fold .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fold .fn{flex:1;min-width:0}
+.fold .fn b{display:block;font-weight:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fold .fn small{display:block;font-size:11px;font-weight:400;color:var(--ems-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fold .cnt{font-size:12px;color:var(--ems-muted);font-variant-numeric:tabular-nums}
 .fold .tw{width:14px;flex:none;color:var(--ems-muted);font-size:10px;text-align:center}
+.fold .ic{flex:none;color:var(--ems-warning)}
+.fold .mo{border:0;background:transparent;color:var(--ems-muted);cursor:pointer;padding:0 4px;border-radius:4px;font-size:14px;line-height:1}
+.fold .mo:hover{background:var(--ems-border);color:var(--ems-text)}
 .fold-sep{border-top:1px solid var(--ems-border);margin:6px 4px}
+.cur{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--ems-border);font-size:13px}
+.cur h2{font-size:14px}
 .bulk{display:flex;gap:8px;align-items:center;padding:10px 16px;background:var(--ems-navy-soft);border-bottom:1px solid var(--ems-navy-line);font-size:13px;flex-wrap:wrap}
-.use-link{border:0;background:transparent;padding:0;font:600 13px var(--font);color:var(--ems-navy);cursor:pointer}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;padding:14px 16px}
+.fc{border:1px solid var(--ems-border);border-radius:10px;overflow:hidden;background:var(--ems-surface);display:flex;flex-direction:column;min-width:0}
+.fc.sel{border-color:var(--ems-navy);box-shadow:0 0 0 3px var(--ems-focus)}
+.fc .th{position:relative;height:84px;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,#3f5fc9,#5a45d6)}
+.fc .th.pdf{background:linear-gradient(135deg,#c2410c,#dc2626)}
+.fc .th.anh{background:linear-gradient(135deg,#047857,#0d9488)}
+.fc .th.audio{background:linear-gradient(135deg,#b45309,#d97706)}
+.fc .th input{position:absolute;left:8px;top:8px;width:16px;height:16px}
+.fc .th .ty{position:absolute;right:8px;top:8px;font-size:11px;font-weight:700;background:rgba(0,0,0,.28);border-radius:4px;padding:1px 6px}
+.fc .bd{padding:9px 11px;display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.fc .nm{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fc .mt{font-size:11px;color:var(--ems-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fc .ac{display:flex;gap:10px;align-items:center;margin-top:auto;padding-top:5px;font-size:12px}
+.fc .ac button{border:0;background:transparent;padding:0;font:600 12px var(--font);color:var(--ems-navy);cursor:pointer}
+.fc .ac button:hover{text-decoration:underline}
+.fc .ac .icon-btn{margin-left:auto;color:var(--ems-muted);padding:0 6px;font-size:15px}
+.use-link{border:0;background:transparent;padding:0;font:600 11px var(--font);color:var(--ems-navy);cursor:pointer}
 .use-link:hover{text-decoration:underline}
-.fname{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pick-list{flex-shrink:0;max-height:300px;overflow-y:auto;border:1px solid var(--ems-border);border-radius:var(--r-ctl)}
-.pick-list label{display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--ems-border);font-size:13px;cursor:pointer}
-.pick-list label:last-child{border-bottom:0}
-.pick-list label:hover{background:var(--ems-surface-2)}
-.pick-list .muted{margin-left:auto;font-size:12px;white-space:nowrap}
 .dup-row{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--ems-border);border-radius:var(--r-ctl)}
+.more{display:flex;justify-content:center;padding:0 16px 16px}
 </style>
 </head><body>
 <div class="page" id="app"></div>
@@ -34,19 +58,34 @@
 (function(){ 'use strict';
 var U = LMS.ui, esc = U.esc;
 var UNF = 'Chưa phân thư mục';
-var LOAI_TONE = { 'Video': 'navy', 'PDF': 'info', 'Ảnh': 'ok', 'Audio': 'warn' };
-var st = { folder: '', q: '', loai: '', unused: false, dup: false, open: {}, sel: [] };
+var LOAI_CLS = { 'Video': '', 'PDF': 'pdf', 'Ảnh': 'anh', 'Audio': 'audio' };
+var ICON = { 'Video': '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="M15 10l6-3v10l-6-3z"/></svg>', 'PDF': '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>', 'Ảnh': '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>', 'Audio': '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>' };
+var FOLDER_IC = '<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+var st = { folder: '', ct: '', q: '', loai: '', sort: 'moi', unused: false, dup: false, open: {}, sel: [], limit: 24 };
 var app = document.getElementById('app');
-var tbl, usageCache = {};
+var usageCache = {};
+var tbl = { clearSel: function(){ st.sel = []; }, render: function(){ renderList(); } };
 
 function files(){ return LMS.db.thuVien; }
+function tms(){ return LMS.db.thuMuc || (LMS.db.thuMuc = []); }
+function me(){ return LMS.db.meta.user.ten; }
 function folderOf(f){ return f.thuMuc && f.thuMuc !== UNF ? f.thuMuc : UNF; }
 function fmtSize(kb){ if (kb == null) return '—'; if (kb >= 1048576) return (kb / 1048576).toFixed(2).replace('.', ',') + ' GB'; if (kb >= 1024) return (kb / 1024).toFixed(1).replace('.', ',') + ' MB'; return kb + ' KB'; }
 function usage(id){ if (!usageCache[id]) usageCache[id] = LMS.fileUsage(id); return usageCache[id]; }
 function hashGroups(){ var g = {}; files().forEach(function(f){ (g[f.hash] = g[f.hash] || []).push(f); }); return g; }
 function isDup(f, groups){ return (groups[f.hash] || []).length > 1; }
-function folderList(){ var s = {}; files().forEach(function(f){ var p = folderOf(f); if (p !== UNF) { var parts = p.split('/'), acc = []; parts.forEach(function(x){ acc.push(x.trim()); s[acc.join('/')] = 1; }); } }); return Object.keys(s).sort(function(a,b){ return a.localeCompare(b, 'vi'); }); }
 function inFolder(f, path){ if (!path) return true; var p = folderOf(f); if (path === UNF) return p === UNF; return p === path || p.indexOf(path + '/') === 0; }
+function ent(path){ return tms().filter(function(m){ return m.duongDan === path; })[0] || null; }
+function chu(path){ return LMS.thuMucCua(path); }
+function tenDV(m){ return m && m.donVi ? LMS.donViTen(m.donVi) : 'Dùng chung toàn Học viện'; }
+function canPath(path){ if (LMS.phamVi.all) return true; if (!path || path === UNF) return true; var m = chu(path); return !!(m && m.donVi && LMS.phamVi.ids[m.donVi]); }
+function canFile(f){ var p = folderOf(f); if (p === UNF) return LMS.phamVi.all || f.nguoiTai === me(); return canPath(p); }
+function ctOfPath(path){ var m = chu(path); return m ? m.chuongTrinh : null; }
+function okCT(path){ return !st.ct || ctOfPath(path) === st.ct; }
+function slug(x){ return U.norm(x).replace(/[^a-z0-9/]+/g, '-').replace(/^-|-$/g, ''); }
+function keyOf(f){ var p = folderOf(f); return (p === UNF ? 'chua-phan-thu-muc' : slug(p)) + '/' + f.ten; }
+function folderList(){ var s = {}; tms().forEach(function(m){ s[m.duongDan] = 1; }); files().forEach(function(f){ var p = folderOf(f); if (p !== UNF) s[p] = 1; }); Object.keys(s).forEach(function(p){ var parts = p.split('/'); while (parts.length > 1) { parts.pop(); s[parts.join('/')] = 1; } }); return Object.keys(s).sort(function(a,b){ return a.localeCompare(b, 'vi'); }); }
+function ctGoc(){ return LMS.db.chuongTrinh.filter(function(c){ return !c.cha; }); }
 function loaiFromFile(file){
   var t = file.type || '', n = file.name.toLowerCase();
   if (/^video\//.test(t) || /\.(mp4|mov|webm|mkv)$/.test(n)) return 'Video';
@@ -55,62 +94,55 @@ function loaiFromFile(file){
   if (t === 'application/pdf' || /\.pdf$/.test(n)) return 'PDF';
   return null;
 }
+function copyText(txt, ok){
+  function fb(){ try { var ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); } catch (e) {} U.toast(ok, 'ok'); }
+  try { if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(function(){ U.toast(ok, 'ok'); }, fb); else fb(); } catch (e) { fb(); }
+}
 
 /* ---------- khung trang ---------- */
 function shell(){
   app.innerHTML =
     '<div class="page-head"><div><h1>Thư viện tài nguyên</h1><div class="sub" id="sub"></div></div>' +
-    '<div class="actions"><button class="btn" id="bNewFolder">Tạo thư mục</button><button class="btn primary" id="bUp">Tải tệp lên</button></div></div>' +
+    '<div class="actions"><button class="btn primary" id="bUp"></button></div></div>' +
     '<div class="kpis" id="kpis"></div>' +
-    '<div class="lib"><div class="panel"><div class="panel-head"><h2>Thư mục</h2></div><div class="folders" id="tree"></div></div>' +
-    '<div class="panel"><div class="panel-head filters">' +
-      '<input class="inp" id="fQ" placeholder="Tìm theo tên tệp…">' +
-      '<select class="sel" id="fLoai"><option value="">Tất cả loại tệp</option><option>Video</option><option>PDF</option><option>Ảnh</option><option>Audio</option></select>' +
-      '<label class="check"><input type="checkbox" id="fUnused"> Chưa được sử dụng</label>' +
-      '<label class="check"><input type="checkbox" id="fDup"> Trùng nội dung</label>' +
-    '</div><div id="bulk"></div><div id="tbl"></div></div></div>';
-  document.getElementById('bUp').onclick = function(){ document.getElementById('upFile').click(); };
-  document.getElementById('bNewFolder').onclick = function(){ moveDialog(st.sel.slice(), true); };
-  document.getElementById('fQ').oninput = function(e){ st.q = e.target.value; tbl.render(true); };
-  document.getElementById('fLoai').onchange = function(e){ st.loai = e.target.value; tbl.render(true); };
-  document.getElementById('fUnused').onchange = function(e){ st.unused = e.target.checked; renderAll(); };
-  document.getElementById('fDup').onchange = function(e){ st.dup = e.target.checked; renderAll(); };
+    '<details class="cdn" id="cdn"><summary>Cấu hình base-URL server media / CDN (theo loại)</summary><div class="in" id="cdnIn"></div></details>' +
+    '<div class="lib"><div class="panel"><div style="padding:12px 12px 0"><div class="field"><label for="fCT">Chương trình đào tạo</label><select class="sel" id="fCT"></select></div></div>' +
+      '<div class="side-h"><span>Thư mục</span><button id="bNewFolder">+ Thư mục</button></div><div class="folders" id="tree"></div></div>' +
+    '<div class="panel"><div class="cur" id="cur"></div><div class="panel-head filters">' +
+      '<select class="sel" id="fLoai" style="flex:0 1 150px"><option value="">Tất cả loại tệp</option><option>Video</option><option>PDF</option><option>Ảnh</option><option>Audio</option></select>' +
+      '<input class="inp" id="fQ" placeholder="Tìm theo tên tệp hoặc khoá">' +
+      '<select class="sel" id="fSort" style="flex:0 1 150px" aria-label="Sắp xếp"><option value="moi">Mới tải lên</option><option value="ten">Tên A–Z</option><option value="kb">Dung lượng lớn</option></select>' +
+      '<button class="btn" id="bAll">Chọn tất cả</button>' +
+    '</div><div id="bulk"></div><div id="list"></div></div></div>';
+  document.getElementById('bUp').onclick = function(){ if (!canPath(st.folder || UNF)) { U.toast('Thư mục này do đơn vị khác quản lý, không tải tệp lên được', 'bad'); return; } document.getElementById('upFile').click(); };
+  document.getElementById('bNewFolder').onclick = function(){ folderForm(null, st.folder && st.folder !== UNF && canPath(st.folder) ? st.folder : ''); };
+  document.getElementById('fQ').oninput = function(e){ st.q = e.target.value; st.limit = 24; renderList(); };
+  document.getElementById('fLoai').onchange = function(e){ st.loai = e.target.value; st.limit = 24; renderList(); };
+  document.getElementById('fSort').onchange = function(e){ st.sort = e.target.value; renderList(); };
+  document.getElementById('fCT').onchange = function(e){ st.ct = e.target.value; if (st.folder && st.folder !== UNF && !okCT(st.folder)) st.folder = ''; st.limit = 24; renderAll(); };
+  document.getElementById('bAll').onclick = function(){ var r = filteredRows().filter(canFile), all = r.length && r.every(function(f){ return st.sel.indexOf(f.id) >= 0; }); st.sel = all ? [] : r.map(function(f){ return f.id; }); renderList(); };
   document.getElementById('upFile').onchange = onUpload;
-
-  var host = document.getElementById('tbl');
-  st.groups = hashGroups();
-  tbl = U.table(host, {
-    select: true, pageSize: 15, sort: 'ngay', dir: -1,
-    empty: 'Chưa có dữ liệu',
-    rows: filteredRows,
-    onSelect: function(ids){ st.sel = ids; renderBulk(); },
-    columns: [
-      { key: 'ten', label: 'Tên tệp', render: function(f){ return '<div class="t-main fname" title="' + esc(f.ten) + '">' + U.hl(f.ten, st.q) + '</div>' + (isDup(f, st.groups) ? '<div class="t-sub"><span class="badge warn">Trùng nội dung · ' + st.groups[f.hash].length + ' bản</span></div>' : ''); }, sortVal: function(f){ return U.norm(f.ten); } },
-      { key: 'loai', label: 'Loại', render: function(f){ return U.badge(f.loai, LOAI_TONE[f.loai]); } },
-      { key: 'kb', label: 'Dung lượng', cls: 'num', render: function(f){ return fmtSize(f.kb); } },
-      { key: 'thuMuc', label: 'Thư mục', render: function(f){ var p = folderOf(f); return '<span style="white-space:nowrap">' + (p === UNF ? '<span class="muted">' + UNF + '</span>' : esc(p)) + '</span>'; }, sortVal: function(f){ return folderOf(f); } },
-      { key: 'nguoiTai', label: 'Người tải' },
-      { key: 'ngay', label: 'Ngày tải', render: function(f){ return LMS.fmtDate(f.ngay); } },
-      { key: 'dung', label: 'Đang dùng ở', sortVal: function(f){ return usage(f.id).length; }, render: function(f){ var u = usage(f.id); if (!u.length) return '<span class="muted">Chưa sử dụng</span>'; var tip = u.map(function(x){ return x.hp.ten + ' › ' + x.bai.ten; }).join('\n'); return '<button class="use-link" data-use="' + esc(f.id) + '" title="' + esc(tip) + '">' + u.length + ' bài giảng</button>'; } },
-      { key: 'act', label: '', sortable: false, w: '40px', render: function(f){ return '<button class="icon-btn" data-more="' + esc(f.id) + '" aria-label="Thao tác">⋯</button>'; } }
-    ]
+  var list = document.getElementById('list');
+  list.addEventListener('click', function(e){
+    var b = e.target.closest('[data-a]'); if (!b) return; var f = LMS.byId('thuVien', b.dataset.id); if (!f) return; var a = b.dataset.a;
+    if (a === 'mv') moveDialog([f.id]); else if (a === 'key') copyText(keyOf(f), 'Đã sao chép khoá tệp'); else if (a === 'use') usageDialog(f); else if (a === 'more') rowMenu(b, f);
   });
-  host.addEventListener('click', function(e){
-    var m = e.target.closest('[data-more]'); if (m) { rowMenu(m, LMS.byId('thuVien', m.dataset.more)); return; }
-    var u = e.target.closest('[data-use]'); if (u) usageDialog(LMS.byId('thuVien', u.dataset.use));
-  });
+  list.addEventListener('change', function(e){ var c = e.target.closest('[data-sel]'); if (!c) return; var id = c.dataset.sel; st.sel = st.sel.filter(function(x){ return x !== id; }); if (c.checked) st.sel.push(id); c.closest('.fc').classList.toggle('sel', c.checked); renderBulk(); });
 }
 
 function filteredRows(){
   var nq = U.norm(st.q.trim());
-  return files().filter(function(f){
+  var r = files().filter(function(f){
     if (!inFolder(f, st.folder)) return false;
+    if (st.ct && !(folderOf(f) !== UNF && okCT(folderOf(f)))) return false;
     if (st.loai && f.loai !== st.loai) return false;
     if (st.unused && usage(f.id).length) return false;
     if (st.dup && !isDup(f, st.groups)) return false;
-    if (nq && U.norm(f.ten).indexOf(nq) < 0) return false;
+    if (nq && U.norm(f.ten + ' ' + keyOf(f)).indexOf(nq) < 0) return false;
     return true;
   });
+  r.sort(st.sort === 'ten' ? function(a,b){ return a.ten.localeCompare(b.ten, 'vi'); } : st.sort === 'kb' ? function(a,b){ return (b.kb || 0) - (a.kb || 0); } : function(a,b){ return a.ngay < b.ngay ? 1 : -1; });
+  return r;
 }
 
 function renderAll(){
@@ -119,61 +151,187 @@ function renderAll(){
   var all = files(), tot = 0, unused = 0, dupFiles = 0, dupWaste = 0;
   all.forEach(function(f){ tot += f.kb || 0; if (!usage(f.id).length) unused++; });
   Object.keys(st.groups).forEach(function(h){ var g = st.groups[h]; if (g.length > 1) { dupFiles += g.length; dupWaste += (g.length - 1) * (g[0].kb || 0); } });
-  document.getElementById('sub').textContent = all.length + ' tệp · ' + fmtSize(tot);
+  var nDV = {}; tms().forEach(function(m){ if (m.donVi) nDV[m.donVi] = 1; });
+  document.getElementById('sub').textContent = all.length + ' tệp · ' + fmtSize(tot) + ' · gom theo thư mục, mỗi thư mục do một đơn vị quản lý';
   var k = document.getElementById('kpis');
   k.innerHTML =
-    '<div class="kpi"><div class="k-label">Tổng số tệp</div><div class="k-val">' + all.length + '</div><div class="k-sub">' + folderList().length + ' thư mục</div></div>' +
+    '<div class="kpi"><div class="k-label">Tổng số tệp</div><div class="k-val">' + all.length + '</div><div class="k-sub">' + folderList().length + ' thư mục · ' + Object.keys(nDV).length + ' đơn vị quản lý</div></div>' +
     '<div class="kpi"><div class="k-label">Dung lượng</div><div class="k-val">' + fmtSize(tot) + '</div><div class="k-sub">Video chiếm ' + (tot ? Math.round(all.filter(function(f){ return f.loai === 'Video'; }).reduce(function(s,f){ return s + f.kb; }, 0) / tot * 100) : 0) + '%</div></div>' +
-    '<div class="kpi clickable warn' + (st.unused ? ' active' : '') + '" data-k="unused"><div class="k-label">Chưa được sử dụng</div><div class="k-val">' + unused + '</div><div class="k-sub">Không gắn vào bài giảng nào</div></div>' +
-    '<div class="kpi clickable bad' + (st.dup ? ' active' : '') + '" data-k="dup"><div class="k-label">Trùng nội dung</div><div class="k-val">' + dupFiles + '</div><div class="k-sub">' + (dupWaste ? 'Có thể giải phóng ' + fmtSize(dupWaste) : 'Không có tệp trùng') + '</div></div>';
-  k.querySelectorAll('[data-k]').forEach(function(el){ el.onclick = function(){ var key = el.dataset.k; st[key] = !st[key]; document.getElementById(key === 'unused' ? 'fUnused' : 'fDup').checked = st[key]; renderAll(); }; });
-  renderTree();
-  tbl.render(true);
-  renderBulk();
+    '<div class="kpi clickable ' + (unused ? 'warn' : 'ok') + (st.unused ? ' active' : '') + '" data-k="unused"><div class="k-label">Chưa được sử dụng</div><div class="k-val">' + unused + '</div><div class="k-sub">Không gắn vào bài giảng nào</div></div>' +
+    '<div class="kpi clickable ' + (dupFiles ? 'bad' : 'ok') + (st.dup ? ' active' : '') + '" data-k="dup"><div class="k-label">Trùng nội dung</div><div class="k-val">' + dupFiles + '</div><div class="k-sub">' + (dupWaste ? 'Có thể giải phóng ' + fmtSize(dupWaste) : 'Không có tệp trùng') + '</div></div>';
+  k.querySelectorAll('[data-k]').forEach(function(el){ el.onclick = function(){ var key = el.dataset.k; st[key] = !st[key]; st.limit = 24; renderAll(); }; });
+  document.getElementById('fCT').innerHTML = U.opts(ctGoc().map(function(c){ return { id: c.id, t: c.ten }; }), 'id', 't', st.ct, 'Tất cả chương trình');
+  renderCdn(); renderTree(); renderList();
+}
+
+function renderCdn(){
+  var c = LMS.db.cauHinhMedia || (LMS.db.cauHinhMedia = {}), ro = !LMS.phamVi.all;
+  document.getElementById('cdnIn').innerHTML = '<div class="form-grid">' + ['Video', 'PDF', 'Ảnh', 'Audio'].map(function(l){ return '<div class="field"><label>' + l + '</label><input class="inp" data-cdn="' + l + '" value="' + esc(c[l] || '') + '" placeholder="https://…"' + (ro ? ' readonly' : '') + '></div>'; }).join('') + '</div>' +
+    '<div class="row"><span class="muted small">Đường dẫn phát tệp = base-URL của loại tệp + khoá tệp. ' + (ro ? 'Chỉ quản trị hệ thống sửa được cấu hình này.' : '') + '</span>' + (ro ? '' : '<button class="btn sm primary right" id="cdnSave">Lưu cấu hình</button>') + '</div>';
+  var b = document.getElementById('cdnSave'); if (b) b.onclick = function(){
+    var bad = null, v = {}; document.querySelectorAll('[data-cdn]').forEach(function(i){ var x = i.value.trim().replace(/\/+$/, ''); if (x && !/^https?:\/\/[^\s]+$/.test(x)) bad = i.dataset.cdn; v[i.dataset.cdn] = x; });
+    if (bad) { U.toast('Base-URL của ' + bad + ' phải bắt đầu bằng http:// hoặc https://', 'bad'); return; }
+    var truoc = JSON.parse(JSON.stringify(c)); Object.keys(v).forEach(function(l){ c[l] = v[l]; });
+    LMS.commit('Sửa', 'Cấu hình media', 'Base-URL server media / CDN', truoc, v); U.toast('Đã lưu cấu hình base-URL', 'ok');
+  };
 }
 
 function renderTree(){
-  var all = files(), paths = folderList();
-  var own = {}; all.forEach(function(f){ var p = folderOf(f); own[p] = (own[p] || 0) + 1; });
+  var all = files(), paths = folderList().filter(function(p){ return okCT(p) || folderList().some(function(x){ return x.indexOf(p + '/') === 0 && okCT(x); }); });
   function total(p){ return all.filter(function(f){ return inFolder(f, p); }).length; }
-  var h = '<button class="fold' + (st.folder === '' ? ' on' : '') + '" data-f=""><span class="tw"></span><span class="fn">Tất cả tệp</span><span class="cnt">' + all.length + '</span></button><div class="fold-sep"></div>';
+  var nAll = st.ct ? all.filter(function(f){ return folderOf(f) !== UNF && okCT(folderOf(f)); }).length : all.length;
+  var h = '<div class="fold' + (st.folder === '' ? ' on' : '') + '" data-f="" role="button" tabindex="0"><span class="tw"></span><span class="fn"><b>Tất cả</b></span><span class="cnt">' + nAll + '</span></div>';
+  if (!st.ct) h += '<div class="fold' + (st.folder === UNF ? ' on' : '') + '" data-f="' + UNF + '" role="button" tabindex="0"><span class="tw"></span><span class="fn"><b>' + UNF + '</b></span><span class="cnt">' + all.filter(function(f){ return folderOf(f) === UNF; }).length + '</span></div>';
+  h += '<div class="fold-sep"></div>';
   function kids(parent){ return paths.filter(function(p){ var i = p.lastIndexOf('/'); return (i < 0 ? '' : p.slice(0, i)) === parent; }); }
   function node(p, depth){
-    var ch = kids(p), open = st.open[p] !== false, name = p.split('/').pop();
-    h += '<button class="fold' + (st.folder === p ? ' on' : '') + '" data-f="' + esc(p) + '" style="padding-left:' + (8 + depth * 14) + 'px"><span class="tw"' + (ch.length ? ' data-tw="' + esc(p) + '"' : '') + '>' + (ch.length ? (open ? '▾' : '▸') : '') + '</span><span class="fn" title="' + esc(p) + '">' + esc(name) + '</span><span class="cnt">' + total(p) + '</span></button>';
+    var ch = kids(p), open = st.open[p] !== false, name = p.split('/').pop(), m = chu(p), mine = canPath(p);
+    h += '<div class="fold' + (st.folder === p ? ' on' : '') + '" data-f="' + esc(p) + '" role="button" tabindex="0" style="padding-left:' + (8 + depth * 14) + 'px"><span class="tw"' + (ch.length ? ' data-tw="' + esc(p) + '"' : '') + '>' + (ch.length ? (open ? '▾' : '▸') : '') + '</span>' + FOLDER_IC + '<span class="fn" title="' + esc(p + ' · ' + tenDV(m)) + '"><b>' + esc(name) + '</b><small>' + esc(tenDV(m)) + '</small></span><span class="cnt">' + total(p) + '</span>' + (mine ? '<button class="mo" data-mo="' + esc(p) + '" aria-label="Thao tác thư mục ' + esc(name) + '">⋯</button>' : '') + '</div>';
     if (open) ch.forEach(function(c){ node(c, depth + 1); });
   }
   kids('').forEach(function(p){ node(p, 0); });
   if (!paths.length) h += '<div class="muted small" style="padding:8px">Chưa có thư mục</div>';
-  h += '<div class="fold-sep"></div><button class="fold' + (st.folder === UNF ? ' on' : '') + '" data-f="' + UNF + '"><span class="tw"></span><span class="fn">' + UNF + '</span><span class="cnt">' + (own[UNF] || 0) + '</span></button>';
   var t = document.getElementById('tree'); t.innerHTML = h;
-  t.querySelectorAll('[data-f]').forEach(function(b){ b.onclick = function(e){ var tw = e.target.closest('[data-tw]'); if (tw) { st.open[tw.dataset.tw] = st.open[tw.dataset.tw] === false; renderTree(); return; } st.folder = b.dataset.f; renderTree(); tbl.render(true); }; });
+  t.querySelectorAll('[data-f]').forEach(function(b){
+    b.onclick = function(e){
+      var mo = e.target.closest('[data-mo]'); if (mo) { e.stopPropagation(); folderMenu(mo, mo.dataset.mo); return; }
+      var tw = e.target.closest('[data-tw]'); if (tw) { st.open[tw.dataset.tw] = st.open[tw.dataset.tw] === false; renderTree(); return; }
+      st.folder = b.dataset.f; st.sel = []; st.limit = 24; renderTree(); renderList();
+    };
+    b.onkeydown = function(e){ if (e.target === b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); b.click(); } };
+  });
+}
+
+function renderCur(n){
+  var el = document.getElementById('cur'), p = st.folder, up = document.getElementById('bUp');
+  var name = !p ? 'Tất cả' : p === UNF ? UNF : p.split('/').pop();
+  up.textContent = 'Tải tệp lên · ' + (!p ? UNF : name);
+  var ok = canPath(p || UNF); up.disabled = !ok; up.title = ok ? '' : 'Thư mục do đơn vị khác quản lý';
+  if (!p || p === UNF) { el.innerHTML = '<h2>' + esc(name) + '</h2><span class="muted small">' + n + ' tệp' + (p === UNF ? ' · tệp chưa xếp vào thư mục, chỉ người tải lên và quản trị hệ thống quản lý' : '') + '</span>'; return; }
+  var m = chu(p), self = ent(p), ct = m && m.chuongTrinh ? LMS.byId('chuongTrinh', m.chuongTrinh) : null;
+  el.innerHTML = '<h2>' + esc(name) + '</h2>' + U.badge(tenDV(m) + (m && m.donVi ? ' quản lý' : ''), m && m.donVi ? 'navy' : '') + (ct ? U.badge(ct.ten, '') : '') + '<span class="muted small">' + n + ' tệp' + (m && !self ? ' · theo thư mục cha' : '') + (m && m.moTa && self ? ' · ' + esc(m.moTa) : '') + '</span>' +
+    (canPath(p) ? '<button class="btn sm right" id="curEdit">Sửa thông tin thư mục</button>' : '<span class="right muted small">Chỉ xem · thư mục của đơn vị khác</span>');
+  var b = document.getElementById('curEdit'); if (b) b.onclick = function(){ folderForm(p); };
+}
+
+function renderList(){
+  var rows = filteredRows(), host = document.getElementById('list');
+  renderCur(rows.length);
+  if (!rows.length) { host.innerHTML = '<div class="empty">' + (st.q || st.loai || st.unused || st.dup ? 'Không có tệp phù hợp bộ lọc' : 'Thư mục này chưa có tệp. Bấm "Tải tệp lên".') + '</div>'; renderBulk(); return; }
+  var show = rows.slice(0, st.limit);
+  host.innerHTML = '<div class="cards">' + show.map(function(f){
+    var u = usage(f.id), can = canFile(f), on = st.sel.indexOf(f.id) >= 0, p = folderOf(f);
+    return '<div class="fc' + (on ? ' sel' : '') + '"><div class="th ' + (LOAI_CLS[f.loai] || '') + '">' + (can ? '<input type="checkbox" data-sel="' + esc(f.id) + '"' + (on ? ' checked' : '') + ' aria-label="Chọn ' + esc(f.ten) + '">' : '') + (ICON[f.loai] || ICON.PDF) + '<span class="ty">' + esc(f.loai) + '</span></div>' +
+      '<div class="bd"><div class="nm" title="' + esc(f.ten) + '">' + U.hl(f.ten, st.q) + '</div>' +
+      '<div class="mt" title="' + esc(p) + '">' + fmtSize(f.kb) + ' · ' + esc(p === UNF ? UNF : p.split('/').pop()) + '</div>' +
+      '<div class="mt">' + esc(f.nguoiTai || '—') + ' · ' + LMS.fmtDate(f.ngay) + ' · ' + (u.length ? '<button class="use-link" data-a="use" data-id="' + esc(f.id) + '">' + u.length + ' bài giảng</button>' : 'chưa sử dụng') + '</div>' +
+      (isDup(f, st.groups) ? '<div><span class="badge warn">Trùng nội dung · ' + st.groups[f.hash].length + ' bản</span></div>' : '') +
+      '<div class="ac">' + (can ? '<button data-a="mv" data-id="' + esc(f.id) + '">Di chuyển</button>' : '') + '<button data-a="key" data-id="' + esc(f.id) + '" title="' + esc(keyOf(f)) + '">Copy khoá</button><button class="icon-btn" data-a="more" data-id="' + esc(f.id) + '" aria-label="Thao tác khác">⋯</button></div></div></div>';
+  }).join('') + '</div>' + (rows.length > show.length ? '<div class="more"><button class="btn" id="bMore">Xem thêm ' + Math.min(24, rows.length - show.length) + ' / còn ' + (rows.length - show.length) + ' tệp</button></div>' : '');
+  var bm = document.getElementById('bMore'); if (bm) bm.onclick = function(){ st.limit += 24; renderList(); };
+  renderBulk();
 }
 
 function renderBulk(){
   var b = document.getElementById('bulk');
-  var ids = st.sel.filter(function(id){ return LMS.byId('thuVien', id); });
+  st.sel = st.sel.filter(function(id){ return LMS.byId('thuVien', id); });
+  var ids = st.sel;
+  var r = filteredRows().filter(canFile);
+  document.getElementById('bAll').textContent = r.length && r.every(function(f){ return ids.indexOf(f.id) >= 0; }) ? 'Bỏ chọn tất cả' : 'Chọn tất cả';
   if (!ids.length) { b.innerHTML = ''; return; }
   b.innerHTML = '<div class="bulk"><b>Đã chọn ' + ids.length + ' tệp</b><button class="btn sm" id="bbMove">Di chuyển thư mục</button><button class="btn sm danger" id="bbDel">Xóa</button><button class="btn sm ghost right" id="bbClr">Bỏ chọn</button></div>';
-  document.getElementById('bbMove').onclick = function(){ moveDialog(ids, false); };
-  document.getElementById('bbDel').onclick = function(){ bulkDelete(ids); };
-  document.getElementById('bbClr').onclick = function(){ tbl.clearSel(); };
+  document.getElementById('bbMove').onclick = function(){ moveDialog(ids.slice()); };
+  document.getElementById('bbDel').onclick = function(){ bulkDelete(ids.slice()); };
+  document.getElementById('bbClr').onclick = function(){ st.sel = []; renderList(); };
 }
 
-/* ---------- thao tác theo dòng ---------- */
-function rowMenu(anchor, f){
-  if (!f) return;
-  var dup = isDup(f, st.groups);
+/* ---------- thư mục ---------- */
+function folderMenu(anchor, path){
   U.menu(anchor, [
-    { label: 'Đổi tên', onClick: function(){ renameDialog(f); } },
-    { label: 'Di chuyển thư mục', onClick: function(){ moveDialog([f.id], false); } },
-    { label: 'Xem nơi đang dùng', onClick: function(){ usageDialog(f); } },
-    dup ? { label: 'Giữ 1 bản (xử lý trùng)', onClick: function(){ dedupDialog(f.hash); } } : null,
+    { label: 'Sửa thông tin thư mục', onClick: function(){ folderForm(path); } },
+    { label: 'Thêm thư mục con', onClick: function(){ folderForm(null, path); } },
     '-',
-    { label: 'Xóa tệp', danger: true, onClick: function(){ deleteOne(f); } }
+    { label: 'Xóa thư mục', danger: true, onClick: function(){ folderDelete(path); } }
   ]);
 }
+function folderForm(path, parent){
+  var isNew = !path, db = LMS.db, self = path ? ent(path) : null, inh = path ? chu(path) : (parent ? chu(parent) : null);
+  var name = path ? path.split('/').pop() : '', cha = path ? path.split('/').slice(0, -1).join('/') : (parent || '');
+  var dsCha = folderList().filter(function(p){ return canPath(p) && (!path || (p !== path && p.indexOf(path + '/') !== 0)); });
+  var dv = db.donVi.slice().sort(function(a,b){ return a.ma < b.ma ? -1 : 1; });
+  var curDV = self ? (self.donVi || '') : (inh ? (inh.donVi || '') : (LMS.phamVi.all ? '' : (LMS.phamVi.donVi || '')));
+  var curCT = self ? (self.chuongTrinh || '') : (inh ? (inh.chuongTrinh || '') : (st.ct || ''));
+  var body = '<div class="form-grid">' +
+    '<div class="field full"><label>Tên thư mục <span class="req">*</span></label><input class="inp" name="ten" maxlength="80" value="' + esc(name) + '" placeholder="VD: Châm cứu 1"></div>' +
+    '<div class="field full"><label>Thư mục cha</label><select class="sel" name="cha">' + U.opts(dsCha.map(function(p){ return { id: p, t: p.split('/').join(' › ') }; }), 'id', 't', cha, '— Cấp gốc —') + '</select></div>' +
+    '<div class="field"><label>Phòng ban – khoa quản lý <span class="req">*</span></label><select class="sel" name="donVi">' + (LMS.phamVi.all ? '<option value="">Dùng chung toàn Học viện</option>' : '<option value="">— Chọn đơn vị —</option>') + U.opts(dv, 'id', function(x){ return x.ma + ' · ' + x.ten; }, curDV) + '</select><div class="hint">Đơn vị quản lý được tải tệp lên, sửa và xóa tệp trong thư mục; đơn vị khác không thấy thư mục.</div></div>' +
+    '<div class="field"><label>Chương trình đào tạo</label><select class="sel" name="ct">' + U.opts(ctGoc().map(function(c){ return { id: c.id, t: c.ten }; }), 'id', 't', curCT, '— Không gắn chương trình —') + '</select><div class="hint">Dùng để lọc thư mục theo chương trình.</div></div>' +
+    '<div class="field full"><label>Ghi chú</label><input class="inp" name="moTa" maxlength="200" value="' + esc(self ? self.moTa || '' : '') + '"></div></div>';
+  U.modal({ title: isNew ? 'Thêm thư mục' : 'Sửa thông tin thư mục', body: body,
+    foot: [{ label: 'Hủy', close: true }, { label: isNew ? 'Tạo thư mục' : 'Lưu thay đổi', cls: 'primary', onClick: function(api){
+      var r = api.body, v = U.formVals(r), ok = true; v.ten = String(v.ten || '').trim().replace(/\s+/g, ' ');
+      if (!v.ten) { U.fieldErr(r, 'ten', 'Nhập tên thư mục'); ok = false; }
+      else if (/[\/\\]/.test(v.ten)) { U.fieldErr(r, 'ten', 'Tên thư mục không chứa dấu / hoặc \\'); ok = false; }
+      else if (v.ten === UNF) { U.fieldErr(r, 'ten', 'Tên này đã dùng cho mục hệ thống'); ok = false; }
+      else U.fieldErr(r, 'ten', '');
+      var moi = (v.cha ? v.cha + '/' : '') + v.ten;
+      if (ok && moi !== path && folderList().some(function(p){ return p.toLowerCase() === moi.toLowerCase(); })) { U.fieldErr(r, 'ten', 'Đã có thư mục cùng tên ở vị trí này'); ok = false; }
+      if (!LMS.phamVi.all && !v.donVi) { U.fieldErr(r, 'donVi', 'Chọn phòng ban – khoa quản lý thư mục'); ok = false; } else U.fieldErr(r, 'donVi', '');
+      if (!ok) return false;
+      var truoc = self ? { 'Thư mục': path, 'Đơn vị quản lý': tenDV(self), 'Chương trình': self.chuongTrinh ? LMS.name('chuongTrinh', self.chuongTrinh, 'ten') : '—' } : null;
+      if (!self) { self = { id: LMS.nextId('tm'), duongDan: moi }; tms().push(self); }
+      if (path && moi !== path) {
+        tms().forEach(function(m){ if (m.duongDan === path || m.duongDan.indexOf(path + '/') === 0) m.duongDan = moi + m.duongDan.slice(path.length); });
+        files().forEach(function(f){ var p = folderOf(f); if (p === path || p.indexOf(path + '/') === 0) f.thuMuc = moi + p.slice(path.length); });
+        if (st.folder === path || st.folder.indexOf(path + '/') === 0) st.folder = moi + st.folder.slice(path.length);
+      }
+      self.duongDan = moi; self.donVi = v.donVi || null; self.chuongTrinh = v.ct || null; self.moTa = v.moTa || '';
+      var sau = { 'Thư mục': moi, 'Đơn vị quản lý': tenDV(self), 'Chương trình': self.chuongTrinh ? LMS.name('chuongTrinh', self.chuongTrinh, 'ten') : '—' };
+      LMS.commit(isNew ? 'Tạo thư mục' : 'Sửa thư mục', 'Thư viện tài nguyên', moi + ' · ' + tenDV(self), truoc, sau);
+      U.toast(isNew ? 'Đã tạo thư mục “' + v.ten + '”' : 'Đã lưu thông tin thư mục', 'ok');
+      if (isNew) st.folder = moi;
+      if (st.ct && self.chuongTrinh !== st.ct) st.ct = '';
+      renderAll();
+    } }] });
+}
+function folderDelete(path){
+  var nf = files().filter(function(f){ return inFolder(f, path); }).length, sub = folderList().filter(function(p){ return p.indexOf(path + '/') === 0; });
+  if (nf || sub.length) { U.blocked('Không thể xóa thư mục ' + path.split('/').pop(), (nf ? [nf + ' tệp đang nằm trong thư mục'] : []).concat(sub.map(function(p){ return 'Thư mục con ' + p.split('/').pop(); })), 'Di chuyển tệp sang thư mục khác và xóa thư mục con trước.'); return; }
+  U.confirm({ title: 'Xóa thư mục', html: 'Xóa thư mục <b>' + esc(path.split('/').join(' › ')) + '</b>? Thư mục đang trống.', ok: 'Xóa thư mục', danger: true }).then(function(ok){
+    if (!ok) return;
+    LMS.db.thuMuc = tms().filter(function(m){ return m.duongDan !== path; });
+    LMS.commit('Xóa thư mục', 'Thư viện tài nguyên', path);
+    U.toast('Đã xóa thư mục', 'ok'); if (st.folder === path) st.folder = ''; renderAll();
+  });
+}
 
+/* ---------- thao tác theo tệp ---------- */
+function rowMenu(anchor, f){
+  var dup = isDup(f, st.groups), can = canFile(f);
+  U.menu(anchor, [
+    can ? { label: 'Đổi tên', onClick: function(){ renameDialog(f); } } : null,
+    can ? { label: 'Di chuyển thư mục', onClick: function(){ moveDialog([f.id]); } } : null,
+    { label: 'Xem nơi đang dùng', onClick: function(){ usageDialog(f); } },
+    { label: 'Sao chép đường dẫn phát', onClick: function(){ var b = (LMS.db.cauHinhMedia || {})[f.loai] || ''; copyText((b ? b + '/' : '') + keyOf(f), 'Đã sao chép đường dẫn phát'); } },
+    can && dup ? { label: 'Giữ 1 bản (xử lý trùng)', onClick: function(){ dedupDialog(f.hash); } } : null,
+    can ? '-' : null,
+    can ? { label: 'Xóa tệp', danger: true, onClick: function(){ deleteOne(f); } } : null
+  ]);
+}
+function moveDialog(ids){
+  var fs = ids.map(function(id){ return LMS.byId('thuVien', id); }).filter(function(f){ return f && canFile(f); });
+  if (!fs.length) { U.toast('Không có tệp nào bạn được quyền di chuyển', 'bad'); return; }
+  var dich = folderList().filter(canPath);
+  var body = '<div class="muted small">' + (fs.length === 1 ? '<b>' + esc(fs[0].ten) + '</b>' : '<b>' + fs.length + '</b> tệp đã chọn') + '</div>' +
+    '<div class="field"><label>Thư mục đích <span class="req">*</span></label><select class="sel" name="dich"><option value="">— Chọn thư mục —</option>' + dich.map(function(p){ return '<option value="' + esc(p) + '">' + esc(p.split('/').join(' › ') + ' · ' + tenDV(chu(p))) + '</option>'; }).join('') + '<option value="' + UNF + '">' + UNF + '</option></select><div class="hint">Chỉ liệt kê thư mục thuộc phạm vi quản lý của bạn. Tệp chuyển sang thư mục nào thì do đơn vị quản lý thư mục đó quản lý.</div></div>';
+  U.modal({ title: 'Di chuyển tệp', size: 'sm', body: body, foot: [{ label: 'Hủy', close: true }, { label: 'Di chuyển', cls: 'primary', onClick: function(api){
+    var d = U.formVals(api.body).dich; if (!d) { U.fieldErr(api.body, 'dich', 'Chọn thư mục đích'); return false; }
+    var n = 0; fs.forEach(function(f){ if (folderOf(f) !== d) { f.thuMuc = d; n++; } });
+    if (!n) { U.toast('Các tệp đã nằm trong thư mục này'); return; }
+    LMS.commit('Di chuyển', 'Tệp tài nguyên', n + ' tệp → ' + d);
+    U.toast('Đã chuyển ' + n + ' tệp vào “' + d.split('/').pop() + '”', 'ok'); st.sel = []; renderAll();
+  } }] });
+}
 function usageDialog(f){
   var u = LMS.fileUsage(f.id);
   var body = '<dl class="kv"><dt>Tệp</dt><dd><b>' + esc(f.ten) + '</b></dd><dt>Loại · dung lượng</dt><dd>' + esc(f.loai) + ' · ' + fmtSize(f.kb) + '</dd><dt>Thư mục</dt><dd>' + esc(folderOf(f)) + '</dd></dl>';
@@ -182,7 +340,6 @@ function usageDialog(f){
   var m = U.modal({ title: 'Nơi đang sử dụng tệp', size: 'lg', body: body });
   m.body.querySelectorAll('[data-go]').forEach(function(b){ b.onclick = function(){ m.close(); LMS.go('hoc-phan.html', { hocPhan: b.dataset.go, tab: 'bai', bai: b.dataset.bai }); }; });
 }
-
 function renameDialog(f){
   var dot = f.ten.lastIndexOf('.'), ext = dot > 0 ? f.ten.slice(dot) : '', base = dot > 0 ? f.ten.slice(0, dot) : f.ten;
   U.modal({ title: 'Đổi tên tệp', size: 'sm',
@@ -197,39 +354,6 @@ function renameDialog(f){
       U.toast('Đã đổi tên tệp', 'ok'); renderAll();
     } }] });
 }
-
-function moveDialog(ids, createMode){
-  var fl = folderList();
-  var pre = {}; ids.forEach(function(id){ pre[id] = true; });
-  var body = '<div class="form-grid">' +
-    '<div class="field full"><label>Thư mục đích <span class="req">*</span></label><select class="sel" name="dich">' + (createMode ? '' : U.opts(fl, null, null, '', null) + '<option value="' + UNF + '">' + UNF + '</option>') + '<option value="__new"' + (createMode ? ' selected' : '') + '>+ Thư mục mới…</option></select></div>' +
-    '<div class="field full" data-newbox><label>Tên thư mục mới <span class="req">*</span></label><input class="inp" name="moi" placeholder="VD: Châm cứu 1/Hình minh họa"><div class="hint">Dùng dấu “/” để tạo thư mục con.</div></div>' +
-    '</div>' +
-    '<div class="field"><label>Tệp đưa vào thư mục (<span data-cnt>' + ids.length + '</span> đã chọn)</label><input class="inp" data-q placeholder="Lọc tệp…"><div class="pick-list" data-list></div></div>';
-  var m = U.modal({ title: createMode ? 'Tạo thư mục' : 'Di chuyển tệp', body: body, size: 'lg',
-    foot: [{ label: 'Hủy' }, { label: createMode ? 'Tạo và di chuyển' : 'Di chuyển', cls: 'primary', onClick: function(api){
-      var v = U.formVals(api.body), dest = v.dich === '__new' ? v.moi.split('/').map(function(s){ return s.trim(); }).filter(Boolean).join('/') : v.dich;
-      if (v.dich === '__new' && !dest) { U.fieldErr(api.body, 'moi', 'Nhập tên thư mục'); return false; }
-      if (dest === UNF && v.dich === '__new') { U.fieldErr(api.body, 'moi', 'Tên thư mục không hợp lệ'); return false; }
-      var chosen = Object.keys(pre).filter(function(k){ return pre[k]; });
-      if (!chosen.length) { U.toast('Chọn ít nhất 1 tệp', 'bad'); return false; }
-      var n = 0; chosen.forEach(function(id){ var f = LMS.byId('thuVien', id); if (f && folderOf(f) !== dest) { f.thuMuc = dest; n++; } });
-      if (!n) { U.toast('Các tệp đã nằm trong thư mục này'); return; }
-      LMS.commit(createMode ? 'Tạo thư mục' : 'Di chuyển', 'Tệp tài nguyên', n + ' tệp → ' + dest);
-      U.toast('Đã chuyển ' + n + ' tệp vào “' + dest + '”', 'ok');
-      tbl.clearSel(); st.folder = dest; renderAll();
-    } }] });
-  var list = m.body.querySelector('[data-list]'), qEl = m.body.querySelector('[data-q]'), sel = m.body.querySelector('[name=dich]'), nb = m.body.querySelector('[data-newbox]');
-  function drawList(){
-    var nq = U.norm(qEl.value.trim());
-    var rows = files().filter(function(f){ return pre[f.id] || !nq || U.norm(f.ten).indexOf(nq) >= 0; }).sort(function(a,b){ return (pre[b.id] ? 1 : 0) - (pre[a.id] ? 1 : 0); }).slice(0, 200);
-    list.innerHTML = rows.map(function(f){ return '<label><input type="checkbox" data-id="' + esc(f.id) + '"' + (pre[f.id] ? ' checked' : '') + '><span>' + esc(f.ten) + '</span><span class="muted">' + esc(folderOf(f)) + '</span></label>'; }).join('') || '<div class="empty">Không có tệp phù hợp</div>';
-    list.querySelectorAll('[data-id]').forEach(function(cb){ cb.onchange = function(){ pre[cb.dataset.id] = cb.checked; m.body.querySelector('[data-cnt]').textContent = Object.keys(pre).filter(function(k){ return pre[k]; }).length; }; });
-  }
-  function toggleNew(){ nb.style.display = sel.value === '__new' ? '' : 'none'; }
-  qEl.oninput = drawList; sel.onchange = toggleNew; toggleNew(); drawList();
-}
-
 function deleteOne(f){
   var refs = LMS.refsOf('file', f.id);
   if (refs.length) { U.blocked('Không thể xóa “' + f.ten + '”', refs, 'Gỡ tệp khỏi các bài giảng ở màn Học phần (hoặc thay bằng tệp khác) trước khi xóa.'); return; }
@@ -240,7 +364,6 @@ function deleteOne(f){
     U.toast('Đã xóa tệp', 'ok'); renderAll();
   });
 }
-
 function bulkDelete(ids){
   var fs = ids.map(function(id){ return LMS.byId('thuVien', id); }).filter(Boolean);
   var used = fs.filter(function(f){ return LMS.refsOf('file', f.id).length; }), free = fs.filter(function(f){ return used.indexOf(f) < 0; });
@@ -254,7 +377,6 @@ function bulkDelete(ids){
     U.toast('Đã xóa ' + free.length + ' tệp', 'ok'); tbl.clearSel(); renderAll();
   });
 }
-
 function dedupDialog(hash){
   var g = files().filter(function(f){ return f.hash === hash; });
   if (g.length < 2) return;
@@ -270,8 +392,6 @@ function dedupDialog(hash){
     tbl.clearSel(); renderAll();
   } }] });
 }
-
-/* ---------- tải lên ---------- */
 function onUpload(e){
   var list = Array.prototype.slice.call(e.target.files || []); e.target.value = '';
   if (!list.length) return;
@@ -285,6 +405,7 @@ function onUpload(e){
   if (bad.length) U.toast('Bỏ qua ' + bad.length + ' tệp không đúng định dạng (chỉ nhận video, PDF, ảnh, âm thanh)', 'bad');
   if (!items.length) return;
   var dest = st.folder || UNF;
+  if (!canPath(dest)) { U.toast('Thư mục này do đơn vị khác quản lý, không tải tệp lên được', 'bad'); return; }
   var dups = items.filter(function(i){ return i.dup; });
   if (!dups.length) { doUpload(items, dest); return; }
   var body = '<div class="note warn">' + dups.length + ' tệp trùng tên và dung lượng với tệp đã có trong thư viện:</div><ul style="margin:0;padding-left:18px">' + dups.map(function(i){ return '<li><b>' + esc(i.file.name) + '</b> — đã có tại “' + esc(folderOf(i.dup)) + '”, tải ngày ' + LMS.fmtDate(i.dup.ngay) + '</li>'; }).join('') + '</ul>';

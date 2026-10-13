@@ -47,7 +47,7 @@ Mọi màn hình dùng chung `edot.css` (design token EDOT) và `lms-core.js` (k
 
 ## Mô hình dữ liệu `LMS.db`
 - `donVi[]` {id, ma, ten, cha, laKhoa}
-- `chuongTrinh[]` {id, ma, ten, cha, khoa(donVi id), hocPhan:[hpId], trangThai:'hoat-dong'|'ngung'} — cây theo `cha`.
+- `chuongTrinh[]` {id, ma, ten, cha, khoa(donVi id), hocPhan:[hpId], trangThai:'hoat-dong'|'ngung', loai:'chuong-trinh'|'nhom'|'hoc-phan'} — khung học phần trực tuyến, cây theo `cha`: chương trình › nhóm học phần › học phần. Gốc có thêm {moTa, doiTuong, maQLDT (mã chương trình bên Quản lý đào tạo, chỉ để đối chiếu), congKhai (hiển thị trên Cổng học viên)}; nút học phần có `hocPhan[0]` là học phần đã biên soạn trên LMS (rỗng = học phần dự kiến) và `hocSau:[id nút học phần cần học trước]`. Thứ tự hiển thị là thứ tự phần tử trong mảng. `lop.chuongTrinh` trỏ tới nút học phần; lấy chương trình gốc bằng `LMS.ctGoc(id)`. Mở lớp từ màn này: `LMS.go('lop-hoc.html', {moLop:1, ct, hp})`. Không lưu tín chỉ, học kỳ, bộ môn, chuẩn đầu ra: các thông tin này thuộc hệ thống Quản lý đào tạo.
 - `hocPhan[]` {id, ma, ten, khoa, soTC, trangThai:'hoat-dong'|'nhap'|'ngung', moTa, chuanDauRa[] (mục tiêu học phần), phanLoai(chuongTrinh id|null), quyTac:'tien-quyet'|'mo-toan-bo', tieuChi:{xemOn, xem, quizOn, quizKieu:'diem'|'pct', quizDiem, quizPct, tuDong}, bai:[…]}
 - `bai` {id, ten, giay (thời lượng), xuatBan, hocThu, hien, tienQuyet:[baiId], tieuChiRieng:null|{…như tieuChi}, dinhKem:[fileId], khoi:[khối]} và các trường tóm tắt do `LMS.syncBai(bai)` suy ra từ khối: phut, video, taiLieu, quiz (số câu). Màn khác chỉ đọc trường tóm tắt; sửa nội dung thì sửa `khoi` rồi gọi `syncBai`.
 - Khối `{id, loai, …}`: tieu-de{text,cap}, doan-van{html}, cong-thuc{tex,kieu}, anh{file,chuThich,size}, video{file,chuThich,xemToiThieu,batBuoc,tuaNhanh,dauChim,giay}, am-thanh{file,chuThich,soLan,loiThoaiHien,loiThoai,ngheToiThieu,tuaCau,tocDo,luyenCau,tuPhat,giay}, pdf{file,chuThich,taiVe}, nut{nhan,url,tabMoi}, quiz{tieuDe,cauHoi[]}, nhung{url}, html{code}, trang-tt{html,cao}, duong-ke{kieu}, nhom{tieuDe,con[]}, bo-cuc{layout,cot[[]]}, luoi{dong,soCot,tiLe[],o[[]]}. Duyệt lồng nhau bằng `LMS.walkKhoi(list, fn)`; tệp đang dùng của bài: `LMS.baiFiles(bai)`.
@@ -72,6 +72,13 @@ Mọi màn hình dùng chung `edot.css` (design token EDOT) và `lms-core.js` (k
   7. Chuyên cần tính trên các buổi đã có kết quả (tạm tính khi chưa chốt); cột Chuyên cần trong bảng điểm lấy từ đây.
 - `lms-hoidap.js` (nạp ở hoi-dap.html và lop-hoc.html) — `LMS.hoiDapUI.render(host, list, o)` vẽ chủ đề và gắn toàn bộ thao tác: trả lời (gắn @tên khi trả lời một trả lời), chọn câu trả lời đúng, sửa, xóa có lý do, khôi phục; o = {st, tuongDoi, hienLop, hienBai, flat, menu, onChange, moNhom}. Quản trị và giảng viên của lớp sửa, xóa được câu hỏi gốc và mọi trả lời; sửa nội dung của học viên hiện nhãn "đã sửa bởi …", nội dung gốc giữ trong noiDungGoc và nhật ký.
 - `lms-buoi.js` (nạp sau lms-core.js ở lop-hoc.html và buoi-hoc.html) — `LMS.buoiUI`: chiTiet(b, ctx), form(b|null, {lop, onDone}), dinhKy({lop, onDone}), huy(b, {onDone}), khoiPhuc(b, {onDone}), quyTac({vaiTro, onDone}), menu(anchor, b, ctx), oTrangThai(b), oDiemDanh(b), hanhDongChinh(b). ctx = {vaiTro:'pdt'|'gv', gv, onDone}. Hai màn gọi chung một bộ hộp thoại, không viết lại logic buổi học ở từng màn.
+- Lớp tự học, không có buổi học và điểm danh ở Cổng quản trị. Mức độ chuyên cần đo bằng nhịp tự học:
+  - `hoatDong` {lopId:{hvId:{'YYYY-MM-DD': số phút học trong ngày}}} — nhật ký tự học; `cauHinhNhip` {deu: số ngày học mỗi tuần để tính Học đều, gianDoan, ngung: số ngày chưa vào học, nhacTuDong}.
+  - `LMS.nhipHoc(lopId, hvId)` → {ngay, soNgay, lanCuoi, nghi (số ngày chưa vào học), n7, n14, n28, phut7, phutTong, kcTB, kcMax (khoảng cách giữa các ngày học), tuanCo, tuanTong, pctTuan, tuanNghi, nhom:{key:'deu'|'thua'|'gian-doan'|'ngung'|'chua'|'xong', label, tone}}.
+  - `LMS.chuyenCanHV(lopId, hvId)` = số tuần có vào học / số tuần đã qua {co, tong, pct, vang, vangLienTiep = số tuần nghỉ liên tiếp}; cột điểm nguồn `diem-danh` lấy pct/10. `LMS.lopStats(lopId)` có thêm `nhip` (đếm theo nhóm), `nhipN`, `phut7TB`.
+  - `lop.keHoach` {baiId: tuần hoàn thành} (rỗng = chia đều), `lop.nhacHoc` {on, ngay, moc, bao}; thông báo nhắc học có `nhacHoc:true`.
+  - `lop.hinhThuc`: 'truc-tuyen-gv' = tự học có giảng viên hỗ trợ (hỏi đáp, chấm bài, có cột Chuyên cần), 'tu-hoc' = tự học hoàn toàn.
+  - `buoiHoc[]` và các hàm buổi học chỉ còn để Cổng học viên bản cũ chạy được, Cổng quản trị không dùng.
 - `tienDo` {lopId:{hvId:{done, lastAt, quiz:{baiId:điểm}, phutXem}}}
 - `nganHang[]` {id, ma, ten, hocPhan, trangThai}; `cauHoi[]` {id, nh, bai, noiDung, loai:'mot-dap-an'|'nhieu-dap-an'|'tu-luan', doKho:'De'|'TrungBinh'|'Kho', phuongAn, dapAn, phienBan, trangThai, ngay}
 - `deThi[]` {id, ma, ten, nh, cauHoi:[qId], thoiLuong, thang, diemDat, tronCau, trangThai:'nhap'|'xuat-ban'}
@@ -119,3 +126,9 @@ Mọi màn hình dùng chung `edot.css` (design token EDOT) và `lms-core.js` (k
 5. Trạng thái tính theo thời gian thực (LMS.TODAY / Date.now()).
 6. Thuật ngữ: Chương trình đào tạo → Học phần → Lớp học → Buổi học / Bài giảng; Ngân hàng câu hỏi → Đề thi → Kỳ thi.
 7. Mỗi màn hình có ít nhất: tiêu đề + số lượng, bộ lọc/tìm kiếm (bỏ dấu), bảng, thao tác thêm/sửa/xem chi tiết, thao tác ⋯ theo dòng, liên kết sang màn liên quan bằng LMS.go.
+
+- `taiKhoan[]` bổ sung: `loai:'qt'|'nv'|'hv'` (Quản trị hệ thống, Nhân sự, Học viên; tài khoản giảng viên là `nv`), `admin:boolean` (Admin hệ thống, không áp dụng cho `hv`). `nhanSu[]` {id, ma, hoTen, email, donVi, taiKhoan} là hồ sơ nhân sự phòng ban; hồ sơ nhân sự để liên kết tài khoản = `nhanSu[]` + `giangVien[]`.
+
+- Phạm vi dữ liệu: `LMS.phamVi` {all, ids:{donViId:1}, ten, lyDo, donVi}; `LMS.phamViCua(taiKhoan)`; `LMS.dangNhap(ten)`. Khi tài khoản không thấy toàn bộ, `LMS.db` là bản đã lọc theo phạm vi (các bảng trong `SCOPED`), phần ngoài phạm vi được giữ riêng và ghép lại khi `save()`; màn hình không cần tự lọc theo đơn vị.
+
+- `thuMuc[]` {id, duongDan, donVi (null = dùng chung toàn Học viện), chuongTrinh (id chương trình gốc), moTa}: thư mục thư viện. Tệp vẫn lưu đường dẫn ở `thuVien[].thuMuc`; `LMS.thuMucCua(duongDan)` trả về thư mục quản lý (trùng đường dẫn hoặc thư mục cha gần nhất). `cauHinhMedia` {Video, PDF, Ảnh, Audio}: base-URL theo loại tệp.

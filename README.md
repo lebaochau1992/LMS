@@ -60,14 +60,14 @@ Thêm màn hình mới: đặt file HTML vào thư mục, bổ sung tên file v�
 | Nhóm | Màn hình | Điều chỉnh chính (mã vấn đề trong báo cáo) |
 |---|---|---|
 | Tổng quan | Bảng điều khiển | 8 chỉ số quản lý, tiến độ theo khoa/lớp so với kế hoạch, phễu học tập, chuyên cần theo tuần, phổ điểm, việc cần xử lý, học viên nguy cơ, lịch 14 ngày; số liệu thống nhất với các màn chi tiết (DL-01, DL-02, HT-01) |
-| Đào tạo | Chương trình đào tạo | Cây nhiều cấp có lọc; số học phần/lớp/học viên tự tính; chặn xóa khi đang dùng (DL-19) |
-| | Học phần | Tương ứng menu "Nội dung học tập" của hệ thống: danh sách có lọc trạng thái/chương trình/khoa, tạo ở trạng thái Nháp, nhân bản; chi tiết 5 tab (Thông tin, Bài giảng, Nội dung học tập, Học viên, Chương trình đang dùng); trình soạn bài giảng 16 loại khối (đoạn văn, công thức, ảnh, video có cấu hình xem, âm thanh có cấu hình nghe, PDF, nút, quiz 8 dạng câu và nhập từ ngân hàng, nhúng, HTML, trang tương tác, đường kẻ, nhóm, bố cục cột, lưới), tài liệu đính kèm, mục lục học liệu, xem trước theo góc nhìn học viên; điều kiện mở bài nhiều bài, tiêu chí hoàn thành mặc định và riêng từng bài, ẩn/hiện bài (NT-01, DL-19) |
-| | Lớp học | Đủ các tab như hệ thống: Thông tin lớp (ảnh bìa, loại học tập, tính chất lớp, số tín chỉ, tính điểm, ghi chú), Học viên, Nội dung học tập, Tiến độ học tập (theo học viên, theo bài, ma trận), Buổi học và điểm danh (tạo lịch định kỳ, thêm, dời, hủy buổi, rà soát và xác nhận điểm danh tự động, bảng chuyên cần học viên × buổi, xuất CSV), Điểm, Hỏi đáp / Thảo luận (như hệ thống: nhóm theo bài giảng, lọc Chưa trả lời / Đã trả lời / Gửi riêng giảng viên, bung/thu gọn, xuất Excel; bổ sung trả lời, sửa, xóa của quản trị và giảng viên lớp ở câu hỏi gốc và từng trả lời, trả lời một người có gắn @tên), Thông báo, Khảo sát, Giảng viên (giảng viên chính, trợ giảng), Quản lý đăng ký học. Thông báo: phân loại, mẫu nội dung tự điền, chọn người nhận theo nhóm (nguy cơ, chậm tiến độ, chuyên cần thấp…), email, ghim, yêu cầu xác nhận đã đọc, hẹn giờ, nháp, đính kèm, theo dõi đã xem, nhắc người chưa xem, thu hồi. Khảo sát: tạo từ mẫu, 4 dạng câu hỏi, bắt buộc, ẩn danh, thông báo mời và nhắc tự động, kết quả theo từng câu, danh sách chưa phản hồi, xuất CSV, khóa câu hỏi khi đã có phiếu |
-| | Lịch buổi học | Màn điều phối xuyên lớp cho Phòng đào tạo và lịch dạy của giảng viên (chọn vai trò). Theo dõi buổi đang diễn ra theo nhật ký phòng học, buổi chờ giảng viên xác nhận điểm danh, buổi thiếu dữ liệu, đơn xin vắng chờ duyệt; lịch tuần; quy tắc điểm danh tự động. Thêm, sửa, dời, hủy buổi (kèm thông báo học viên, tạo buổi học bù) dùng chung bộ thao tác với tab Buổi học của Lớp học |
+| Đào tạo | Chương trình đào tạo | Khung học phần học trực tuyến để mở lớp trên cổng: danh sách chương trình, chi tiết gồm nhóm học phần và các học phần lý thuyết theo thứ tự học; mỗi học phần hiện trạng thái nội dung (sẵn sàng mở lớp, đang biên soạn, chưa có nội dung), số bài và giờ học liệu, học phần học trước, lớp đang mở; mở lớp ngay từ học phần; thêm học phần đã biên soạn hoặc học phần dự kiến; mã đối chiếu với hệ thống Quản lý đào tạo; chặn gỡ khi đã mở lớp (DL-19). Khung đầy đủ của ngành (tín chỉ, học kỳ, thực hành, chuẩn đầu ra) không quản lý ở đây |
+| | Học phần | Tương ứng menu "Nội dung học tập" của hệ thống: danh sách có lọc trạng thái/chương trình/khoa, tạo ở trạng thái Nháp, nhân bản; danh sách có thẻ số liệu gọn theo trạng thái, cột Mã tách riêng, cột Số bài; học phần không khai báo tín chỉ (quản lý bên hệ thống Quản lý đào tạo), chọn chương trình khi tạo là gắn luôn; chi tiết có dải chỉ số gọn (bài giảng, thời lượng, cách mở bài, học viên, chương trình) và 5 tab (Thông tin, Bài giảng, Nội dung học tập, Học viên, Chương trình đang dùng); trình soạn bài giảng 16 loại khối (đoạn văn, công thức, ảnh, video có cấu hình xem, âm thanh có cấu hình nghe, PDF, nút, quiz 8 dạng câu và nhập từ ngân hàng, nhúng, HTML, trang tương tác, đường kẻ, nhóm, bố cục cột, lưới), tài liệu đính kèm, mục lục học liệu, xem trước theo góc nhìn học viên; điều kiện mở bài nhiều bài, tiêu chí hoàn thành mặc định và riêng từng bài, ẩn/hiện bài (NT-01, DL-19) |
+| | Lớp học | Đủ các tab như hệ thống: Thông tin lớp (ảnh bìa, loại học tập, tính chất lớp, số tín chỉ, tính điểm, ghi chú), Học viên, Nội dung học tập, Tiến độ học tập (theo học viên, theo bài, ma trận), Kế hoạch học tập (chia bài theo tuần, mốc bài tập và kiểm tra, tỷ lệ học viên đạt mốc từng tuần, điều chỉnh kế hoạch, quy tắc nhắc học, gửi kế hoạch tuần), Mức độ học tập (nhịp học từng học viên, lần học gần nhất, dải 28 ngày, khoảng cách giữa các lần học, tuần có học, nhắc học, xuất CSV), Điểm, Hỏi đáp / Thảo luận (như hệ thống: nhóm theo bài giảng, lọc Chưa trả lời / Đã trả lời / Gửi riêng giảng viên, bung/thu gọn, xuất Excel; bổ sung trả lời, sửa, xóa của quản trị và giảng viên lớp ở câu hỏi gốc và từng trả lời, trả lời một người có gắn @tên), Thông báo, Khảo sát, Giảng viên (giảng viên chính, trợ giảng), Quản lý đăng ký học. Thông báo: phân loại, mẫu nội dung tự điền, chọn người nhận theo nhóm (nguy cơ, chậm tiến độ, chuyên cần thấp…), email, ghim, yêu cầu xác nhận đã đọc, hẹn giờ, nháp, đính kèm, theo dõi đã xem, nhắc người chưa xem, thu hồi. Khảo sát: tạo từ mẫu, 4 dạng câu hỏi, bắt buộc, ẩn danh, thông báo mời và nhắc tự động, kết quả theo từng câu, danh sách chưa phản hồi, xuất CSV, khóa câu hỏi khi đã có phiếu |
+| | Theo dõi học tập | Thay cho Lịch buổi học và điểm danh. Mức độ tự học của học viên các lớp đang học: phân nhóm Học đều, Học thưa, Gián đoạn, Ngưng học, Chưa bắt đầu; lượt vào học mỗi ngày trong 28 ngày; danh sách học viên cần nhắc với lần học gần nhất, dải 28 ngày, khoảng cách giữa các lần học, tiến độ; chọn nhiều và gửi nhắc học; bảng theo lớp; quy tắc đánh giá nhịp học cấu hình được; xuất CSV |
 | | Giám sát lớp | Mức "Chưa đủ dữ liệu", cảnh báo có lý do cụ thể (DL-07) |
 | | Hỏi đáp / Thảo luận | Bố cục như hệ thống: danh sách lớp kèm số câu chờ trả lời, luồng hỏi đáp theo lớp với lọc Tất cả/Chưa trả lời, trả lời ngay trong luồng với tư cách giảng viên hoặc quản trị, xóa từng trả lời; bổ sung trạng thái Đã trả lời/Đã giải quyết, chọn câu trả lời đúng, trả lời kèm @nhắc tên, mẫu trả lời, ghim, chuyển bài, chuyển loại, nhắc giảng viên khi quá 48 giờ, xóa mềm có lý do và khôi phục, xuất CSV thời gian phản hồi |
 | | Báo cáo đào tạo | Số liệu khớp chi tiết lớp, xuất CSV (DL-05) |
-| Học liệu | Thư viện tài nguyên | Cột "Đang dùng ở", lọc tệp chưa dùng, phát hiện trùng (DL-26) |
+| Học liệu | Thư viện tài nguyên | Bố cục theo màn Thư viện của hệ thống: lọc theo chương trình đào tạo, cây thư mục (Tất cả, Chưa phân thư mục, thư mục lồng nhau), lưới thẻ tệp có Di chuyển / Copy khoá, chọn nhiều, cấu hình base-URL server media / CDN theo loại; giữ thẻ số liệu (tổng tệp, dung lượng, chưa sử dụng, trùng nội dung). Thư mục có thông tin riêng: tên, thư mục cha, phòng ban – khoa quản lý, chương trình đào tạo, ghi chú; thêm, sửa, xóa thư mục. Đơn vị quản lý thư mục mới được tải tệp lên, đổi tên, di chuyển, xóa tệp; thư mục dùng chung toàn Học viện thì đơn vị khác chỉ xem |
 | | Khảo sát | Số phiếu gửi tính theo sĩ số lớp |
 | Khảo thí | Ngân hàng câu hỏi | Học phần chọn từ danh sách, số câu tự tính, phiên bản câu hỏi, phát hiện câu trùng (DL-10, DL-11, DL-24) |
 | | Đề thi | Dựng đề từ ngân hàng theo ma trận độ khó |
@@ -79,10 +79,10 @@ Thêm màn hình mới: đặt file HTML vào thư mục, bổ sung tên file v�
 | Tài chính | Danh mục khoản thu | Chặn xóa khi lớp đang dùng |
 | | Thu học phí | Ghi nhận thanh toán → tự ghi danh; duyệt đơn đăng ký; phiếu thu (CN-09) |
 | Người dùng & hệ thống | Hồ sơ học viên | 1 học viên – 1 hồ sơ – nhiều lượt ghi danh; CCCD 12 số không trùng; cấp tài khoản đồng loạt (DL-22, DL-23) |
-| | Giảng viên | Liên kết tài khoản, cảnh báo giảng viên chưa đăng nhập được (DL-21) |
-| | Tài khoản | Liên kết hồ sơ, thao tác hàng loạt |
+| | Giảng viên | Liên kết tài khoản, cảnh báo giảng viên chưa đăng nhập được (DL-21); xóa hồ sơ chỉ khi chưa có tài khoản và chưa phụ trách lớp nào (kể cả lớp đã kết thúc), ngược lại chỉ chuyển Ngừng sử dụng và tài khoản liên kết ngừng theo; chi tiết gồm Thông tin và Lớp phụ trách |
+| | Tài khoản | Liên kết hồ sơ, thao tác hàng loạt; ba phân loại Quản trị hệ thống / Nhân sự / Học viên (giảng viên là nhân sự), ô Admin hệ thống theo phân loại, tài khoản nhân sự bắt buộc liên kết hồ sơ nhân sự (lọc theo phòng ban, khoa), tài khoản học viên cố định nhóm Học viên; tên đăng nhập sửa được, chỉ gồm chữ không dấu a–z và số 0–9, không khoảng trắng, không ký tự đặc biệt, không trùng (áp dụng cả khi tạo mới và khi cấp tài khoản ở màn Giảng viên); nhóm quyền chọn nhiều ở form và ở thao tác Đổi nhóm quyền; xóa tài khoản: chưa liên kết thì xóa, đang liên kết thì chọn xóa liên kết rồi xóa hoặc ngừng sử dụng |
 | | Nhóm quyền | Ma trận quyền theo màn hình và thao tác, phạm vi dữ liệu |
-| | Đơn vị – phòng ban | Đếm thành viên, lớp, học viên theo đơn vị (DL-20) |
+| | Đơn vị – phòng ban | Đếm thành viên, lớp, học viên theo đơn vị (DL-20); danh sách một cột toàn chiều rộng, chi tiết / sửa / tài khoản của đơn vị mở dạng popup; xóa đơn vị: chưa có tham chiếu thì xóa, có tham chiếu thì chuyển tài khoản, nhân sự, học phần, khung chương trình, lớp sang đơn vị khác rồi xóa (đơn vị trực thuộc chuyển lên cấp trên) |
 | | Nhật ký hoạt động | Việt hóa hành động, so sánh trước/sau (CN-11) |
 | Phân tích & cảnh báo | Nhóm học viên theo dõi | Nhóm tính trực tiếp mỗi lần mở, có thời điểm tính (DL-08) |
 
@@ -90,5 +90,38 @@ Thêm màn hình mới: đặt file HTML vào thư mục, bổ sung tên file v�
 
 - Không có máy chủ: đăng nhập nhận tên và mật khẩu bất kỳ; email, thông báo, thanh toán trực tuyến chỉ mô phỏng.
 - Tệp tải lên chỉ lưu thông tin tệp, không lưu nội dung.
+- Lớp trên cổng là lớp tự học: không có buổi học trực tuyến, không điểm danh. Nhật ký tự học (ngày học, số phút) trong dữ liệu mẫu là mô phỏng.
 - Tín hiệu từ trình duyệt thí sinh ở màn Giám sát thi là mô phỏng; ca KT008 luôn được dời về quanh thời điểm mở bản demo để có ca đang thi, ca KT009 luôn ở trạng thái chờ kích hoạt.
 - Dữ liệu riêng từng trình duyệt; xóa dữ liệu trình duyệt sẽ quay về dữ liệu mẫu.
+
+## Co dãn theo độ phân giải
+
+Toàn bộ màn hình dùng chung quy tắc trong `edot.css`, không khai báo riêng từng trang:
+
+| Bề rộng vùng hiển thị | Cách hiển thị |
+|---|---|
+| Dưới 760px (điện thoại) | Một cột; thẻ số liệu xếp 2 cột; bộ lọc và nút thao tác chiếm trọn hàng; bảng giữ bề rộng tối thiểu và cuộn ngang trong khung; hộp thoại gần toàn màn hình |
+| 760 – 1100px (máy tính bảng) | Lưới 2 cột, menu trái thu thành ngăn kéo (dưới 860px) |
+| 1100 – 2100px (laptop, Full HD) | Bố cục đầy đủ, nội dung giãn tối đa 1840px |
+| Từ 2100px (2K) và 2900px (4K) | Phóng toàn giao diện 115% và 140% để giữ cỡ chữ dễ đọc |
+
+Lề trang và khoảng cách co theo bề rộng (`clamp`). Đã kiểm tra tràn ngang ở 390, 768, 1024, 1366, 1920, 2560px cho màn hình danh sách, chi tiết, các tab và hộp thoại tạo mới của từng chức năng.
+
+## Thẻ số liệu
+
+Thẻ số liệu đầu mỗi màn hình dùng chung một kiểu gọn trong `edot.css` (`.kpis` / `.kpi`): số và nhãn trên một dòng, chú thích một dòng nhỏ bên dưới, vạch màu bên trái theo mức cảnh báo (xanh: ổn, cam: cần chú ý, đỏ: cần xử lý).
+
+## Phạm vi dữ liệu theo đơn vị – phòng ban – khoa
+
+Phạm vi được tính theo tài khoản đang đăng nhập và áp dụng cho mọi màn hình (xử lý tập trung trong `lms-core.js`):
+
+| Tài khoản | Phạm vi dữ liệu |
+|---|---|
+| Quản trị hệ thống, tài khoản bật Admin hệ thống | Toàn Học viện |
+| Nhân sự có nhóm quyền phạm vi "Toàn Học viện" (khảo thí, kế toán, an toàn thông tin) | Toàn Học viện |
+| Nhân sự thuộc phòng ban | Dữ liệu của phòng ban và mọi khoa, đơn vị trực thuộc |
+| Nhân sự thuộc khoa (trưởng khoa, giảng viên) | Dữ liệu của khoa mình |
+
+Dữ liệu được xác định đơn vị như sau: chương trình đào tạo, học phần, lớp học theo khoa phụ trách; ghi danh, theo dõi học tập, hỏi đáp, bài tập, kỳ thi, khảo sát, thông báo, học phí theo lớp; ngân hàng câu hỏi, đề thi theo học phần; thư viện tài nguyên theo phòng ban – khoa quản lý của thư mục (thư mục dùng chung, tệp chưa phân thư mục và tệp do chính người dùng tải lên luôn hiển thị). Chương trình đào tạo dùng chung nhiều khoa: mỗi khoa chỉ thấy nhóm và học phần của mình, chỉ khoa chủ quản sửa được thông tin chương trình.
+
+Để xem thử theo từng tài khoản: bấm nhãn "Phạm vi" trên thanh tiêu đề hoặc mục "Chuyển tài khoản" trong menu người dùng. Màn hình đang bị giới hạn phạm vi có dải thông báo ở đầu trang; cột "Đơn vị · phạm vi dữ liệu" ở màn Tài khoản cho biết phạm vi của từng tài khoản.

@@ -187,7 +187,7 @@ function wizard(src){
     }
     if(w.step===3){
       var L=lop(); var gs=LMS.ghiDanhLop(L.id,false).filter(function(g){ return g.trangThai==='dang-hoc'; });
-      var cols=L.cotDiem.map(function(c,i){ return {id:String(i),t:c.ten+' '+c.ts+'% ('+(c.nguon==='bai-tap'?'bài tập':c.nguon==='nhap'?'nhập tay':c.nguon==='ky-thi'?'kỳ thi':'điểm danh')+')',ok:c.nguon==='bai-tap'||c.nguon==='nhap'}; }).filter(function(c){return c.ok;});
+      var cols=L.cotDiem.map(function(c,i){ return {id:String(i),t:c.ten+' '+c.ts+'% ('+(c.nguon==='bai-tap'?'bài tập':c.nguon==='nhap'?'nhập tay':c.nguon==='ky-thi'?'kỳ thi':'chuyên cần tự học')+')',ok:c.nguon==='bai-tap'||c.nguon==='nhap'}; }).filter(function(c){return c.ok;});
       h += '<div class="form-grid">'+
         '<div class="field"><label>Thời điểm giao</label><div class="seg"><button data-gn="1" class="'+(f.giaoNgay?'on':'')+'"'+(hasSub?' disabled':'')+'>Giao ngay</button><button data-gn="0" class="'+(!f.giaoNgay?'on':'')+'"'+(hasSub?' disabled':'')+'>Hẹn giờ giao</button></div>'+(!f.giaoNgay?'<input class="inp" type="datetime-local" name="giaoLuc" value="'+(f.giaoLuc?dtLocal(f.giaoLuc):'')+'" style="margin-top:6px" aria-label="Giờ giao">':'')+'</div>'+
         '<div class="field"><label for="f_han">Hạn nộp <span class="req">*</span></label><input class="inp" type="datetime-local" id="f_han" name="hanNop" value="'+(f.hanNop?dtLocal(f.hanNop):'')+'"><div class="row" style="gap:4px">'+[3,7,14].map(function(n){ return '<button class="btn sm ghost" data-han="'+n+'">+'+n+' ngày</button>'; }).join('')+'</div></div>'+
@@ -398,7 +398,7 @@ function tabCD(tb,b,can){
     var h = '';
     if(!s.daCham) h+='<div class="note warn">Chưa có bài nào được chấm.</div>';
     if(s.choCham) h+='<div class="note warn">Còn '+s.choCham+' bài chờ chấm. <label class="check"><input type="checkbox" id="kem"'+(sel.kem?' checked':'')+'> Vẫn chuyển phần đã chấm, bài còn lại tự vào bảng điểm khi chấm xong</label></div>';
-    h+='<h3>1. Chọn cột điểm nhận điểm</h3><div class="col-pick" style="margin-top:8px">'+l.cotDiem.map(function(c,i){ var ok=c.nguon==='bai-tap'||c.nguon==='nhap'; var why = c.nguon==='diem-danh'?'Cột tính từ điểm danh':c.nguon==='ky-thi'?'Cột nhận điểm kỳ thi':''; var manual = c.nguon==='nhap' && Object.keys(db().diemNhap||{}).some(function(k){ return k.indexOf(l.id+':')===0 && k.slice(-2)===':'+i; });
+    h+='<h3>1. Chọn cột điểm nhận điểm</h3><div class="col-pick" style="margin-top:8px">'+l.cotDiem.map(function(c,i){ var ok=c.nguon==='bai-tap'||c.nguon==='nhap'; var why = c.nguon==='diem-danh'?'Cột tính tự động từ nhịp tự học':c.nguon==='ky-thi'?'Cột nhận điểm kỳ thi':''; var manual = c.nguon==='nhap' && Object.keys(db().diemNhap||{}).some(function(k){ return k.indexOf(l.id+':')===0 && k.slice(-2)===':'+i; });
       return '<label class="'+(!ok?'dis':'')+(sel.cot===String(i)&&!sel.moi?' on':'')+'"><input type="radio" name="cot" value="'+i+'"'+(!ok?' disabled':'')+(sel.cot===String(i)&&!sel.moi?' checked':'')+'><span><b>'+esc(c.ten)+'</b> · '+c.ts+'%<div class="muted small">'+(ok?(c.nguon==='bai-tap'?'Đang gộp '+(c.baiTap||[]).length+' bài tập':'Nhập tay'+(manual?' · đã có điểm nhập, sẽ được thay':'')):why)+'</div></span></label>'; }).join('')+
       '<label class="'+(sel.moi?'on':'')+'"><input type="radio" name="cot" value="moi"'+(sel.moi?' checked':'')+'><span><b>+ Tạo cột mới</b><div class="muted small">Thêm cột và cân lại trọng số</div></span></label></div>';
     if(sel.moi){ var sum=+sel.tsMoi + sel.ts.reduce(function(a,x){return a+(+x||0);},0);

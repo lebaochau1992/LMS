@@ -86,9 +86,9 @@ function noAccRows() {
 
 /* ---------- nhóm có sẵn ---------- */
 var BUILTIN = [
-  { id: 'nguy-co', ten: 'Nguy cơ bỏ học', tone: 'bad', tieuChi: 'Mức rủi ro Cao: tổng điểm rủi ro ≥ 50 từ vắng liên tiếp, chuyên cần, tiến độ, thời gian không học, điểm quiz', test: function (r) { return r.risk && r.risk.muc === 'cao'; }, lyDo: function () { return null; } },
+  { id: 'nguy-co', ten: 'Nguy cơ bỏ học', tone: 'bad', tieuChi: 'Mức rủi ro Cao: tổng điểm rủi ro ≥ 50 từ số tuần không vào học, tỷ lệ tuần có học, tiến độ, thời gian không học, điểm quiz', test: function (r) { return r.risk && r.risk.muc === 'cao'; }, lyDo: function () { return null; } },
   { id: 'can-theo-doi', ten: 'Cần theo dõi', tone: 'warn', tieuChi: 'Mức rủi ro Trung bình: tổng điểm rủi ro từ 25 đến dưới 50', test: function (r) { return r.risk && r.risk.muc === 'tb'; }, lyDo: function () { return null; } },
-  { id: 'vang-2', ten: 'Vắng ≥ 2 buổi liên tiếp', tone: 'bad', tieuChi: 'Vắng không phép từ 2 buổi liên tiếp trở lên tính đến buổi gần nhất', test: function (r) { return r.cc && r.cc.vangLienTiep >= 2; }, lyDo: function (r) { return 'Vắng ' + r.cc.vangLienTiep + ' buổi liên tiếp'; } },
+  { id: 'vang-2', ten: 'Không vào học ≥ 2 tuần liên tiếp', tone: 'bad', tieuChi: 'Không có ngày học nào trong 2 tuần gần nhất của lớp trở lên', test: function (r) { return r.cc && r.cc.vangLienTiep >= 2; }, lyDo: function (r) { return 'Không vào học ' + r.cc.vangLienTiep + ' tuần liên tiếp'; } },
   { id: 'chua-bat-dau', ten: 'Chưa bắt đầu học', tone: 'warn', tieuChi: 'Chưa hoàn thành bài giảng nào, lớp đang học đã khai giảng quá 7 ngày', test: function (r) { return r.td && r.td.done === 0 && r.soNgay > 7; }, lyDo: function (r) { return 'Chưa học bài nào sau ' + r.soNgay + ' ngày khai giảng'; } },
   { id: 'khong-hoc-7', ten: 'Không học 7 ngày', tone: 'warn', tieuChi: 'Đã bắt đầu học nhưng không có hoạt động học từ 7 ngày trở lên', test: function (r) { return r.td && r.td.done > 0 && r.nghi != null && r.nghi >= 7; }, lyDo: function (r) { return 'Không học ' + r.nghi + ' ngày (lần cuối ' + LMS.fmtDate(r.td.lastAt) + ')'; } },
   { id: 'xuat-sac', ten: 'Xuất sắc', tone: 'ok', tieuChi: 'Tiến độ bằng hoặc vượt kế hoạch và điểm quiz trung bình từ 8 trở lên', test: function (r) { return r.td && r.qavg != null && r.qavg >= 8 && r.td.pct >= r.kh; }, lyDo: function (r) { return 'Tiến độ ' + r.td.pct + '% (KH ' + r.kh + '%) · quiz TB ' + r.qavg.toFixed(1); } },
@@ -97,7 +97,7 @@ var BUILTIN = [
 function customs() { return Array.isArray(LMS.db.nhomTheoDoi) ? LMS.db.nhomTheoDoi : []; }
 function critText(dk) {
   var p = [];
-  if (dk.cc != null) p.push('chuyên cần < ' + dk.cc + '%');
+  if (dk.cc != null) p.push('tuần có học < ' + dk.cc + '%');
   if (dk.td != null) p.push('tiến độ < ' + dk.td + '% kế hoạch');
   if (dk.nghi != null) p.push('không học ≥ ' + dk.nghi + ' ngày');
   if (dk.lop) { var l = LMS.byId('lop', dk.lop); p.push('lớp ' + (l ? l.ma : '—')); }
@@ -118,7 +118,7 @@ function customTest(dk) {
 function customLyDo(dk) {
   return function (r) {
     var p = [];
-    if (dk.cc != null && r.cc) p.push('Chuyên cần ' + r.cc.pct + '%');
+    if (dk.cc != null && r.cc) p.push('Tuần có học ' + r.cc.pct + '%');
     if (dk.td != null) p.push('Tiến độ ' + r.td.pct + '% (KH ' + r.kh + '%)');
     if (dk.nghi != null) p.push('Không học ' + r.nghi + ' ngày');
     return p.join(' · ');
@@ -173,7 +173,7 @@ function selRows() { var m = {}; members().forEach(function (r) { m[r.id] = r; }
 
 function renderCards() {
   var gs = allGroups();
-  $('sub').textContent = 'Tính lúc ' + fmtAt(calcAt) + ' · ' + gs.length + ' nhóm · số liệu tính trực tiếp từ điểm danh, tiến độ và điểm quiz';
+  $('sub').textContent = 'Tính lúc ' + fmtAt(calcAt) + ' · ' + gs.length + ' nhóm · số liệu tính trực tiếp từ nhật ký tự học, tiến độ và điểm quiz';
   $('cards').innerHTML = gs.map(function (g) {
     var n = (cache[g.id] || []).length, hv = {}; (cache[g.id] || []).forEach(function (r) { hv[r.hv.id] = 1; });
     var nHv = Object.keys(hv).length;
@@ -221,7 +221,7 @@ function buildTable() {
           if (!r.td) return '<span class="muted nw">Chưa có dữ liệu</span>';
           var t = r.td.pct >= r.kh ? 'ok' : r.td.pct >= r.kh * .5 ? 'warn' : 'bad';
           return '<div class="td-cell">' + U.prog(r.td.pct, t) + '<div class="t-sub">' + r.td.done + '/' + r.td.tong + ' bài · kế hoạch ' + r.kh + '%</div></div>'; } },
-      { key: 'cc', label: 'Chuyên cần', cls: 'num', sortVal: function (r) { return r.cc ? r.cc.pct : null; }, render: function (r) { return r.cc ? '<b class="num">' + r.cc.pct + '%</b><div class="t-sub">' + r.cc.co + '/' + r.cc.tong + ' buổi</div>' : '<span class="muted nw">Chưa có dữ liệu</span>'; } },
+      { key: 'cc', label: 'Tuần có học', cls: 'num', sortVal: function (r) { return r.cc ? r.cc.pct : null; }, render: function (r) { return r.cc ? '<b class="num">' + r.cc.pct + '%</b><div class="t-sub">' + r.cc.co + '/' + r.cc.tong + ' tuần</div>' : '<span class="muted nw">Chưa có dữ liệu</span>'; } },
       { key: 'ly', label: 'Lý do', sortable: false, render: function (r) { return r.reasons.length ? '<div class="reasons">' + r.reasons.map(function (x) { return '<span class="tag">' + esc(x) + '</span>'; }).join('') + '</div>' : '<span class="muted">—</span>'; } },
       { key: 'muc', label: 'Mức', sortVal: function (r) { return r.risk ? r.risk.score : -1; }, render: function (r) { return r.risk ? U.badge(MUC[r.risk.muc][0], MUC[r.risk.muc][1]) + '<div class="t-sub">' + r.risk.score + ' điểm</div>' : '<span class="muted nw">Chưa đánh giá</span>'; } },
       { key: 'act', label: '', sortable: false, w: '44px', render: function (r) { return '<button class="icon-btn" data-act="' + esc(r.id) + '" aria-label="Thao tác">⋯</button>'; } }
@@ -261,8 +261,8 @@ function renderBulk() {
 /* ---------- gửi nhắc nhở ---------- */
 function mauNoiDung(g) {
   if (g.id === 'xuat-sac') return 'Chào {hoTen},\nPhòng Đào tạo ghi nhận kết quả học tập nổi bật của bạn tại {lop}: {lyDo}. Chúc mừng và mong bạn tiếp tục duy trì.\nPhòng Đào tạo – Học viện Y Dược học cổ truyền Việt Nam';
-  if (g.id === 'chua-tk') return 'Chào {hoTen},\nHồ sơ của bạn chưa được kích hoạt tài khoản cổng học tập trực tuyến. Đề nghị bạn liên hệ Phòng Đào tạo (hoặc trả lời email này) để được cấp tài khoản trước buổi học tiếp theo.\nPhòng Đào tạo – Học viện Y Dược học cổ truyền Việt Nam';
-  return 'Chào {hoTen},\nHệ thống ghi nhận tình hình học tập của bạn tại {lop} cần lưu ý: {lyDo}. Đề nghị bạn sắp xếp thời gian hoàn thành bài giảng, tham gia đầy đủ các buổi học và liên hệ giảng viên nếu cần hỗ trợ.\nPhòng Đào tạo – Học viện Y Dược học cổ truyền Việt Nam';
+  if (g.id === 'chua-tk') return 'Chào {hoTen},\nHồ sơ của bạn chưa được kích hoạt tài khoản cổng học tập trực tuyến. Đề nghị bạn liên hệ Phòng Đào tạo (hoặc trả lời email này) để được cấp tài khoản và bắt đầu học.\nPhòng Đào tạo – Học viện Y Dược học cổ truyền Việt Nam';
+  return 'Chào {hoTen},\nHệ thống ghi nhận tình hình học tập của bạn tại {lop} cần lưu ý: {lyDo}. Đề nghị bạn sắp xếp thời gian hoàn thành bài giảng, duy trì vào học ít nhất 3 ngày mỗi tuần và liên hệ giảng viên nếu cần hỗ trợ.\nPhòng Đào tạo – Học viện Y Dược học cổ truyền Việt Nam';
 }
 function guiNhac(rs) {
   if (!rs.length) return;
@@ -338,7 +338,7 @@ function csvCell(v) { v = v == null ? '' : String(v); return /[",\n;]/.test(v) ?
 function exportCsv(rs) {
   if (!rs.length) { U.toast('Không có dữ liệu để xuất', 'bad'); return; }
   var g = curGroup();
-  var lines = [['Mã HV', 'Họ tên', 'Email', 'Mã lớp', 'Lớp', 'Tiến độ (%)', 'Kế hoạch (%)', 'Chuyên cần (%)', 'Lý do', 'Mức'].join(',')];
+  var lines = [['Mã HV', 'Họ tên', 'Email', 'Mã lớp', 'Lớp', 'Tiến độ (%)', 'Kế hoạch (%)', 'Tuần có học (%)', 'Lý do', 'Mức'].join(',')];
   rs.forEach(function (r) { lines.push([r.hv.ma, r.hv.hoTen, r.hv.email, r.lop ? r.lop.ma : '', r.lop ? r.lop.ten : '', r.td ? r.td.pct : '', r.kh != null ? r.kh : '', r.cc ? r.cc.pct : '', r.reasons.join('; '), r.risk ? MUC[r.risk.muc][0] : ''].map(csvCell).join(',')); });
   var text = '﻿' + lines.join('\r\n');
   var slug = U.norm(g.ten).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -359,9 +359,9 @@ function openCustom(c) {
   var lops = db.lop.filter(function (l) { return l.trangThai === 'dang-hoc'; });
   var khoas = db.donVi.filter(function (d) { return d.laKhoa; });
   var body = document.createElement('div'); body.className = 'stack';
-  body.innerHTML = '<div class="field"><label>Tên nhóm <span class="req">*</span></label><input class="inp" name="ten" value="' + esc(c ? c.ten : '') + '" placeholder="vd: Chuyên cần thấp khoa Y học lâm sàng"></div>' +
+  body.innerHTML = '<div class="field"><label>Tên nhóm <span class="req">*</span></label><input class="inp" name="ten" value="' + esc(c ? c.ten : '') + '" placeholder="vd: Học không đều khoa Y học lâm sàng"></div>' +
     '<div class="field"><label>Điều kiện (thỏa đồng thời)</label><div class="cond">' +
-      '<input type="checkbox" name="onCc" aria-label="Điều kiện chuyên cần"' + (dk.cc != null ? ' checked' : '') + '><div class="row">Chuyên cần dưới <input class="inp num" type="number" min="1" max="100" name="cc" value="' + (dk.cc != null ? dk.cc : 80) + '"> %</div>' +
+      '<input type="checkbox" name="onCc" aria-label="Điều kiện chuyên cần"' + (dk.cc != null ? ' checked' : '') + '><div class="row">Tỷ lệ tuần có học dưới <input class="inp num" type="number" min="1" max="100" name="cc" value="' + (dk.cc != null ? dk.cc : 80) + '"> %</div>' +
       '<input type="checkbox" name="onTd" aria-label="Điều kiện tiến độ"' + (dk.td != null ? ' checked' : '') + '><div class="row">Tiến độ dưới <input class="inp num" type="number" min="1" max="100" name="td" value="' + (dk.td != null ? dk.td : 50) + '"> % kế hoạch</div>' +
       '<input type="checkbox" name="onNghi" aria-label="Điều kiện số ngày không học"' + (dk.nghi != null ? ' checked' : '') + '><div class="row">Không học từ <input class="inp num" type="number" min="1" max="90" name="nghi" value="' + (dk.nghi != null ? dk.nghi : 7) + '"> ngày</div>' +
     '</div><div class="err" id="cErr"></div></div>' +
@@ -374,8 +374,8 @@ function openCustom(c) {
   }
   function valid(x, show) {
     var e = '';
-    if (x.dk.cc == null && x.dk.td == null && x.dk.nghi == null) e = 'Chọn ít nhất một điều kiện chuyên cần, tiến độ hoặc số ngày không học';
-    else if (x.dk.cc != null && !(x.dk.cc >= 1 && x.dk.cc <= 100)) e = 'Chuyên cần phải từ 1 đến 100%';
+    if (x.dk.cc == null && x.dk.td == null && x.dk.nghi == null) e = 'Chọn ít nhất một điều kiện tuần có học, tiến độ hoặc số ngày không học';
+    else if (x.dk.cc != null && !(x.dk.cc >= 1 && x.dk.cc <= 100)) e = 'Tỷ lệ tuần có học phải từ 1 đến 100%';
     else if (x.dk.td != null && !(x.dk.td >= 1 && x.dk.td <= 100)) e = 'Tiến độ phải từ 1 đến 100% kế hoạch';
     else if (x.dk.nghi != null && !(x.dk.nghi >= 1 && x.dk.nghi <= 90 && Math.floor(x.dk.nghi) === x.dk.nghi)) e = 'Số ngày không học phải là số nguyên từ 1 đến 90';
     else if (x.dk.lop && x.dk.khoa) { var l = LMS.byId('lop', x.dk.lop); if (l && l.khoa !== x.dk.khoa) e = 'Lớp đã chọn không thuộc khoa đã chọn'; }

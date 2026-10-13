@@ -8,6 +8,26 @@
 .bulk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:var(--ems-navy-soft);border-bottom:1px solid var(--ems-navy-line);font-size:13px}
 .bulk[hidden]{display:none}
 .filters .sel{flex:0 1 180px}
+.kpis.mini.fit{display:flex;flex-wrap:wrap}
+.kpis.mini.fit .kpi{flex:0 1 auto}
+.mc{position:relative}
+.mc-ctl{min-height:36px;border:1px solid var(--ems-border-strong);border-radius:var(--r-ctl);padding:4px 30px 4px 6px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;cursor:pointer;background:var(--ems-surface);position:relative}
+.mc-ctl:after{content:"";position:absolute;right:11px;top:50%;width:7px;height:7px;border-right:1.5px solid var(--ems-muted);border-bottom:1.5px solid var(--ems-muted);transform:translateY(-70%) rotate(45deg)}
+.mc-ctl:focus-visible,.mc.open .mc-ctl{outline:none;border-color:var(--ems-navy);box-shadow:0 0 0 3px var(--ems-focus)}
+.mc-ph{color:var(--ems-faint);padding-left:4px;font-size:14px}
+.mc-chip{display:inline-flex;align-items:center;gap:4px;background:var(--ems-navy-soft);border:1px solid var(--ems-navy-line);color:var(--ems-navy);border-radius:4px;padding:1px 4px 1px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.mc-chip button{border:0;background:transparent;color:inherit;cursor:pointer;padding:0 3px;font-size:14px;line-height:1}
+.mc-pop{margin-top:4px;background:var(--ems-surface);border:1px solid var(--ems-border);border-radius:8px;box-shadow:0 10px 24px rgba(2,6,23,.15);max-height:230px;overflow:auto;padding:4px}
+.mc-pop[hidden]{display:none}
+.mc .mc-pop label{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--ems-text)}
+.mc-pop label:hover{background:var(--ems-surface-2)}
+.mc-pop small{display:block;color:var(--ems-muted);font-size:11px;font-weight:400}
+.mc.dis .mc-ctl{background:var(--ems-surface-2);cursor:not-allowed}
+.mc.dis .mc-ctl:after{display:none}
+.mc.dis .mc-chip{background:var(--ems-surface);border-color:var(--ems-border);color:var(--ems-text-2);padding-right:8px}
+.opt-list{display:flex;flex-direction:column;gap:8px}
+.opt-list .o{border:1px solid var(--ems-border);border-radius:8px;padding:10px 12px;font-size:13px}
+.opt-list .o b{display:block;margin-bottom:2px}
 .chk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;padding:10px;border:1px solid var(--ems-border);border-radius:var(--r-ctl);background:var(--ems-surface-2)}
 @media (max-width:560px){.chk-grid{grid-template-columns:1fr}}
 .pw-row{display:flex;gap:6px;align-items:center}
@@ -23,9 +43,10 @@
 <script>
 (function(){ 'use strict';
 var U = LMS.ui, esc = U.esc;
-var LOAI = { nv: 'Nhân sự', gv: 'Giảng viên', hv: 'Học viên' };
-var LOAI_TONE = { nv: 'navy', gv: 'info', hv: '' };
-var TT = { 'hoat-dong': ['Đang hoạt động', 'ok'], 'ngung': ['Ngừng hoạt động', ''] };
+var LOAI = { qt: 'Quản trị hệ thống', nv: 'Nhân sự', hv: 'Học viên' };
+var LOAI_TONE = { qt: 'navy', nv: 'info', hv: '' };
+var TT = { 'hoat-dong': ['Đang hoạt động', 'ok'], 'ngung': ['Ngừng sử dụng', ''] };
+var NQ_QT = 'nq1', NQ_HV = 'nq8';
 var F = { q: '', loai: '', nhom: '', donVi: '', tt: '', ex: '' };
 var selIds = [];
 var tbl;
@@ -45,10 +66,34 @@ document.addEventListener('click', function (e) {
 });
 
 function me() { return LMS.db.meta.user.ten; }
+function nhanSuList() { return (LMS.db.nhanSu || []).map(function (x) { return { id: x.id, ma: x.ma, hoTen: x.hoTen, email: x.email, donVi: x.donVi, taiKhoan: x.taiKhoan, kieu: 'ns', ref: x }; }).concat(LMS.db.giangVien.filter(function (g) { return g.trangThai !== 'ngung' || g.taiKhoan; }).map(function (x) { return { id: x.id, ma: x.ma, hoTen: x.hoTen, email: x.email, donVi: x.donVi, taiKhoan: x.taiKhoan, kieu: 'gv', ref: x }; })); }
 function hoSo(t) {
-  if (t.loai === 'gv') return LMS.db.giangVien.find(function (g) { return g.taiKhoan === t.id; }) || null;
-  if (t.loai === 'hv') return LMS.db.hocVien.find(function (h) { return h.taiKhoan === t.id; }) || null;
+  if (t.loai === 'nv') return nhanSuList().find(function (g) { return g.taiKhoan === t.id; }) || null;
+  if (t.loai === 'hv') { var h = LMS.db.hocVien.find(function (x) { return x.taiKhoan === t.id; }); return h ? { id: h.id, ma: h.ma, hoTen: h.hoTen, email: h.email, kieu: 'hv', ref: h } : null; }
   return null;
+}
+function hoSoTen(h) { return h.kieu === 'hv' ? 'học viên' : h.kieu === 'gv' ? 'giảng viên' : 'nhân sự'; }
+function moHoSo(h) { if (h.kieu === 'gv') LMS.go('giang-vien.html', { gv: h.id }); else if (h.kieu === 'hv') LMS.go('hoc-vien.html', { hv: h.id }); }
+function goHoSo(h) { return h.kieu === 'gv' ? '<a href="#"' + goAttr('giang-vien.html', { gv: h.id }) + ' class="mono">' + esc(h.ma) + '</a>' : h.kieu === 'hv' ? '<a href="#"' + goAttr('hoc-vien.html', { hv: h.id }) + ' class="mono">' + esc(h.ma) + '</a>' : '<span class="mono" title="' + esc(h.hoTen) + '">' + esc(h.ma) + '</span>'; }
+function nhomChoLoai(l) { return LMS.db.nhomQuyen.filter(function (n) { return l === 'hv' ? n.id === NQ_HV : n.id !== NQ_HV; }); }
+/* ô chọn nhiều nhóm quyền */
+function multiBox(host, o) {
+  var val = (o.value || []).slice(), opts = o.options || [], dis = !!o.disabled;
+  host.className = 'mc'; host.innerHTML = '<div class="mc-ctl" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false"></div><div class="mc-pop" role="listbox" hidden></div>';
+  var ctl = host.firstChild, pop = host.lastChild;
+  function paint() {
+    host.classList.toggle('dis', dis);
+    ctl.innerHTML = val.length ? val.map(function (id) { var n = opts.find(function (x) { return x.id === id; }) || LMS.byId('nhomQuyen', id) || { ten: id }; return '<span class="mc-chip">' + esc(n.ten) + (dis ? '' : '<button type="button" data-x="' + esc(id) + '" aria-label="Bỏ ' + esc(n.ten) + '">×</button>') + '</span>'; }).join('') : '<span class="mc-ph">' + esc(o.placeholder || 'Chọn nhóm quyền') + '</span>';
+    pop.innerHTML = opts.map(function (n) { return '<label><input type="checkbox" value="' + esc(n.id) + '"' + (val.indexOf(n.id) >= 0 ? ' checked' : '') + '><span>' + esc(n.ten) + (n.moTa ? '<small>' + esc(n.moTa) + '</small>' : '') + '</span></label>'; }).join('') || '<div class="muted small" style="padding:8px">Không có nhóm quyền</div>';
+  }
+  function open(on) { if (dis) on = false; pop.hidden = !on; host.classList.toggle('open', on); ctl.setAttribute('aria-expanded', on ? 'true' : 'false'); }
+  ctl.onclick = function (e) { var x = e.target.closest('[data-x]'); if (x) { val = val.filter(function (v) { return v !== x.dataset.x; }); paint(); if (o.onChange) o.onChange(val); return; } open(pop.hidden); };
+  ctl.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); open(true); var f = pop.querySelector('input'); if (f) f.focus(); } else if (e.key === 'Escape' && !pop.hidden) { e.stopPropagation(); open(false); } };
+  pop.onkeydown = function (e) { if (e.key === 'Escape') { e.stopPropagation(); open(false); ctl.focus(); } };
+  pop.onchange = function (e) { var c = e.target; if (c.checked) { if (val.indexOf(c.value) < 0) val.push(c.value); } else val = val.filter(function (v) { return v !== c.value; }); var st = pop.scrollTop; paint(); pop.scrollTop = st; var again = pop.querySelector('input[value="' + c.value + '"]'); if (again) again.focus(); if (o.onChange) o.onChange(val); };
+  document.addEventListener('mousedown', function h(e) { if (!document.body.contains(host)) { document.removeEventListener('mousedown', h); return; } if (!host.contains(e.target)) open(false); });
+  paint();
+  return { get: function () { return val.slice(); }, set: function (v) { val = v.slice(); paint(); }, config: function (c) { if (c.options) opts = c.options; if (c.disabled != null) dis = c.disabled; if (c.value) val = c.value.slice(); val = val.filter(function (v) { return opts.some(function (x) { return x.id === v; }); }); open(false); paint(); } };
 }
 function nhomTen(id) { var n = LMS.byId('nhomQuyen', id); return n ? n.ten : id; }
 function goAttr(page, param) { return ' data-go="' + page + '" data-p="' + esc(JSON.stringify(param)) + '"'; }
@@ -56,9 +101,18 @@ function listHtml(arr) {
   return '<ul class="acc-list">' + arr.slice(0, 12).map(function (t) { return '<li><b>' + esc(t.ten) + '</b> · ' + esc(t.hoTen) + '</li>'; }).join('') + (arr.length > 12 ? '<li>… và ' + (arr.length - 12) + ' tài khoản khác</li>' : '') + '</ul>';
 }
 function tomTatDs(arr) { return arr.length === 1 ? arr[0].ten : arr.length + ' tài khoản: ' + arr.slice(0, 5).map(function (t) { return t.ten; }).join(', ') + (arr.length > 5 ? '…' : ''); }
+function loiTen(ten, self) {
+  if (!ten) return 'Nhập tên đăng nhập';
+  if (/\s/.test(ten)) return 'Tên đăng nhập không chứa khoảng trắng';
+  if (/[^\x00-\x7f]/.test(ten)) return 'Tên đăng nhập không dùng chữ có dấu tiếng Việt';
+  if (/[^a-z0-9]/i.test(ten)) return 'Tên đăng nhập không dùng ký tự đặc biệt, chỉ gồm chữ a–z và số 0–9';
+  if (ten.length < 3 || ten.length > 40) return 'Tên đăng nhập dài từ 3 đến 40 ký tự';
+  if (LMS.db.taiKhoan.some(function (x) { return x !== self && x.ten.toLowerCase() === ten.toLowerCase(); })) return 'Tên đăng nhập đã tồn tại';
+  return '';
+}
 function snap(t) {
   var hs = hoSo(t);
-  return { 'Họ tên': t.hoTen, 'Email': t.email, 'Phân loại': LOAI[t.loai], 'Nhóm quyền': t.nhom.map(nhomTen).join(', ') || '—', 'Đơn vị': t.donVi ? LMS.donViTen(t.donVi) : '—', 'Hồ sơ liên kết': hs ? hs.ma : '—', 'Trạng thái': TT[t.trangThai][0] };
+  return { 'Tên đăng nhập': t.ten, 'Họ tên': t.hoTen, 'Email': t.email, 'Phân loại': LOAI[t.loai] || t.loai, 'Admin hệ thống': t.admin ? 'Có' : 'Không', 'Nhóm quyền': t.nhom.map(nhomTen).join(', ') || '—', 'Đơn vị': t.donVi ? LMS.donViTen(t.donVi) : '—', 'Hồ sơ liên kết': hs ? hs.ma : '—', 'Trạng thái': TT[t.trangThai][0] };
 }
 
 /* ---------- lọc ---------- */
@@ -67,7 +121,7 @@ function match(t) {
   if (F.nhom && t.nhom.indexOf(F.nhom) < 0) return false;
   if (F.donVi === '__none' ? !!t.donVi : (F.donVi && t.donVi !== F.donVi)) return false;
   if (F.tt && t.trangThai !== F.tt) return false;
-  if (F.ex === 'chua-lk' && !((t.loai === 'gv' || t.loai === 'hv') && !hoSo(t))) return false;
+  if (F.ex === 'chua-lk' && !((t.loai === 'nv' || t.loai === 'hv') && !hoSo(t))) return false;
   if (F.ex === 'chua-dn' && t.lanCuoi) return false;
   if (F.ex === 'mk-tam' && !t.mkTam) return false;
   if (F.q) { var q = U.norm(F.q); if (U.norm(t.ten + ' ' + t.hoTen + ' ' + t.email).indexOf(q) < 0) return false; }
@@ -79,7 +133,7 @@ function rows() { return LMS.db.taiKhoan.filter(match); }
 var app = document.getElementById('app');
 app.innerHTML =
   '<div class="page-head"><div><h1>Tài khoản</h1><div class="sub" id="sub"></div></div><div class="actions"><button class="btn" id="btnNhom">Nhóm quyền</button><button class="btn primary" id="btnAdd">+ Thêm tài khoản</button></div></div>' +
-  '<div class="kpis" id="kpis"></div>' +
+  '<div class="kpis mini fit" id="kpis"></div>' +
   '<div class="panel"><div class="panel-head filters">' +
     '<input class="inp" id="fQ" placeholder="Tìm tên đăng nhập, họ tên, email">' +
     '<select class="sel" id="fLoai"></select><select class="sel" id="fNhom"></select><select class="sel" id="fDv"></select><select class="sel" id="fTt"></select>' +
@@ -102,22 +156,22 @@ function renderFilters() {
 }
 function renderSub() {
   var n = rows().length, all = LMS.db.taiKhoan.length;
-  $('sub').textContent = (n === all ? all + ' tài khoản' : n + ' / ' + all + ' tài khoản') + ' · Nhân sự, giảng viên và học viên đăng nhập cổng';
+  $('sub').textContent = (n === all ? all + ' tài khoản' : n + ' / ' + all + ' tài khoản') + ' · Quản trị hệ thống, nhân sự và học viên đăng nhập cổng';
 }
 function renderKpis() {
   var a = LMS.db.taiKhoan;
   var hd = a.filter(function (t) { return t.trangThai === 'hoat-dong'; }).length;
-  var chuaLk = a.filter(function (t) { return (t.loai === 'gv' || t.loai === 'hv') && !hoSo(t); }).length;
+  var chuaLk = a.filter(function (t) { return (t.loai === 'nv' || t.loai === 'hv') && !hoSo(t); }).length;
   var chuaDn = a.filter(function (t) { return !t.lanCuoi; }).length;
   var mkTam = a.filter(function (t) { return t.mkTam; }).length;
   var k = [
     { key: 'all', label: 'Tổng tài khoản', val: a.length, sub: a.filter(function (t) { return t.loai === 'hv'; }).length + ' học viên', on: !F.tt && !F.ex },
     { key: 'tt:hoat-dong', label: 'Đang hoạt động', val: hd, sub: a.length ? Math.round(hd / a.length * 100) + '%' : '', cls: 'ok', on: F.tt === 'hoat-dong' },
-    { key: 'tt:ngung', label: 'Ngừng hoạt động', val: a.length - hd, sub: 'Không đăng nhập được', on: F.tt === 'ngung' },
-    { key: 'ex:chua-lk', label: 'Chưa liên kết hồ sơ', val: chuaLk, sub: chuaLk ? 'Cần gắn hồ sơ GV/HV' : 'Đầy đủ', cls: chuaLk ? 'warn' : 'ok', on: F.ex === 'chua-lk' },
+    { key: 'tt:ngung', label: 'Ngừng sử dụng', val: a.length - hd, sub: 'Không đăng nhập được', on: F.tt === 'ngung' },
+    { key: 'ex:chua-lk', label: 'Chưa liên kết hồ sơ', val: chuaLk, sub: chuaLk ? 'Cần gắn hồ sơ nhân sự, học viên' : 'Mọi tài khoản đã liên kết hồ sơ', cls: chuaLk ? 'warn' : 'ok', on: F.ex === 'chua-lk' },
     { key: 'ex:chua-dn', label: 'Chưa đăng nhập', val: chuaDn, sub: mkTam + ' đang dùng mật khẩu tạm', cls: chuaDn ? 'warn' : '', on: F.ex === 'chua-dn' }
   ];
-  $('kpis').innerHTML = k.map(function (x) { return '<div class="kpi clickable ' + (x.cls || '') + (x.on ? ' active' : '') + '" data-k="' + x.key + '" tabindex="0"><div class="k-label">' + x.label + '</div><div class="k-val">' + x.val + '</div><div class="k-sub">' + esc(x.sub) + '</div></div>'; }).join('');
+  $('kpis').innerHTML = k.map(function (x) { return '<div class="kpi clickable ' + (x.cls || '') + (x.on ? ' active' : '') + '" data-k="' + x.key + '" tabindex="0" title="' + esc(x.sub) + '"><span class="k-val">' + x.val + '</span><span class="k-label">' + x.label + '</span></div>'; }).join('');
   $('kpis').querySelectorAll('.kpi').forEach(function (el) {
     el.onclick = function () {
       var k = el.dataset.k; F.tt = ''; F.ex = '';
@@ -131,15 +185,14 @@ function renderKpis() {
 var cols = [
   { key: 'ten', label: 'Tên đăng nhập', render: function (t) { return '<span class="mono">' + U.hl(t.ten, F.q) + '</span>' + (t.ten === me() ? ' ' + U.badge('Bạn', 'navy') : ''); } },
   { key: 'hoTen', label: 'Họ tên', render: function (t) { return '<div class="t-main">' + U.hl(t.hoTen, F.q) + '</div><div class="t-sub">' + U.hl(t.email, F.q) + '</div>'; } },
-  { key: 'loai', label: 'Phân loại', render: function (t) { return U.badge(LOAI[t.loai], LOAI_TONE[t.loai]); }, sortVal: function (t) { return LOAI[t.loai]; } },
+  { key: 'loai', label: 'Phân loại', render: function (t) { return U.badge(LOAI[t.loai] || t.loai, LOAI_TONE[t.loai]) + (t.admin ? '<div class="cell-sub">Admin hệ thống</div>' : ''); }, sortVal: function (t) { return LOAI[t.loai]; } },
   { key: 'nhom', label: 'Nhóm quyền', render: function (t) { return t.nhom.length ? t.nhom.map(function (id) { return '<span class="tag">' + esc(nhomTen(id)) + '</span>'; }).join('') : U.badge('Chưa gán nhóm', 'warn'); }, sortVal: function (t) { return t.nhom.map(nhomTen).join(','); } },
-  { key: 'donVi', label: 'Đơn vị', render: function (t) { return t.donVi ? esc(LMS.donViTen(t.donVi)) : '<span class="muted">—</span>'; }, sortVal: function (t) { return t.donVi ? LMS.donViTen(t.donVi) : null; } },
+  { key: 'donVi', label: 'Đơn vị · phạm vi dữ liệu', render: function (t) { var pv = t.loai === 'hv' ? null : LMS.phamViCua(t); return (t.donVi ? esc(LMS.donViTen(t.donVi)) : '<span class="muted">—</span>') + (pv ? '<div class="cell-sub" title="' + esc(pv.lyDo || '') + '">Phạm vi: ' + esc(pv.all ? 'Toàn Học viện' : pv.ten) + '</div>' : ''); }, sortVal: function (t) { return t.donVi ? LMS.donViTen(t.donVi) : null; } },
   { key: 'hoSo', label: 'Hồ sơ liên kết', render: function (t) {
-      if (t.loai === 'nv') return '<span class="muted">—</span>';
+      if (t.loai === 'qt') return '<span class="muted">—</span>';
       var h = hoSo(t);
-      if (!h) return U.badge('Chưa liên kết hồ sơ', 'warn');
-      return t.loai === 'gv' ? '<a href="#"' + goAttr('giang-vien.html', { gv: h.id }) + ' class="mono">' + esc(h.ma) + '</a>' : '<a href="#"' + goAttr('hoc-vien.html', { hv: h.id }) + ' class="mono">' + esc(h.ma) + '</a>';
-    }, sortVal: function (t) { var h = hoSo(t); return h ? h.ma : (t.loai === 'nv' ? null : ''); } },
+      return h ? goHoSo(h) : U.badge('Chưa liên kết hồ sơ', 'warn');
+    }, sortVal: function (t) { var h = hoSo(t); return h ? h.ma : (t.loai === 'qt' ? null : ''); } },
   { key: 'trangThai', label: 'Trạng thái', render: function (t) { return U.badge(TT[t.trangThai][0], TT[t.trangThai][1]) + (t.mkTam ? '<div class="cell-sub">MK tạm · ' + LMS.fmtDate(t.mkTam.ngay) + '</div>' : ''); } },
   { key: 'lanCuoi', label: 'Lần đăng nhập cuối', render: function (t) { return t.lanCuoi ? '<span class="num">' + LMS.fmtDT(t.lanCuoi) + '</span>' : '<span class="muted">Chưa đăng nhập</span>'; } },
   { key: 'act', label: '', sortable: false, w: '44px', render: function (t) { return '<button class="icon-btn" data-act="' + esc(t.id) + '" aria-label="Thao tác">⋯</button>'; } }
@@ -165,7 +218,7 @@ function renderBulk() {
   el.innerHTML = '<b>Đã chọn ' + s.length + ' tài khoản</b>' +
     '<button class="btn sm" data-b="nhom">Đổi nhóm quyền</button>' +
     '<button class="btn sm" data-b="mk">Cấp lại mật khẩu</button>' +
-    '<button class="btn sm danger" data-b="ngung"' + (nNgung ? '' : ' disabled') + '>Ngừng hoạt động (' + nNgung + ')</button>' +
+    '<button class="btn sm danger" data-b="ngung"' + (nNgung ? '' : ' disabled') + '>Ngừng sử dụng (' + nNgung + ')</button>' +
     '<button class="btn sm" data-b="kh"' + (nKh ? '' : ' disabled') + '>Kích hoạt lại (' + nKh + ')</button>' +
     '<button class="btn sm ghost right" data-b="clear">Bỏ chọn</button>';
   el.querySelectorAll('[data-b]').forEach(function (b) {
@@ -184,32 +237,58 @@ function rowMenu(anchor, t) {
   var h = hoSo(t), self = t.ten === me();
   U.menu(anchor, [
     { label: 'Sửa thông tin', onClick: function () { openForm(t); } },
-    { label: 'Đổi nhóm quyền', onClick: function () { doiNhom([t]); } },
+    { label: 'Đổi nhóm quyền', disabled: t.loai === 'hv', title: 'Tài khoản học viên cố định nhóm quyền Học viên', onClick: function () { doiNhom([t]); } },
     { label: 'Cấp lại mật khẩu', onClick: function () { capLaiMk([t]); } },
-    h ? { label: 'Xem hồ sơ ' + (t.loai === 'gv' ? 'giảng viên' : 'học viên'), onClick: function () { LMS.go(t.loai === 'gv' ? 'giang-vien.html' : 'hoc-vien.html', t.loai === 'gv' ? { gv: h.id } : { hv: h.id }); } } : null,
+    h && h.kieu !== 'ns' ? { label: 'Xem hồ sơ ' + hoSoTen(h), onClick: function () { moHoSo(h); } } : null,
     { label: 'Xem nhật ký hoạt động', onClick: function () { LMS.go('nhat-ky.html', { user: t.ten }); } },
     '-',
     t.trangThai === 'hoat-dong'
-      ? { label: 'Ngừng hoạt động', danger: true, disabled: self, title: 'Không thể ngừng tài khoản đang đăng nhập', onClick: function () { doiTrangThai([t], 'ngung'); } }
-      : { label: 'Kích hoạt lại', onClick: function () { doiTrangThai([t], 'hoat-dong'); } }
+      ? { label: 'Ngừng sử dụng', disabled: self, title: 'Không thể ngừng tài khoản đang đăng nhập', onClick: function () { doiTrangThai([t], 'ngung'); } }
+      : { label: 'Kích hoạt lại', onClick: function () { doiTrangThai([t], 'hoat-dong'); } },
+    { label: 'Xóa tài khoản', danger: true, disabled: self, title: 'Không thể xóa tài khoản đang đăng nhập', onClick: function () { xoaTK(t); } }
   ]);
+}
+
+function xoaTK(t) {
+  if (t.ten === me()) { U.toast('Không thể xóa tài khoản đang đăng nhập', 'bad'); return; }
+  var db = LMS.db;
+  if (t.nhom.indexOf(NQ_QT) >= 0 && !db.taiKhoan.some(function (x) { return x !== t && x.trangThai === 'hoat-dong' && x.nhom.indexOf(NQ_QT) >= 0; })) { U.blocked('Không thể xóa ' + t.ten, ['Đây là tài khoản Quản trị hệ thống đang hoạt động duy nhất'], 'Gán nhóm Quản trị hệ thống cho một tài khoản khác trước khi xóa.'); return; }
+  function xoa(goLk) {
+    var h = hoSo(t), truoc = snap(t);
+    if (goLk && h) h.ref.taiKhoan = null;
+    db.taiKhoan = db.taiKhoan.filter(function (x) { return x.id !== t.id; });
+    LMS.commit('Xóa', 'Tài khoản', t.ten + ' · ' + t.hoTen + (goLk && h ? ' · gỡ liên kết hồ sơ ' + h.ma : ''), truoc, null);
+    U.toast('Đã xóa tài khoản ' + t.ten + (goLk && h ? ', hồ sơ ' + h.ma + ' không còn tài khoản đăng nhập' : ''), 'ok');
+    tbl.clearSel(); render();
+  }
+  var h = hoSo(t);
+  if (!h) {
+    U.confirm({ title: 'Xóa tài khoản', html: 'Xóa tài khoản <b>' + esc(t.ten) + '</b> (' + esc(t.hoTen) + ')? Tài khoản không liên kết hồ sơ nhân sự hay học viên nào. Nhật ký hoạt động của tài khoản được giữ lại. Thao tác không hoàn tác được.', ok: 'Xóa tài khoản', danger: true }).then(function (ok) { if (ok) xoa(false); });
+    return;
+  }
+  var active = t.trangThai === 'hoat-dong';
+  U.modal({ title: 'Tài khoản đang liên kết hồ sơ', size: 'sm',
+    body: '<div class="note warn">Tài khoản <b>' + esc(t.ten) + '</b> đang liên kết hồ sơ ' + hoSoTen(h) + ' <b>' + esc(h.ma) + ' · ' + esc(h.hoTen) + '</b> nên chưa xóa ngay được.</div>' +
+      '<div class="opt-list"><div class="o"><b>Xóa liên kết rồi xóa</b>Gỡ tài khoản khỏi hồ sơ ' + esc(h.ma) + ' và xóa hẳn. ' + (h.kieu === 'hv' ? 'Học viên' : 'Người dùng') + ' không đăng nhập được cho đến khi được cấp tài khoản mới.</div>' +
+      '<div class="o"><b>Ngừng sử dụng</b>' + (active ? 'Giữ tài khoản và liên kết hồ sơ, chỉ khóa đăng nhập. Kích hoạt lại được khi cần.' : 'Tài khoản đang ở trạng thái Ngừng sử dụng, liên kết hồ sơ vẫn được giữ.') + '</div></div>',
+    foot: [{ label: 'Hủy', close: true }].concat(active ? [{ label: 'Ngừng sử dụng', onClick: function () { setTimeout(function () { doiTrangThai([t], 'ngung'); }, 0); } }] : []).concat([{ label: 'Xóa liên kết rồi xóa', cls: 'danger', onClick: function () { xoa(true); } }]) });
 }
 
 /* ---------- thao tác ---------- */
 function doiTrangThai(list, to) {
   var self = list.filter(function (t) { return t.ten === me(); });
   var ds = list.filter(function (t) { return t.trangThai !== to && !(to === 'ngung' && t.ten === me()); });
-  if (!ds.length) { U.toast(to === 'ngung' ? 'Không có tài khoản nào cần ngừng hoạt động' : 'Không có tài khoản nào cần kích hoạt lại', 'bad'); return; }
+  if (!ds.length) { U.toast(to === 'ngung' ? 'Không có tài khoản nào cần ngừng sử dụng' : 'Không có tài khoản nào cần kích hoạt lại', 'bad'); return; }
   var ngung = to === 'ngung';
-  var html = (ngung ? 'Ngừng hoạt động' : 'Kích hoạt lại') + ' <b>' + ds.length + '</b> tài khoản:' + listHtml(ds) +
+  var html = (ngung ? 'Ngừng sử dụng' : 'Kích hoạt lại') + ' <b>' + ds.length + '</b> tài khoản:' + listHtml(ds) +
     (ngung ? '<div class="note warn" style="margin-top:10px">Người dùng sẽ không đăng nhập được cho đến khi được kích hoạt lại. Dữ liệu và lịch sử học tập được giữ nguyên.</div>' : '') +
     (ngung && self.length ? '<div class="muted small" style="margin-top:8px">Bỏ qua tài khoản đang đăng nhập (' + esc(me()) + ').</div>' : '');
-  U.confirm({ title: ngung ? 'Ngừng hoạt động tài khoản' : 'Kích hoạt lại tài khoản', html: html, ok: ngung ? 'Ngừng hoạt động' : 'Kích hoạt lại', danger: ngung }).then(function (ok) {
+  U.confirm({ title: ngung ? 'Ngừng sử dụng tài khoản' : 'Kích hoạt lại tài khoản', html: html, ok: ngung ? 'Ngừng sử dụng' : 'Kích hoạt lại', danger: ngung }).then(function (ok) {
     if (!ok) return;
     var tu = TT[ngung ? 'hoat-dong' : 'ngung'][0], den = TT[to][0];
     ds.forEach(function (t) { t.trangThai = to; });
-    LMS.commit(ngung ? 'Ngừng hoạt động' : 'Kích hoạt lại', 'Tài khoản', tomTatDs(ds), { 'Tài khoản': ds.map(function (t) { return t.ten; }).join(', '), 'Trạng thái': tu }, { 'Tài khoản': ds.map(function (t) { return t.ten; }).join(', '), 'Trạng thái': den });
-    U.toast((ngung ? 'Đã ngừng hoạt động ' : 'Đã kích hoạt lại ') + ds.length + ' tài khoản', 'ok');
+    LMS.commit(ngung ? 'Ngừng sử dụng' : 'Kích hoạt lại', 'Tài khoản', tomTatDs(ds), { 'Tài khoản': ds.map(function (t) { return t.ten; }).join(', '), 'Trạng thái': tu }, { 'Tài khoản': ds.map(function (t) { return t.ten; }).join(', '), 'Trạng thái': den });
+    U.toast((ngung ? 'Đã ngừng sử dụng ' : 'Đã kích hoạt lại ') + ds.length + ' tài khoản', 'ok');
     tbl.clearSel(); render();
   });
 }
@@ -251,19 +330,20 @@ function capLaiMk(list) {
   });
 }
 
-function doiNhom(list) {
-  if (!list.length) return;
-  var db = LMS.db, mode = 'thay';
-  var cur = list.length === 1 ? list[0].nhom.slice() : [];
+function doiNhom(all) {
+  var hvs = all.filter(function (t) { return t.loai === 'hv'; }), list = all.filter(function (t) { return t.loai !== 'hv'; });
+  if (!list.length) { U.toast('Tài khoản học viên cố định nhóm quyền Học viên, không đổi được', 'bad'); return; }
+  var mode = 'thay', one = list.length === 1;
   var body = document.createElement('div'); body.className = 'stack';
-  body.innerHTML = '<div class="small muted">Áp dụng cho ' + (list.length === 1 ? '<b>' + esc(list[0].ten) + '</b>' : '<b>' + list.length + '</b> tài khoản') + '</div>' +
-    '<div class="seg" id="mode"><button type="button" class="on" data-m="thay">Thay thế nhóm</button><button type="button" data-m="them">Thêm vào nhóm</button><button type="button" data-m="go">Gỡ khỏi nhóm</button></div>' +
-    '<div class="chk-grid">' + db.nhomQuyen.map(function (n) { return '<label class="check"><input type="checkbox" value="' + esc(n.id) + '"' + (cur.indexOf(n.id) >= 0 ? ' checked' : '') + '> ' + esc(n.ten) + '</label>'; }).join('') + '</div><div class="err small" id="nErr" style="color:var(--ems-danger)"></div>';
+  body.innerHTML = '<div class="small muted">Áp dụng cho ' + (one ? '<b>' + esc(list[0].ten) + '</b> · ' + esc(list[0].hoTen) : '<b>' + list.length + '</b> tài khoản') + (hvs.length ? ' · bỏ qua ' + hvs.length + ' tài khoản học viên (cố định nhóm Học viên)' : '') + '</div>' +
+    (one ? '' : '<div class="seg" id="mode"><button type="button" class="on" data-m="thay">Thay thế nhóm</button><button type="button" data-m="them">Thêm vào nhóm</button><button type="button" data-m="go">Gỡ khỏi nhóm</button></div>') +
+    '<div class="field"><label>Nhóm quyền <span class="req">*</span></label><div id="nq"></div><div class="hint">Chọn được nhiều nhóm; quyền của tài khoản là hợp quyền của các nhóm.</div><div class="err" id="nErr"></div></div>';
+  var mb = multiBox(body.querySelector('#nq'), { options: nhomChoLoai('nv'), value: one ? list[0].nhom : [], onChange: function () { body.querySelector('#nErr').textContent = ''; } });
   body.querySelectorAll('[data-m]').forEach(function (b) { b.onclick = function () { mode = b.dataset.m; body.querySelectorAll('[data-m]').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
   U.modal({
     title: 'Đổi nhóm quyền', body: body,
     foot: [{ label: 'Hủy', close: true }, { label: 'Lưu', cls: 'primary', onClick: function () {
-      var picked = Array.prototype.map.call(body.querySelectorAll('.chk-grid input:checked'), function (i) { return i.value; });
+      var picked = mb.get();
       var err = body.querySelector('#nErr');
       if (!picked.length) { err.textContent = 'Chọn ít nhất một nhóm quyền'; return false; }
       var result = list.map(function (t) {
@@ -272,7 +352,7 @@ function doiNhom(list) {
       });
       var empty = result.filter(function (r) { return !r.n.length; });
       if (empty.length) { err.textContent = 'Tài khoản ' + empty.slice(0, 3).map(function (r) { return r.t.ten; }).join(', ') + (empty.length > 3 ? '…' : '') + ' sẽ không còn nhóm quyền nào'; return false; }
-      var selfLose = result.find(function (r) { return r.t.ten === me() && r.t.nhom.indexOf('nq1') >= 0 && r.n.indexOf('nq1') < 0; });
+      var selfLose = result.find(function (r) { return r.t.ten === me() && r.t.nhom.indexOf(NQ_QT) >= 0 && r.n.indexOf(NQ_QT) < 0; });
       if (selfLose) { err.textContent = 'Không thể gỡ nhóm Quản trị hệ thống khỏi tài khoản đang đăng nhập'; return false; }
       var changed = result.filter(function (r) { return r.n.slice().sort().join() !== r.t.nhom.slice().sort().join(); });
       if (!changed.length) { U.toast('Không có thay đổi'); return; }
@@ -289,74 +369,94 @@ function doiNhom(list) {
 /* ---------- thêm / sửa ---------- */
 function openForm(t) {
   var db = LMS.db, isNew = !t;
-  var d = t || { ten: '', hoTen: '', email: '', loai: 'nv', nhom: [], donVi: '', trangThai: 'hoat-dong' };
+  var d = t || { ten: '', hoTen: '', email: '', loai: F.loai || 'qt', nhom: [], donVi: '', trangThai: 'hoat-dong' };
+  if (!LOAI[d.loai]) d = Object.assign({}, d, { loai: 'nv' });
   var hs = t ? hoSo(t) : null;
   var body = document.createElement('div');
   body.innerHTML = '<div class="form-grid">' +
-    '<div class="field"><label>Tên đăng nhập <span class="req">*</span></label><input class="inp mono" name="ten" value="' + esc(d.ten) + '"' + (isNew ? ' placeholder="vd: nguyenvana"' : ' readonly') + ' autocomplete="off"></div>' +
-    '<div class="field"><label>Phân loại <span class="req">*</span></label><select class="sel" name="loai">' + U.opts(Object.keys(LOAI).map(function (k) { return { v: k, l: LOAI[k] }; }), 'v', 'l', d.loai) + '</select></div>' +
+    '<div class="field"><label>Tên đăng nhập <span class="req">*</span></label><input class="inp mono" name="ten" maxlength="40" value="' + esc(d.ten) + '" placeholder="vd: nguyenvana" autocomplete="off" spellcheck="false"><div class="hint">3–40 ký tự, chỉ gồm chữ không dấu a–z và số 0–9; không khoảng trắng, không ký tự đặc biệt.</div></div>' +
+    '<div class="field"><label>Phân loại tài khoản <span class="req">*</span></label><select class="sel" name="loai">' + U.opts(Object.keys(LOAI).map(function (k) { return { v: k, l: LOAI[k] }; }), 'v', 'l', d.loai) + '</select></div>' +
+    '<div class="field full"><label class="check"><input type="checkbox" name="admin"> Admin hệ thống</label><div class="hint" id="adHint"></div></div>' +
+    '<div class="field"><label id="dvLab">Đơn vị – phòng ban</label><select class="sel" name="donVi"></select><div class="hint" id="dvHint"></div></div>' +
+    '<div class="field" id="hsField"><label id="hsLab">Hồ sơ liên kết</label><select class="sel" name="hoSo"></select><div class="hint" id="hsHint"></div></div>' +
     '<div class="field"><label>Họ tên <span class="req">*</span></label><input class="inp" name="hoTen" value="' + esc(d.hoTen) + '"></div>' +
     '<div class="field"><label>Email <span class="req">*</span></label><input class="inp" name="email" type="email" value="' + esc(d.email) + '"></div>' +
-    '<div class="field"><label>Đơn vị <span class="req" id="dvReq">*</span></label><select class="sel" name="donVi">' + U.opts(db.donVi, 'id', 'ten', d.donVi || '', '— Không thuộc đơn vị —') + '</select></div>' +
-    '<div class="field" id="hsField"><label>Hồ sơ liên kết</label><select class="sel" name="hoSo"></select></div>' +
-    '<div class="field full"><label>Nhóm quyền <span class="req">*</span></label><div class="chk-grid" id="nhomBox">' + db.nhomQuyen.map(function (n) { return '<label class="check"><input type="checkbox" name="nq_' + esc(n.id) + '" data-nq="' + esc(n.id) + '"' + (d.nhom.indexOf(n.id) >= 0 ? ' checked' : '') + '> ' + esc(n.ten) + '</label>'; }).join('') + '</div><div class="err" id="nhomErr"></div></div>' +
+    '<div class="field full"><label>Nhóm quyền <span class="req">*</span></label><div id="nq"></div><div class="hint" id="nqHint"></div><div class="err" id="nhomErr"></div></div>' +
     (isNew ? pwFields() : '') +
     '</div>' + (!isNew && t.mkTam ? '<div class="note info">Đang dùng mật khẩu tạm cấp ngày ' + LMS.fmtDate(t.mkTam.ngay) + '.</div>' : '');
-  var loaiSel = body.querySelector('[name=loai]'), hsSel = body.querySelector('[name=hoSo]');
-  function fillHs() {
-    var l = loaiSel.value, f = body.querySelector('#hsField');
-    body.querySelector('#dvReq').style.display = l === 'hv' ? 'none' : '';
-    if (l === 'nv') { f.style.display = 'none'; hsSel.innerHTML = ''; return; }
-    f.style.display = '';
-    var coll = l === 'gv' ? db.giangVien : db.hocVien;
-    var free = coll.filter(function (x) { return !x.taiKhoan || (t && x.taiKhoan === t.id); });
-    var curId = hs && t && l === t.loai ? hs.id : '';
-    hsSel.innerHTML = U.opts(free, 'id', function (x) { return x.ma + ' · ' + x.hoTen; }, curId, '— Chưa liên kết —');
+  var q = function (n) { return body.querySelector('[name=' + n + ']'); };
+  var loaiSel = q('loai'), hsSel = q('hoSo'), dvSel = q('donVi'), adm = q('admin');
+  var mb = multiBox(body.querySelector('#nq'), { options: nhomChoLoai(d.loai), value: d.nhom, onChange: function () { body.querySelector('#nhomErr').textContent = ''; } });
+  function dsHoSo(l) { return (l === 'hv' ? db.hocVien.map(function (x) { return { id: x.id, ma: x.ma, hoTen: x.hoTen, email: x.email, taiKhoan: x.taiKhoan, kieu: 'hv', ref: x }; }) : nhanSuList()).filter(function (x) { return !x.taiKhoan || (t && x.taiKhoan === t.id); }); }
+  function fillHs(keep) {
+    var l = loaiSel.value, list = dsHoSo(l);
+    if (l === 'nv' && dvSel.value) list = list.filter(function (x) { return x.donVi === dvSel.value || x.id === keep; });
+    hsSel.innerHTML = U.opts(list, 'id', function (x) { return x.ma + ' · ' + x.hoTen + (x.kieu === 'gv' ? ' (giảng viên)' : ''); }, keep || '', l === 'nv' ? '— Chọn hồ sơ nhân sự —' : '— Chưa liên kết —');
+    body.querySelector('#hsHint').textContent = l === 'nv' ? (list.length ? list.length + ' hồ sơ chưa có tài khoản' + (dvSel.value ? ' thuộc đơn vị đã chọn' : '') : 'Không còn hồ sơ nhân sự chưa có tài khoản' + (dvSel.value ? ' ở đơn vị này' : '')) : l === 'hv' ? 'Chỉ liên kết được với hồ sơ học viên chưa có tài khoản' : '';
   }
-  loaiSel.onchange = function () {
-    fillHs();
-    if (isNew && !body.querySelector('#nhomBox input:checked')) {
-      var def = { gv: 'nq4', hv: 'nq8' }[loaiSel.value];
-      var cb = def && body.querySelector('[data-nq="' + def + '"]'); if (cb) cb.checked = true;
-    }
-  };
+  function apply(reset) {
+    var l = loaiSel.value;
+    /* admin hệ thống */
+    adm.disabled = l === 'hv';
+    if (l === 'hv') adm.checked = false; else if (reset) adm.checked = l === 'qt';
+    body.querySelector('#adHint').textContent = l === 'hv' ? 'Tài khoản học viên không được đặt làm Admin hệ thống.' : l === 'qt' ? 'Mặc định bật với tài khoản quản trị, có thể bỏ chọn.' : 'Tùy chọn với tài khoản nhân sự.';
+    /* đơn vị – phòng ban */
+    var curDv = reset ? '' : (dvSel.value || d.donVi || '');
+    dvSel.disabled = l === 'hv';
+    dvSel.innerHTML = U.opts(l === 'hv' ? [] : db.donVi, 'id', 'ten', l === 'hv' ? '' : curDv, l === 'nv' ? 'Tất cả phòng ban, khoa' : '—');
+    body.querySelector('#dvLab').textContent = l === 'nv' ? 'Đơn vị – phòng ban (lọc hồ sơ)' : 'Đơn vị – phòng ban';
+    body.querySelector('#dvHint').textContent = l === 'nv' ? 'Chọn phòng ban, khoa để lọc danh sách hồ sơ nhân sự.' : l === 'hv' ? 'Không áp dụng với học viên.' : '';
+    /* hồ sơ */
+    body.querySelector('#hsField').style.display = l === 'qt' ? 'none' : '';
+    body.querySelector('#hsLab').innerHTML = l === 'nv' ? 'Hồ sơ nhân sự <span class="req">*</span>' : 'Hồ sơ học viên';
+    fillHs(!reset && hs && t && l === t.loai ? hs.id : '');
+    /* nhóm quyền */
+    var val = reset ? (l === 'qt' ? [NQ_QT] : l === 'hv' ? [NQ_HV] : []) : (l === 'hv' ? [NQ_HV] : mb.get());
+    mb.config({ options: nhomChoLoai(l), disabled: l === 'hv', value: val });
+    body.querySelector('#nqHint').textContent = l === 'hv' ? 'Tài khoản học viên cố định nhóm quyền Học viên.' : l === 'qt' ? 'Mặc định Quản trị hệ thống, chọn thêm được các nhóm khác.' : 'Bắt buộc chọn ít nhất một nhóm, chọn được nhiều nhóm.';
+    body.querySelector('#nhomErr').textContent = '';
+  }
+  loaiSel.onchange = function () { apply(true); };
+  dvSel.onchange = function () { if (loaiSel.value === 'nv') fillHs(hsSel.value); };
   hsSel.onchange = function () {
-    var coll = loaiSel.value === 'gv' ? db.giangVien : db.hocVien;
-    var x = coll.find(function (o) { return o.id === hsSel.value; }); if (!x) return;
-    var ht = body.querySelector('[name=hoTen]'), em = body.querySelector('[name=email]');
-    if (!ht.value) ht.value = x.hoTen; if (!em.value) em.value = x.email || '';
-    if (loaiSel.value === 'gv' && x.donVi && !body.querySelector('[name=donVi]').value) body.querySelector('[name=donVi]').value = x.donVi;
+    var x = dsHoSo(loaiSel.value).find(function (o) { return o.id === hsSel.value; }); if (!x) return;
+    q('hoTen').value = x.hoTen; q('email').value = x.email || '';
+    if (loaiSel.value === 'nv' && x.donVi) { dvSel.value = x.donVi; fillHs(x.id); }
+    ['hoSo', 'hoTen', 'email'].forEach(function (n) { U.fieldErr(body, n, ''); });
   };
-  fillHs();
+  q('ten').oninput = function () { U.fieldErr(body, 'ten', this.value ? loiTen(this.value, t) : ''); };
+  apply(isNew);
+  if (!isNew) adm.checked = !!t.admin && t.loai !== 'hv';
   U.modal({
     title: isNew ? 'Thêm tài khoản' : 'Sửa tài khoản · ' + t.ten, body: body, size: 'lg',
     onOpen: function (api) { bindShow(api.body); },
     foot: [{ label: 'Hủy', close: true }, { label: isNew ? 'Tạo tài khoản' : 'Lưu thay đổi', cls: 'primary', onClick: function () {
       var v = U.formVals(body), ok = true;
-      var nhom = Array.prototype.map.call(body.querySelectorAll('#nhomBox input:checked'), function (i) { return i.dataset.nq; });
-      if (isNew) {
-        v.ten = v.ten.toLowerCase();
-        if (!/^[a-z0-9._]{3,}$/.test(v.ten)) { U.fieldErr(body, 'ten', 'Tối thiểu 3 ký tự, chỉ gồm a-z, 0-9, dấu chấm, gạch dưới'); ok = false; }
-        else if (db.taiKhoan.some(function (x) { return x.ten.toLowerCase() === v.ten; })) { U.fieldErr(body, 'ten', 'Tên đăng nhập đã tồn tại'); ok = false; }
-        else U.fieldErr(body, 'ten', '');
-      }
+      v.loai = loaiSel.value; v.hoSo = v.loai === 'qt' ? '' : hsSel.value; v.donVi = v.loai === 'hv' ? '' : dvSel.value;
+      var nhom = v.loai === 'hv' ? [NQ_HV] : mb.get();
+      v.ten = String(q('ten').value || '').toLowerCase(); q('ten').value = v.ten;
+      var eTen = loiTen(v.ten, t); U.fieldErr(body, 'ten', eTen); if (eTen) ok = false;
+      var prof = v.hoSo ? dsHoSo(v.loai).find(function (o) { return o.id === v.hoSo; }) : null;
+      if (v.loai === 'nv' && !prof) { U.fieldErr(body, 'hoSo', 'Chọn hồ sơ nhân sự liên kết với tài khoản'); ok = false; } else U.fieldErr(body, 'hoSo', '');
       if (!v.hoTen) { U.fieldErr(body, 'hoTen', 'Nhập họ tên'); ok = false; } else U.fieldErr(body, 'hoTen', '');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) { U.fieldErr(body, 'email', 'Email không đúng định dạng'); ok = false; }
       else if (db.taiKhoan.some(function (x) { return x !== t && (x.email || '').toLowerCase() === v.email.toLowerCase(); })) { U.fieldErr(body, 'email', 'Email đã dùng cho tài khoản khác'); ok = false; }
       else U.fieldErr(body, 'email', '');
-      if (v.loai !== 'hv' && !v.donVi) { U.fieldErr(body, 'donVi', 'Chọn đơn vị công tác'); ok = false; } else U.fieldErr(body, 'donVi', '');
       var ne = body.querySelector('#nhomErr');
       if (!nhom.length) { ne.textContent = 'Chọn ít nhất một nhóm quyền'; ok = false; } else ne.textContent = '';
-      if (!isNew && t.ten === me() && t.nhom.indexOf('nq1') >= 0 && nhom.indexOf('nq1') < 0) { ne.textContent = 'Không thể gỡ nhóm Quản trị hệ thống khỏi tài khoản đang đăng nhập'; ok = false; }
+      if (!isNew && t.ten === me() && t.nhom.indexOf(NQ_QT) >= 0 && nhom.indexOf(NQ_QT) < 0) { ne.textContent = 'Không thể gỡ nhóm Quản trị hệ thống khỏi tài khoản đang đăng nhập'; ok = false; }
       if (isNew && !checkPw(body, v)) ok = false;
       if (!ok) return false;
 
       var truoc = t ? snap(t) : null;
       var acc = t || { id: LMS.nextId('tk'), ten: v.ten, trangThai: 'hoat-dong', lanCuoi: null, mkTam: { ngay: new Date().toISOString(), boi: me() } };
-      acc.hoTen = v.hoTen; acc.email = v.email; acc.loai = v.loai; acc.nhom = nhom; acc.donVi = v.donVi || null;
+      var tenCu = t ? t.ten : null;
+      if (t && v.ten !== tenCu) { db.nhatKy.forEach(function (n) { if (n.user === tenCu) n.user = v.ten; }); if (db.meta.user.ten === tenCu) db.meta.user.ten = v.ten; acc.ten = v.ten; }
+      acc.hoTen = v.hoTen; acc.email = v.email; acc.loai = v.loai; acc.nhom = nhom; acc.admin = v.loai !== 'hv' && adm.checked;
+      acc.donVi = v.loai === 'nv' ? (prof.donVi || v.donVi || null) : (v.donVi || null);
       if (isNew) db.taiKhoan.push(acc);
-      db.giangVien.concat(db.hocVien).forEach(function (x) { if (x.taiKhoan === acc.id && x.id !== v.hoSo) x.taiKhoan = null; });
-      if (v.hoSo && acc.loai !== 'nv') { var coll = acc.loai === 'gv' ? db.giangVien : db.hocVien; var x = coll.find(function (o) { return o.id === v.hoSo; }); if (x) x.taiKhoan = acc.id; }
+      db.giangVien.concat(db.hocVien, db.nhanSu || []).forEach(function (x) { if (x.taiKhoan === acc.id && !(prof && x === prof.ref)) x.taiKhoan = null; });
+      if (prof) prof.ref.taiKhoan = acc.id;
       var sau = snap(acc);
       if (isNew) { LMS.commit('Tạo', 'Tài khoản', acc.ten + ' · ' + acc.hoTen, null, sau); U.toast('Đã tạo tài khoản ' + acc.ten, 'ok'); }
       else {

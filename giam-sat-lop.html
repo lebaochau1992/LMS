@@ -39,16 +39,14 @@ function analyze(lop){
   gds.forEach(function(g){ var r = LMS.riskOf(lop.id, g.hv); if (!r) return; if (r.muc === 'cao') cao++; else if (r.muc === 'tb') tb++; });
   var gap = s.tienDo != null ? s.keHoach - s.tienDo : null;
   var reasons = [], muc;
-  if (s.buoiDaDay === 0 && s.keHoach < 10) { muc = 'na'; reasons.push(lop.trangThai === 'tuyen-sinh' ? 'Chưa khai giảng' : 'Chưa có buổi đã dạy'); }
+  if (lop.trangThai === 'tuyen-sinh' || s.keHoach < 5) { muc = 'na'; reasons.push(lop.trangThai === 'tuyen-sinh' ? 'Chưa khai giảng' : 'Mới khai giảng'); }
   else {
     var ct = false, td = false;
     if (gap != null && gap > 15) { ct = true; reasons.push('Tiến độ chậm ' + gap + ' điểm so với kế hoạch'); }
     else if (gap != null && gap > 8) { td = true; reasons.push('Tiến độ chậm ' + gap + ' điểm'); }
-    if (s.chuyenCan != null && s.chuyenCan < 70) { ct = true; reasons.push('Chuyên cần ' + s.chuyenCan + '%'); }
-    else if (s.chuyenCan != null && s.chuyenCan < 80) { td = true; reasons.push('Chuyên cần ' + s.chuyenCan + '%'); }
-    if (s.buoiChuaDD >= 2) { ct = true; reasons.push(s.buoiChuaDD + ' buổi chưa có điểm danh'); }
-    else if (s.buoiChuaDD === 1) { td = true; reasons.push('1 buổi chưa có điểm danh'); }
-    if (s.buoiChoXN) { td = true; reasons.push(s.buoiChoXN + ' buổi chờ GV xác nhận điểm danh'); }
+    if (s.chuyenCan != null && s.chuyenCan < 70) { ct = true; reasons.push('Chỉ ' + s.chuyenCan + '% số tuần có học'); }
+    else if (s.chuyenCan != null && s.chuyenCan < 80) { td = true; reasons.push(s.chuyenCan + '% số tuần có học'); }
+    var ng = s.nhip.ngung + s.nhip.chua; if (s.nhipN && ng / s.nhipN >= .2) { ct = true; reasons.push(ng + ' HV ngưng hoặc chưa học'); } else if (ng) { td = true; reasons.push(ng + ' HV ngưng hoặc chưa học'); }
     if (s.dangHoc && cao / s.dangHoc >= .15) { ct = true; reasons.push(cao + ' HV nguy cơ cao'); }
     else if (cao > 0) { td = true; reasons.push(cao + ' HV nguy cơ cao'); }
     muc = ct ? 'ct' : td ? 'td' : 'ok';
@@ -67,7 +65,7 @@ function render(){
   var data = lopGS().map(analyze);
   var dang = data.filter(function(a){ return a.lop.trangThai === 'dang-hoc'; });
   var cham = data.filter(function(a){ return a.cham; }).length;
-  var chuaDD = data.reduce(function(s, a){ return s + a.s.buoiChuaDD + a.s.buoiChoXN; }, 0);
+  var chuaDD = data.reduce(function(s, a){ return s + (a.lop.trangThai === 'dang-hoc' ? a.s.nhip.ngung + a.s.nhip['gian-doan'] + a.s.nhip.chua : 0); }, 0);
   var cao = data.reduce(function(s, a){ return s + a.cao; }, 0);
   var ts = data.length - dang.length;
   var khoas = D().donVi.filter(function(d){ return d.laKhoa; });
@@ -77,7 +75,7 @@ function render(){
     '<div class="kpis">' +
       kpi('', 'Lớp đang học', dang.length, ts ? '+ ' + ts + ' lớp đang tuyển sinh' : 'không có lớp tuyển sinh', '') +
       kpi('cham', 'Lớp chậm tiến độ', cham, 'thấp hơn kế hoạch > 15 điểm', cham ? 'bad' : 'ok') +
-      kpi('dd', 'Buổi chưa chốt điểm danh', chuaDD, chuaDD ? 'chờ xác nhận hoặc thiếu dữ liệu' : 'đã chốt đầy đủ', chuaDD ? 'warn' : 'ok') +
+      kpi('dd', 'Học viên cần nhắc học', chuaDD, chuaDD ? 'gián đoạn, ngưng học hoặc chưa bắt đầu' : 'không có', chuaDD ? 'warn' : 'ok') +
       kpi('cao', 'Học viên nguy cơ cao', cao, 'trên ' + dang.reduce(function(s, a){ return s + a.s.dangHoc; }, 0) + ' lượt ghi danh đang học', cao ? 'bad' : 'ok') +
     '</div>' +
     '<div class="panel"><div class="panel-head filters">' +
@@ -102,8 +100,8 @@ function render(){
       { key: 'lop', label: 'Lớp', sortVal: function(a){ return a.lop.ma; }, render: function(a){ var t = LMS.TT_LOP[a.lop.trangThai]; return '<div class="t-main">' + U.hl(a.lop.ma, st.q) + ' · ' + U.hl(a.lop.ten, st.q) + '</div><div class="t-sub">' + esc(LMS.donViTen(a.lop.khoa)) + ' · ' + esc(LMS.trangThaiThoiGian(a.lop).label) + (a.lop.trangThai === 'tuyen-sinh' ? ' · ' + t[0] : '') + '</div>'; } },
       { key: 'gv', label: 'Giảng viên', sortVal: function(a){ return gvTen(a.lop.giangVien[0]); }, render: function(a){ return a.lop.giangVien.map(function(g){ return '<div class="small">' + esc(gvTen(g)) + '</div>'; }).join(''); } },
       { key: 'td', label: 'Tiến độ TB / kế hoạch', sortVal: function(a){ return a.gap; }, render: function(a){ return pk(a.s.tienDo, a.s.keHoach); } },
-      { key: 'cc', label: 'Chuyên cần TB', cls: 'num', sortVal: function(a){ return a.s.chuyenCan; }, render: function(a){ return !a.s.apDungDD ? '<span class="muted small">Không áp dụng (tự học)</span>' : a.s.chuyenCan == null ? '<span class="muted small">Chưa có dữ liệu</span>' : '<b class="' + (a.s.chuyenCan < 70 ? 'txt-bad' : '') + '" style="' + (a.s.chuyenCan < 70 ? 'color:var(--ems-danger)' : a.s.chuyenCan < 80 ? 'color:var(--ems-warning)' : '') + '">' + a.s.chuyenCan + '%</b>'; } },
-      { key: 'buoi', label: 'Buổi đã dạy', cls: 'num', sortVal: function(a){ return a.s.buoiDaDay; }, render: function(a){ return a.s.buoiDaDay + '/' + a.s.buoiTong + (a.s.buoiChuaDD + a.s.buoiChoXN ? '<div class="t-sub" style="color:var(--ems-' + (a.s.buoiChuaDD ? 'danger' : 'warning') + ')">' + (a.s.buoiChuaDD + a.s.buoiChoXN) + ' chưa chốt</div>' : ''); } },
+      { key: 'cc', label: 'Tuần có học TB', cls: 'num', sortVal: function(a){ return a.s.chuyenCan; }, render: function(a){ return !a.s.apDungDD ? '<span class="muted small">Không áp dụng (tự học)</span>' : a.s.chuyenCan == null ? '<span class="muted small">Chưa có dữ liệu</span>' : '<b class="' + (a.s.chuyenCan < 70 ? 'txt-bad' : '') + '" style="' + (a.s.chuyenCan < 70 ? 'color:var(--ems-danger)' : a.s.chuyenCan < 80 ? 'color:var(--ems-warning)' : '') + '">' + a.s.chuyenCan + '%</b>'; } },
+      { key: 'buoi', label: 'Nhịp học', sortVal: function(a){ return a.s.nhipN ? a.s.nhip.deu / a.s.nhipN : -1; }, render: function(a){ if (!a.s.nhipN) return '<span class="muted small">—</span>'; var c = a.s.nhip.ngung + a.s.nhip['gian-doan'] + a.s.nhip.chua; return '<b>' + a.s.nhip.deu + '/' + a.s.nhipN + '</b> học đều' + (c ? '<div class="t-sub" style="color:var(--ems-danger)">' + c + ' cần nhắc</div>' : ''); } },
       { key: 'risk', label: 'HV nguy cơ', sortVal: function(a){ return a.cao * 100 + a.tb; }, render: function(a){ if (a.lop.trangThai !== 'dang-hoc') return '<span class="muted small">—</span>'; return '<div class="risk-sum">' + (a.cao ? U.badge('Cao ' + a.cao, 'bad') : '') + (a.tb ? U.badge('TB ' + a.tb, 'warn') : '') + (!a.cao && !a.tb ? '<span class="muted small">Không có</span>' : '') + '</div><div class="t-sub">/' + a.s.dangHoc + ' HV</div>'; } },
       { key: 'muc', label: 'Mức cảnh báo', sortVal: function(a){ return MUC[a.muc][2] * 1000 + (a.cao || 0); }, render: function(a){ var m = MUC[a.muc]; return U.badge(m[0], m[1]) + (a.reasons.length ? '<div class="reasons">' + a.reasons.map(esc).join(' · ') + '</div>' : ''); } }
     ],
@@ -118,7 +116,7 @@ function render(){
   document.getElementById('btnBC').onclick = function(){ LMS.go('bao-cao-dao-tao.html'); };
   app.querySelectorAll('[data-kpi]').forEach(function(k){ k.onclick = function(){
     var v = k.dataset.kpi;
-    if (v === 'dd') { LMS.go('buoi-hoc.html', { trangThai: 'can' }); return; }
+    if (v === 'dd') { LMS.go('theo-doi-hoc-tap.html', { nhom: 'can' }); return; }
     st.kpi = st.kpi === v ? '' : v; render();
   }; });
   renderDetail(false);
@@ -142,7 +140,7 @@ function renderDetail(scroll){
   var rows = all.filter(function(r){ return !st.riskF || (r.rk && r.rk.muc === st.riskF); });
   var nCao = all.filter(function(r){ return r.rk && r.rk.muc === 'cao'; }).length, nTb = all.filter(function(r){ return r.rk && r.rk.muc === 'tb'; }).length;
   host.innerHTML = '<div class="panel"><div class="panel-head"><div class="grow"><div class="eyebrow">Chi tiết lớp</div><h2>' + esc(lop.ma + ' · ' + lop.ten) + '</h2><div class="small muted">' + esc(lop.giangVien.map(gvTen).join(', ')) + ' · ' + LMS.fmtDate(lop.batDau) + ' – ' + LMS.fmtDate(lop.ketThuc) + ' · ' + a.s.dangHoc + ' HV · ' + U.badge(MUC[a.muc][0], MUC[a.muc][1]) + '</div></div>' +
-    '<div class="row"><button class="btn" data-openlop>Mở lớp</button><button class="btn" data-buoi>Lịch buổi học</button><button class="btn primary" data-nhac disabled>Nhắc học viên</button><button class="icon-btn" data-close aria-label="Đóng">✕</button></div></div>' +
+    '<div class="row"><button class="btn" data-openlop>Mở lớp</button><button class="btn" data-buoi>Mức độ học tập</button><button class="btn primary" data-nhac disabled>Nhắc học viên</button><button class="icon-btn" data-close aria-label="Đóng">✕</button></div></div>' +
     '<div class="panel-head filters"><div class="seg" data-rf>' + [['', 'Tất cả (' + all.length + ')'], ['cao', 'Nguy cơ cao (' + nCao + ')'], ['tb', 'Trung bình (' + nTb + ')']].map(function(x){ return '<button data-v="' + x[0] + '"' + (st.riskF === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
     '<button class="btn sm" data-selcao' + (nCao ? '' : ' disabled') + '>Chọn nhóm nguy cơ cao</button><span class="small muted right" data-selcnt>Chưa chọn học viên</span></div><div data-hvtbl></div></div>';
   var nhac = host.querySelector('[data-nhac]'), cnt = host.querySelector('[data-selcnt]');
@@ -153,14 +151,14 @@ function renderDetail(scroll){
     columns: [
       { key: 'hv', label: 'Học viên', sortVal: function(r){ return r.hv.hoTen; }, render: function(r){ return U.person(r.hv.hoTen, esc(r.hv.ma)); } },
       { key: 'td', label: 'Tiến độ', sortVal: function(r){ return r.td.pct; }, render: function(r){ return U.prog(r.td.pct, null, r.td.done + '/' + r.td.tong) + '<div class="t-sub">' + (r.td.lastAt ? 'Học gần nhất ' + LMS.fmtDate(r.td.lastAt) : 'Chưa vào học') + '</div>'; } },
-      { key: 'cc', label: 'Chuyên cần', cls: 'num', sortVal: function(r){ return r.cc ? r.cc.pct : null; }, render: function(r){ return r.cc ? '<b>' + r.cc.pct + '%</b><div class="t-sub">' + r.cc.co + '/' + r.cc.tong + ' buổi</div>' : '<span class="muted small">Chưa có dữ liệu</span>'; } },
-      { key: 'vlt', label: 'Vắng liên tiếp', cls: 'num', sortVal: function(r){ return r.cc ? r.cc.vangLienTiep : null; }, render: function(r){ var v = r.cc ? r.cc.vangLienTiep : null; return v == null ? '—' : (v >= 2 ? '<b style="color:var(--ems-danger)">' + v + '</b>' : v); } },
+      { key: 'cc', label: 'Tuần có học', cls: 'num', sortVal: function(r){ return r.cc ? r.cc.pct : null; }, render: function(r){ return r.cc ? '<b>' + r.cc.pct + '%</b><div class="t-sub">' + r.cc.co + '/' + r.cc.tong + ' tuần</div>' : '<span class="muted small">Chưa có dữ liệu</span>'; } },
+      { key: 'vlt', label: 'Tuần nghỉ liên tiếp', cls: 'num', sortVal: function(r){ return r.cc ? r.cc.vangLienTiep : null; }, render: function(r){ var v = r.cc ? r.cc.vangLienTiep : null; return v == null ? '—' : (v >= 2 ? '<b style="color:var(--ems-danger)">' + v + '</b>' : v); } },
       { key: 'quiz', label: 'Quiz TB', cls: 'num', sortVal: function(r){ return r.quiz; }, render: function(r){ return r.quiz == null ? '<span class="muted">—</span>' : '<b' + (r.quiz < 5 ? ' style="color:var(--ems-danger)"' : '') + '>' + r.quiz.toLocaleString('vi-VN') + '</b><div class="t-sub">' + r.nQuiz + ' bài</div>'; } },
       { key: 'rk', label: 'Nguy cơ', sortVal: function(r){ return r.rk ? r.rk.score : -1; }, render: function(r){ if (!r.rk) return '<span class="muted small">—</span>'; var m = RISK[r.rk.muc]; return U.badge(m[0], m[1]) + (r.rk.reasons.length ? '<div class="reasons">' + r.rk.reasons.map(esc).join(' · ') + '</div>' : ''); } }
     ]
   });
   host.querySelector('[data-openlop]').onclick = function(){ LMS.go('lop-hoc.html', { lop: lop.id }); };
-  host.querySelector('[data-buoi]').onclick = function(){ LMS.go('buoi-hoc.html', { lop: lop.id }); };
+  host.querySelector('[data-buoi]').onclick = function(){ LMS.go('lop-hoc.html', { lop: lop.id, tab: 'nhip' }); };
   host.querySelector('[data-close]').onclick = function(){ st.lop = null; render(); };
   host.querySelectorAll('[data-rf] button').forEach(function(b){ b.onclick = function(){ st.riskF = b.dataset.v; renderDetail(false); }; });
   host.querySelector('[data-selcao]').onclick = function(){
@@ -174,7 +172,7 @@ function renderDetail(scroll){
 function openNhac(lop, hvs){
   if (!hvs.length) return;
   var hp = LMS.hocPhanOfLop(lop);
-  var mau = 'Chào bạn, hệ thống ghi nhận tiến độ học tập học phần ' + (hp ? hp.ten : '') + ' của bạn đang chậm so với kế hoạch lớp ' + lop.ma + '. Đề nghị bạn hoàn thành các bài còn thiếu và tham gia đầy đủ các buổi học tiếp theo. Cần hỗ trợ, vui lòng phản hồi giảng viên phụ trách.';
+  var mau = 'Chào bạn, hệ thống ghi nhận tiến độ học tập học phần ' + (hp ? hp.ten : '') + ' của bạn đang chậm so với kế hoạch lớp ' + lop.ma + '. Đề nghị bạn hoàn thành các bài còn thiếu và duy trì vào học ít nhất 3 ngày mỗi tuần. Cần hỗ trợ, vui lòng phản hồi giảng viên phụ trách.';
   U.modal({
     title: 'Nhắc học viên · ' + lop.ma,
     body: '<div class="small">Gửi tới <b>' + hvs.length + '</b> học viên: ' + esc(hvs.slice(0, 5).map(function(h){ return h.hoTen; }).join(', ')) + (hvs.length > 5 ? ' và ' + (hvs.length - 5) + ' người khác' : '') + '</div>' +

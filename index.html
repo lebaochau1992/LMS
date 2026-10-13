@@ -77,6 +77,7 @@ body{padding:0;overflow:hidden}
       <div class="tools">
         <a class="btn sm hide-sm" href="cong-hoc-vien/index.html" target="_blank" rel="noopener" title="Mở Cổng học viên dùng chung dữ liệu với bản quản trị">Cổng học viên ↗</a>
         <button class="btn sm ghost hide-sm" id="btnReset" title="Xóa mọi thay đổi và nạp lại dữ liệu mẫu">Khôi phục dữ liệu mẫu</button>
+        <button class="badge navy hide-sm" id="pvChip" style="cursor:pointer;font-family:inherit" title="Phạm vi dữ liệu của tài khoản đang đăng nhập. Bấm để chuyển tài khoản."></button>
         <button class="icon-btn" id="btnTheme" title="Đổi giao diện sáng / tối" aria-label="Đổi giao diện"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
         <button class="userbtn" id="btnUser" aria-haspopup="true"><span class="avatar" id="uAvatar">LC</span><span class="hide-sm" id="uName">admin02</span> ▾</button>
       </div>
@@ -140,7 +141,7 @@ function findItem(id){ return allItems().find(function(x){ return x.it.id===id; 
 /* số việc cần xử lý hiện trên menu */
 function counts(){
   var db = LMS.db, c = {};
-  var chuaDD = db.buoiHoc.filter(function(b){ var k=LMS.buoiStatus(b).key; return k==='chua-dd'||k==='cho-xn'; }).length; if(chuaDD) c['buoi-hoc']=chuaDD;
+  var canNhac = 0; db.ghiDanh.forEach(function(g){ if(g.trangThai!=='dang-hoc') return; var l=LMS.byId('lop',g.lop); if(!l||l.trangThai!=='dang-hoc') return; var n=LMS.nhipHoc(g.lop,g.hv); if(n && (n.nhom.key==='ngung'||n.nhom.key==='chua')) canNhac++; }); if(canNhac) c['theo-doi-hoc-tap']=canNhac;
   var cham = db.baiLam.filter(function(b){ return b.trangThai==='cho-cham'; }).length; if(cham) c['cham-bai']=cham; var bt = (db.baiTap||[]).reduce(function(a,b){ return a+(b.trangThai==='nhap'?0:LMS.btStats(b).choCham); },0); if(bt) c['bai-tap']=bt; var gs = (db.phienThi||[]).filter(function(p){ var k=LMS.byId('kyThi',p.ky); return k && LMS.kyThiStatus(k).key==='dang' && (p.trangThai==='khoa'||p.trangThai==='mat-ket-noi'||(p.suKien||[]).some(function(e){ return !e.xl && LMS.SK[e.loai] && LMS.SK[e.loai][1]>=2; })); }).length; if(gs) c['giam-sat-thi']=gs;
   var hd = db.hoiDap.filter(function(h){ return LMS.hdChoTL(h) && LMS.daysBetween(h.ngay, LMS.TODAY)>=2; }).length; if(hd) c['hoi-dap']=hd;
   return c;
@@ -201,26 +202,37 @@ document.getElementById('btnReset').onclick = function(){
 
 /* ---------- người dùng ---------- */
 function me(){ return LMS.db.meta.user; }
-function paintUser(){ document.getElementById('uName').textContent = me().ten; document.getElementById('uAvatar').textContent = U.initials(me().hoTen); }
+function tkMe(){ return LMS.taiKhoanDangNhap().find(function(t){ return t.ten===me().ten; }) || null; }
+var LOAI_TK = { qt:'Quản trị hệ thống', nv:'Nhân sự', hv:'Học viên' };
+function paintUser(){ document.getElementById('uName').textContent = me().ten; document.getElementById('uAvatar').textContent = U.initials(me().hoTen); var c=document.getElementById('pvChip'); c.textContent = 'Phạm vi: ' + LMS.phamVi.ten; c.className = 'badge hide-sm ' + (LMS.phamVi.all ? 'navy' : 'info'); }
+document.getElementById('pvChip').onclick = chuyenTK;
+function chuyenTK(){
+  var ds = LMS.taiKhoanDangNhap();
+  var body = '<div class="muted small">Chọn tài khoản để xem hệ thống theo phạm vi dữ liệu của tài khoản đó. Quản trị hệ thống, Admin hệ thống và nhóm quyền có phạm vi Toàn Học viện thấy toàn bộ; các tài khoản nhân sự khác thấy dữ liệu của đơn vị mình và các đơn vị trực thuộc.</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tài khoản</th><th>Đơn vị</th><th>Nhóm quyền</th><th>Phạm vi dữ liệu</th><th></th></tr></thead><tbody>' +
+    ds.map(function(t){ var pv = LMS.phamViCua(t), cur = t.ten===me().ten, off = t.trangThai==='ngung';
+      return '<tr><td><b class="mono">'+esc(t.ten)+'</b><div class="t-sub">'+esc(t.hoTen)+' · '+esc(LOAI_TK[t.loai]||'')+(t.admin?' · Admin':'')+'</div></td><td>'+esc(LMS.donViTen(t.donVi))+'</td><td>'+(t.nhom||[]).map(function(id){ return '<span class="tag">'+esc(LMS.name('nhomQuyen',id,'ten'))+'</span>'; }).join('')+'</td><td>'+U.badge(pv.ten, pv.all?'navy':'info')+'<div class="t-sub">'+esc(pv.lyDo||'')+'</div></td><td style="text-align:right">'+(cur?U.badge('Đang dùng','ok'):off?'<span class="muted small">Ngừng sử dụng</span>':'<button class="btn sm" data-tk="'+esc(t.ten)+'">Chuyển</button>')+'</td></tr>'; }).join('') + '</tbody></table></div>';
+  U.modal({ title:'Chuyển tài khoản · phạm vi dữ liệu', size:'lg', body:body, noFocus:true, onOpen:function(api){ api.body.querySelectorAll('[data-tk]').forEach(function(b){ b.onclick=function(){ if(LMS.dangNhap(b.dataset.tk)) location.reload(); else U.toast('Chưa chuyển được tài khoản vì trình duyệt không lưu được dữ liệu','bad'); }; }); }, foot:[{label:'Đóng',cls:'primary',close:true}] });
+}
 document.getElementById('btnUser').onclick = function(e){
   e.stopPropagation();
   var ex = document.querySelector('.umenu'); if(ex){ ex.remove(); return; }
   var m = document.createElement('div'); m.className='menu umenu';
-  m.innerHTML = '<div class="who"><b>'+esc(me().hoTen)+'</b><div class="muted small">'+esc(me().email)+'</div></div><button data-a="info">Thông tin người dùng</button><button data-a="pw">Đổi mật khẩu</button><hr><button data-a="out" class="danger">Đăng xuất</button>';
+  m.innerHTML = '<div class="who"><b>'+esc(me().hoTen)+'</b><div class="muted small">'+esc(me().email)+'</div></div><button data-a="info">Thông tin người dùng</button><button data-a="sw">Chuyển tài khoản</button><button data-a="pw">Đổi mật khẩu</button><hr><button data-a="out" class="danger">Đăng xuất</button>';
   document.body.appendChild(m);
-  m.onclick = function(ev){ var a = ev.target.dataset.a; if(!a) return; m.remove(); if(a==='info') userInfo(); if(a==='pw') changePw(); if(a==='out') logout(); };
+  m.onclick = function(ev){ var a = ev.target.dataset.a; if(!a) return; m.remove(); if(a==='info') userInfo(); if(a==='sw') chuyenTK(); if(a==='pw') changePw(); if(a==='out') logout(); };
   setTimeout(function(){ document.addEventListener('mousedown', function h(ev){ if(!m.contains(ev.target)){ m.remove(); document.removeEventListener('mousedown',h);} }); },0);
 };
 function userInfo(){
-  var tk = LMS.db.taiKhoan.find(function(t){ return t.ten===me().ten; }) || {};
+  var tk = tkMe() || {};
   U.modal({ title:'Thông tin người dùng', body:
     '<div class="form-grid"><div class="field"><label for="uf1">Tên đăng nhập</label><input class="inp" id="uf1" name="ten" value="'+esc(me().ten)+'"></div>'+
     '<div class="field"><label for="uf2">Họ tên</label><input class="inp" id="uf2" name="hoTen" value="'+esc(me().hoTen)+'"></div>'+
     '<div class="field full"><label for="uf3">Email</label><input class="inp" id="uf3" name="email" value="'+esc(me().email)+'"></div>'+
-    '<div class="field"><label>Phân loại tài khoản</label><input class="inp" readonly value="Nhân sự · Quản trị hệ thống"></div>'+
-    '<div class="field"><label>Đơn vị – phòng ban</label><input class="inp" readonly value="'+esc(LMS.donViTen(tk.donVi))+'"></div></div>',
+    '<div class="field"><label>Phân loại tài khoản</label><input class="inp" readonly value="'+esc((LOAI_TK[tk.loai]||'—')+(tk.admin?' · Admin hệ thống':''))+'"></div>'+
+    '<div class="field"><label>Đơn vị – phòng ban</label><input class="inp" readonly value="'+esc(LMS.donViTen(tk.donVi))+'"></div>'+
+    '<div class="field full"><label>Phạm vi dữ liệu</label><input class="inp" readonly value="'+esc(LMS.phamVi.ten+(LMS.phamVi.lyDo?' · '+LMS.phamVi.lyDo:''))+'"></div></div>',
     foot:[{label:'Hủy'},{label:'Lưu',cls:'primary',onClick:function(api){ var v=U.formVals(api.body), ok=true;
-      U.fieldErr(api.body,'ten', /^[a-z0-9._]{3,}$/i.test(v.ten)?'':'Tối thiểu 3 ký tự, chỉ gồm chữ, số, dấu chấm, gạch dưới'); if(!/^[a-z0-9._]{3,}$/i.test(v.ten)) ok=false;
+      U.fieldErr(api.body,'ten', /^[a-z0-9]{3,40}$/.test(v.ten)?'':'3–40 ký tự, chỉ gồm chữ không dấu a–z và số 0–9'); if(!/^[a-z0-9]{3,40}$/.test(v.ten)) ok=false;
       U.fieldErr(api.body,'hoTen', v.hoTen?'':'Nhập họ tên'); if(!v.hoTen) ok=false;
       U.fieldErr(api.body,'email', /^\S+@\S+\.\S+$/.test(v.email)?'':'Email chưa đúng định dạng'); if(!/^\S+@\S+\.\S+$/.test(v.email)) ok=false;
       if(!ok) return false;
@@ -237,9 +249,9 @@ function logout(){ set(SESSION,'0'); showLogin(); }
 function showLogin(){
   var l = document.createElement('div'); l.className='login'; l.id='login';
   l.innerHTML = '<form class="card" id="loginForm"><div class="row"><div class="logo" style="width:40px;height:40px;border-radius:10px;background:var(--ems-navy);color:#fff;display:grid;place-items:center;font-weight:800">EGO</div><div><h1 style="font-size:18px">EGO LMS · Quản trị</h1><div class="muted small">Học viện Y Dược học cổ truyền Việt Nam</div></div></div>'+
-    '<div class="field"><label for="lg1">Tên đăng nhập</label><input class="inp" id="lg1" name="u" autocomplete="username" value="'+esc(me().ten)+'"></div><div class="field"><label for="lg2">Mật khẩu</label><input class="inp" id="lg2" type="password" name="p" autocomplete="current-password"></div><button class="btn primary" type="submit" style="justify-content:center">Đăng nhập</button><div class="muted small">Bản demo: nhập tên đăng nhập và mật khẩu bất kỳ.</div></form>';
+    '<div class="field"><label for="lg1">Tên đăng nhập</label><input class="inp" id="lg1" name="u" autocomplete="username" value="'+esc(me().ten)+'"></div><div class="field"><label for="lg2">Mật khẩu</label><input class="inp" id="lg2" type="password" name="p" autocomplete="current-password"></div><button class="btn primary" type="submit" style="justify-content:center">Đăng nhập</button><div class="muted small">Bản demo: nhập tên đăng nhập của một tài khoản quản trị hoặc nhân sự, mật khẩu bất kỳ.</div></form>';
   document.body.appendChild(l);
-  l.querySelector('form').onsubmit = function(e){ e.preventDefault(); var v=U.formVals(this); if(!v.u||!v.p){ U.fieldErr(this, !v.u?'u':'p', 'Nhập đủ tên đăng nhập và mật khẩu'); return; } set(SESSION,'1'); l.remove(); };
+  l.querySelector('form').onsubmit = function(e){ e.preventDefault(); var v=U.formVals(this); if(!v.u||!v.p){ U.fieldErr(this, !v.u?'u':'p', 'Nhập đủ tên đăng nhập và mật khẩu'); return; } var u=String(v.u).trim().toLowerCase(); if(u!==me().ten){ if(!LMS.dangNhap(u)){ U.fieldErr(this,'u','Tài khoản không tồn tại, đã ngừng sử dụng hoặc là tài khoản học viên'); return; } set(SESSION,'1'); location.reload(); return; } set(SESSION,'1'); l.remove(); };
   setTimeout(function(){ l.querySelector('#lg2').focus(); },30);
 }
 
