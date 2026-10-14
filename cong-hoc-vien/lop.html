@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, lopId = HV.qp('lop'), tab = HV.qp('tab') || 'tq';
+  function render() {
+    if (LMS.dongBoBuoi(true)) LMS.save();
+    var app = HV.shell('lop.html', { title: 'Lớp học' }), l = LMS.byId('lop', lopId), g = l && HV.gdLop(l.id);
+    if (!l) { app.innerHTML = '<div class="panel"><div class="empty">Không tìm thấy lớp. <a href="lop-cua-toi.html">Về Lớp của tôi</a></div></div>'; return; }
+    if (!g || g.trangThai === 'thoi-hoc') { app.innerHTML = '<div class="crumb"><a href="lop-cua-toi.html">Lớp của tôi</a> ›</div><div class="panel"><div class="panel-body stack"><h1>' + esc(l.ten) + '</h1><div class="note warn">Bạn chưa ghi danh lớp này nên không xem được bài giảng và hoạt động của lớp.</div><div><a class="btn primary" href="' + HV.url('dang-ky.html', { lop: l.id }) + '">Xem thông tin đăng ký</a></div></div></div>'; return; }
+    var hp = LMS.hocPhanOfLop(l), p = HV.tienDoLop(l), tt = HV.TT_GD[g.trangThai], cc = LMS.chuyenCanHV(l.id, HV.id()), dd = LMS.coDiemDanh(l);
+    var s = '<div class="crumb"><a href="lop-cua-toi.html">Lớp của tôi</a> › ' + esc(l.ma) + '</div>';
+    s += '<div class="panel"><div class="panel-body" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"><div class="lop-cover ' + HV.coverCls(l) + '" style="width:120px;height:84px;border-radius:10px;flex:none">' + esc(hp.ma) + '</div><div style="flex:1;min-width:240px"><div class="row"><h1 style="font-size:20px">' + esc(l.ten) + '</h1>' + U.badge(tt[0], tt[1]) + U.badge(LMS.trangThaiThoiGian(l).label, 'navy') + '</div><div class="small muted">' + esc(l.ma) + ' · ' + esc(hp.ten) + ' · ' + hp.soTC + ' tín chỉ · ' + esc(HV.HT[l.hinhThuc] || '') + ' · ' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + '</div><div class="stat-row" style="margin-top:8px"><span>Tiến độ <b>' + p.done + '/' + p.tong + ' bài (' + p.pct + '%)</b></span>' + (dd ? '<span>Chuyên cần <b>' + (cc ? cc.pct + '% (' + cc.co + '/' + cc.tong + ' buổi)' : 'chưa có') + '</b></span>' : '') + '<span>GV <b>' + (l.giangVien.map(HV.gvTen).join(', ') || '—') + '</b></span></div></div>';
+    var tiep = HV.baiCua(l)[Math.min(p.done, HV.baiCua(l).length - 1)];
+    if (tiep && g.trangThai !== 'cho-khai-giang') s += '<a class="btn primary" href="' + HV.url('hoc.html', { lop: l.id, bai: tiep.id }) + '">' + HV.svg('play', 14) + (g.trangThai === 'hoan-thanh' ? ' Xem lại bài giảng' : p.done ? ' Học tiếp' : ' Bắt đầu học') + '</a>';
+    s += '</div></div><div id="tabs"></div><div id="tb"></div>';
+    app.innerHTML = s;
+    var T = [['tq', 'Tổng quan'], ['bai', 'Bài giảng (' + p.tong + ')']].concat(dd ? [['lich', 'Lịch học & điểm danh']] : []).concat([['bt', 'Bài tập & kiểm tra'], ['diem', 'Điểm'], ['tb', 'Thông báo'], ['hd', 'Hỏi đáp']]);
+    if (!T.some(function (x) { return x[0] === tab; })) tab = 'tq';
+    HV.tabs(document.getElementById('tabs'), T, tab, function (t) { if (t === 'hd') { location.href = HV.url('hoi-dap.html', { lop: l.id }); return; } tab = t; history.replaceState(null, '', HV.url('lop.html', { lop: l.id, tab: t })); render(); });
+    var tb = document.getElementById('tb');
+    ({ tq: tq, bai: bai, lich: lich, bt: bt, diem: diem, tb: tbao })[tab](tb, l, g);
+  }
+  function tq(host, l, g) {
+    var hp = LMS.hocPhanOfLop(l), tc = hp.tieuChi || {}, gvs = l.giangVien.map(function (id, i) { var x = LMS.byId('giangVien', id); return x ? { g: x, chinh: i === 0 } : null; }).filter(Boolean);
+    var ke = LMS.buoiCuaLop(l.id).filter(function (b) { return !b.huy && LMS.buoiMoc(b).kt.getTime() > Date.now(); })[0];
+    var s = '<div class="two"><div class="stack">';
+    s += '<div class="panel"><div class="panel-head"><h2>Giới thiệu học phần</h2></div><div class="panel-body stack" style="gap:8px"><div>' + esc(hp.moTa || '') + '</div>' + (hp.chuanDauRa && hp.chuanDauRa.length ? '<div><b>Chuẩn đầu ra</b><ul style="margin:6px 0 0;padding-left:18px">' + hp.chuanDauRa.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>' : '') + '</div></div>';
+    s += '<div class="panel"><div class="panel-head"><h2>Điều kiện hoàn thành</h2></div><div class="panel-body stack" style="gap:8px;font-size:13.5px">' +
+      '<div>' + HV.svg('video', 16) + ' Mỗi bài: xem tối thiểu <b>' + (tc.xem || 80) + '%</b> video' + (tc.quizOn ? ', câu hỏi củng cố đạt từ <b>' + (tc.quizDiem || 5) + ' điểm</b>' : '') + '. Hoàn thành bài trước để mở bài tiếp theo.</div>' +
+      (LMS.coDiemDanh(l) ? '<div>' + HV.svg('cal', 16) + ' Chuyên cần: tham gia phòng học trực tuyến từ <b>' + LMS.cfgDD().nguong + '%</b> thời lượng mỗi buổi; tỷ lệ có mặt khuyến nghị từ <b>' + LMS.CC_CANH_BAO + '%</b>.</div>' : '') +
+      '<div>' + HV.svg('grade', 16) + ' Điểm tổng kết từ <b>' + l.diemDat + '</b> (thang 10): ' + l.cotDiem.map(function (c) { return esc(c.ten) + ' ' + c.ts + '%'; }).join(' · ') + '</div></div></div>';
+    s += '</div><div class="stack">';
+    s += '<div class="panel"><div class="panel-head"><h2>Giảng viên</h2></div><div class="panel-body stack" style="gap:10px">' + (gvs.length ? gvs.map(function (x) { return '<div class="row" style="flex-wrap:nowrap">' + U.person(x.g.hoTen, (x.chinh ? 'Giảng viên chính' : 'Giảng viên') + ' · ' + esc(x.g.email)) + '<a class="btn sm right" href="' + HV.url('hoi-dap.html', { hoi: l.id }) + '">Đặt câu hỏi</a></div>'; }).join('') : '<div class="muted small">Lớp tự học, câu hỏi gửi Phòng đào tạo qua Hỏi đáp.</div>') + '</div></div>';
+    if (LMS.coDiemDanh(l)) s += '<div class="panel"><div class="panel-head"><h2>Buổi học tới</h2></div><div class="panel-body">' + (ke ? '<b>' + esc(ke.ten) + ' · ' + LMS.THU[LMS.parse(ke.ngay).getDay()] + ' ' + LMS.fmtDate(ke.ngay) + ' ' + ke.gio + '–' + ke.den + '</b><div class="small muted">' + esc(ke.chuDe || '') + ' · ' + esc(ke.phong) + ' · GV ' + esc(HV.gvTen(ke.gv)) + '</div><div style="margin-top:8px"><a class="btn sm" href="' + HV.url('lich-hoc.html', { buoi: ke.id }) + '">Chi tiết buổi học</a></div>' : '<div class="muted">Chưa có lịch buổi tới.</div>') + '</div></div>';
+    var tbs = HV.tbCuaToi().filter(function (t) { return t.lop === l.id; }).slice(0, 3);
+    s += '<div class="panel"><div class="panel-head"><h2>Thông báo của lớp</h2></div>' + (tbs.length ? '<div class="todo">' + tbs.map(function (t) { return '<a href="' + HV.url('thong-bao.html', { tb: t.id }) + '"><span class="ic">' + HV.svg('bell') + '</span><span class="tx"><b>' + esc(t.tieuDe) + '</b><small>' + LMS.fmtDT(t.ngay) + '</small></span></a>'; }).join('') + '</div>' : '<div class="empty">Chưa có thông báo</div>') + '</div>';
+    s += '</div></div>';
+    host.innerHTML = s;
+  }
+  function bai(host, l) {
+    var bs = HV.baiCua(l);
+    host.innerHTML = '<div class="panel"><div class="panel-head"><h2>Bài giảng</h2><span class="muted small" style="margin-left:auto">Hoàn thành bài trước để mở bài tiếp theo</span></div><div class="bai-list">' + bs.map(function (b, i) {
+      var st = HV.baiState(l, i), dk = HV.dieuKienBai(l, b), sub = b.phut + ' phút' + (HV.quizKhoi(b).length ? ' · câu hỏi củng cố' : '') + (st === 'xong' ? ' · đã hoàn thành' + (dk.diemQuiz != null ? ' · ' + dk.diemQuiz + ' điểm' : '') : st === 'mo' ? ' · đang học, đã xem ' + dk.xem + '%' : ' · mở sau khi hoàn thành bài ' + i);
+      var inner = '<span class="n">' + (st === 'xong' ? '✓' : st === 'khoa' ? HV.svg('lock', 12) : i + 1) + '</span><span class="t">' + esc(b.ten) + '<small>' + sub + '</small></span>' + (st === 'mo' ? '<span class="btn sm primary">Học</span>' : st === 'xong' ? '<span class="btn sm">Xem lại</span>' : '');
+      return st === 'khoa' ? '<div class="bai-it khoa" title="Hoàn thành bài trước để mở">' + inner + '</div>' : '<a class="bai-it ' + st + '" href="' + HV.url('hoc.html', { lop: l.id, bai: b.id }) + '">' + inner + '</a>';
+    }).join('') + '</div></div>';
+  }
+  function lich(host, l) {
+    var bs = LMS.buoiCuaLop(l.id), cc = LMS.chuyenCanHV(l.id, HV.id());
+    host.innerHTML = '<div class="kpis" style="margin-bottom:12px"><div class="kpi"><div class="k-label">Chuyên cần</div><div class="k-val">' + (cc ? cc.pct + '%' : '—') + '</div><div class="k-sub">' + (cc ? 'có mặt ' + cc.co + ' · có phép ' + cc.phep + ' · vắng ' + cc.vang : 'chưa có buổi điểm danh') + '</div></div><div class="kpi"><div class="k-label">Tổng số buổi</div><div class="k-val">' + bs.filter(function (b) { return !b.huy; }).length + '</div><div class="k-sub">' + bs.filter(function (b) { return b.huy; }).length + ' buổi hủy</div></div></div><div id="lt"></div>';
+    U.table(host.querySelector('#lt'), { rows: bs, pageSize: 12, sort: 'ngay', dir: 1, columns: [
+      { key: 'ngay', label: 'Buổi', sortVal: function (b) { return b.ngay + b.gio; }, render: function (b) { return '<b>' + esc(b.ten) + '</b><div class="t-sub">' + LMS.THU[LMS.parse(b.ngay).getDay()] + ' ' + LMS.fmtDate(b.ngay) + ' · ' + b.gio + '–' + b.den + '</div>'; } },
+      { key: 'cd', label: 'Chủ đề', render: function (b) { return esc(b.chuDe || '—') + '<div class="t-sub">' + esc(b.phong) + '</div>'; }, sortable: false },
+      { key: 'st', label: 'Trạng thái buổi', render: function (b) { var s = LMS.buoiStatus(b); return U.badge(s.key === 'cho-xn' || s.key === 'xong' ? 'Đã diễn ra' : s.label, s.key === 'dang' ? 'info' : s.key === 'huy' ? '' : s.key === 'sap' || s.key === 'hom-nay' ? 'navy' : 'ok'); }, sortable: false },
+      { key: 'dd', label: 'Điểm danh của tôi', render: function (b) { var d = HV.ddCuaToi(b); return d.label ? U.badge(d.label, d.tone) + (d.tam ? '<div class="t-sub">tạm tính, chờ GV xác nhận</div>' : '') : '<span class="muted">—</span>'; }, sortable: false },
+      { key: 'x', label: '', sortable: false, render: function (b) { return '<a class="btn sm" href="' + HV.url('lich-hoc.html', { buoi: b.id }) + '">Chi tiết</a>'; } }
+    ] });
+  }
+  function bt(host, l) {
+    var bts = HV.btCuaToi().filter(function (b) { return b.lop === l.id; }), kys = HV.kyCuaToi().filter(function (k) { return k.lop === l.id; });
+    var s = '<div class="panel"><div class="panel-head"><h2>Kỳ thi, kiểm tra</h2></div>' + (kys.length ? '<div class="todo">' + kys.map(function (k) { var t = HV.kyTT(k), de = LMS.byId('deThi', k.de); return '<a href="' + HV.url('thi.html', { ky: k.id }) + '"><span class="ic bad">' + HV.svg('exam') + '</span><span class="tx"><b>' + esc(k.ten) + '</b><small>' + LMS.fmtDT(k.moLuc) + ' – ' + LMS.fmtDT(k.dongLuc).slice(11) + ' · ' + de.cauHoi.length + ' câu · ' + de.thoiLuong + ' phút</small></span>' + U.badge(t.label, t.tone) + '</a>'; }).join('') + '</div>' : '<div class="empty">Lớp chưa có kỳ thi</div>') + '</div>';
+    s += '<div class="panel"><div class="panel-head"><h2>Bài tập</h2></div>' + (bts.length ? '<div class="todo">' + bts.map(function (b) { var t = HV.btTT(b); return '<a href="' + HV.url('bai-tap.html', { bt: b.id }) + '"><span class="ic warn">' + HV.svg('task') + '</span><span class="tx"><b>' + esc(b.ten) + '</b><small>' + esc(b.ma) + ' · hạn ' + LMS.fmtDT(b.hanNop) + '</small></span>' + U.badge(t.label, t.tone) + '</a>'; }).join('') + '</div>' : '<div class="empty">Lớp chưa giao bài tập</div>') + '</div>';
+    host.innerHTML = '<div class="stack">' + s + '</div>';
+  }
+  function diem(host, l) {
+    var tk = LMS.diemTongKet(l, HV.id());
+    host.innerHTML = '<div class="panel"><div class="panel-head"><h2>Bảng điểm lớp</h2><a class="right small" style="margin-left:auto" href="ket-qua.html">Kết quả toàn khóa ›</a></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cột điểm</th><th>Nguồn</th><th class="num">Trọng số</th><th class="num">Điểm</th></tr></thead><tbody>' + l.cotDiem.map(function (c, i) { var v = LMS.diemCot(l, HV.id(), i), ky = c.kyThi ? LMS.byId('kyThi', c.kyThi) : null; return '<tr><td><b>' + esc(c.ten) + '</b></td><td class="small">' + (c.nguon === 'diem-danh' ? 'Tự tính từ điểm danh' : c.nguon === 'ky-thi' ? esc(ky ? ky.ten : 'Kỳ thi') + (ky && !ky.congBo ? ' · chưa công bố' : '') : c.nguon === 'bai-tap' ? 'Từ bài tập' : 'Giảng viên nhập') + '</td><td class="num">' + c.ts + '%</td><td class="num"><b>' + (v == null ? '—' : v) + '</b></td></tr>'; }).join('') + '<tr><td colspan="3"><b>Điểm tổng kết</b> <span class="muted small">(đạt từ ' + l.diemDat + ')</span></td><td class="num"><b>' + (tk == null ? 'Chưa đủ cột' : tk + (tk >= l.diemDat ? ' · Đạt' : ' · Chưa đạt')) + '</b></td></tr></tbody></table></div></div>';
+  }
+  function tbao(host, l) {
+    var tbs = HV.tbCuaToi().filter(function (t) { return t.lop === l.id; });
+    host.innerHTML = '<div class="panel">' + (tbs.length ? tbs.map(function (t) { var u = !(t.xem || {})[HV.id()]; return '<a class="tb-it' + (u ? ' unread' : '') + '" style="color:inherit;text-decoration:none" href="' + HV.url('thong-bao.html', { tb: t.id }) + '"><span class="dotu' + (u ? '' : ' r') + '"></span><span style="flex:1"><b>' + esc(t.tieuDe) + '</b><div class="small muted">' + LMS.fmtDT(t.ngay) + '</div></span>' + (t.yeuCauXacNhan && !(t.xacNhan || {})[HV.id()] ? U.badge('Cần xác nhận', 'warn') : '') + '</a>'; }).join('') : '<div class="empty">Lớp chưa có thông báo</div>') + '</div>';
+  }
+  LMS.onChange(render); render();
+})();
+</script>
+</body></html>

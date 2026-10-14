@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, loc = HV.qp('loc') || 'dang-hoc';
+  function render() {
+    var app = HV.shell('lop-cua-toi.html', { title: 'Lớp của tôi' }), all = HV.lopCuaToi({ all: true });
+    var F = [['dang-hoc', 'Đang học'], ['cho-khai-giang', 'Chờ khai giảng'], ['bao-luu', 'Bảo lưu'], ['hoan-thanh', 'Hoàn thành'], ['all', 'Tất cả']];
+    var cnt = function (k) { return all.filter(function (x) { return k === 'all' ? x.g.trangThai !== 'thoi-hoc' : x.g.trangThai === k; }).length; };
+    var list = all.filter(function (x) { return loc === 'all' ? x.g.trangThai !== 'thoi-hoc' : x.g.trangThai === loc; });
+    var s = '<div class="page-head"><div><h1>Lớp của tôi</h1><div class="sub">Các lớp bạn đã ghi danh. Lớp chưa ghi danh xem ở mục Đăng ký học.</div></div><div class="actions"><a class="btn" href="dang-ky.html">' + HV.svg('cart', 14) + ' Đăng ký lớp mới</a></div></div>';
+    s += '<div class="seg" role="tablist">' + F.map(function (f) { var n = cnt(f[0]); return '<button data-f="' + f[0] + '"' + (loc === f[0] ? ' class="on"' : '') + '>' + f[1] + (n ? ' ' + n : '') + '</button>'; }).join('') + '</div>';
+    s += list.length ? '<div class="lop-grid">' + list.map(function (x) {
+      var l = x.l, p = HV.tienDoLop(l), g = x.g, hp = LMS.hocPhanOfLop(l), tt = HV.TT_GD[g.trangThai], cc = LMS.chuyenCanHV(l.id, HV.id()), dtk = LMS.diemTongKet(l, HV.id());
+      var ft = g.trangThai === 'hoan-thanh' ? (dtk != null ? 'Điểm tổng kết ' + dtk + (dtk >= l.diemDat ? ' · Đạt' : ' · Chưa đạt') : 'Chờ điểm tổng kết') : g.trangThai === 'cho-khai-giang' ? 'Khai giảng ' + LMS.fmtDate(l.batDau) : g.trangThai === 'bao-luu' ? 'Bảo lưu từ ' + LMS.fmtDate(g.ngayBaoLuu || g.ngay) : (cc ? 'Chuyên cần ' + cc.pct + '% · ' : '') + LMS.trangThaiThoiGian(l).label;
+      return '<a class="lop-card" href="' + HV.url('lop.html', { lop: l.id }) + '"><div class="lop-cover ' + HV.coverCls(l) + '">' + esc(hp.ten) + ' · ' + hp.soTC + ' tín chỉ<span class="st">' + U.badge(tt[0], tt[1]) + '</span></div><div class="bd"><h3>' + esc(l.ten) + '</h3><div class="meta">' + esc(l.ma) + ' · ' + esc(HV.HT[l.hinhThuc] || '') + ' · ' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + '</div><div class="meta">GV: ' + (l.giangVien.map(HV.gvTen).join(', ') || '—') + '</div>' + (g.trangThai === 'cho-khai-giang' ? '' : '<div class="pbar' + (p.pct === 100 ? ' ok' : '') + '"><span style="width:' + p.pct + '%"></span></div><div class="meta">' + p.done + '/' + p.tong + ' bài · ' + p.pct + '%</div>') + '</div><div class="ft">' + esc(ft) + '<span style="margin-left:auto;color:var(--ems-navy);font-weight:600">' + (g.trangThai === 'hoan-thanh' ? 'Xem lại' : g.trangThai === 'dang-hoc' ? 'Vào lớp' : 'Chi tiết') + ' ›</span></div></a>';
+    }).join('') + '</div>' : '<div class="panel"><div class="empty">Không có lớp ở trạng thái này.' + (loc === 'dang-hoc' ? ' <a href="dang-ky.html">Xem lớp đang tuyển sinh</a>' : '') + '</div></div>';
+    app.innerHTML = s;
+    app.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { loc = b.dataset.f; history.replaceState(null, '', HV.url('lop-cua-toi.html', { loc: loc })); render(); }; });
+  }
+  LMS.onChange(render); render();
+})();
+</script>
+</body></html>

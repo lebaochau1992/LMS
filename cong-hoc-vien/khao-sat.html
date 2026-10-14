@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, ksId = HV.qp('ks');
+  function render() {
+    var app = HV.shell('khao-sat.html', { title: 'Khảo sát' });
+    if (ksId) { var k0 = LMS.byId('khaoSat', ksId); if (k0 && HV.ksCuaToi().indexOf(k0) >= 0) return form(app, k0); }
+    var ds = HV.ksCuaToi(), cho = ds.filter(function (k) { return HV.ksMo(k) && !HV.ksDaLam(k); });
+    var s = '<div class="page-head"><div><h1>Khảo sát</h1><div class="sub">Ý kiến của bạn giúp giảng viên và Học viện cải tiến chất lượng đào tạo</div></div></div>';
+    s += '<div class="panel">' + (ds.length ? ds.sort(function (a, b) { return (HV.ksMo(b) && !HV.ksDaLam(b)) - (HV.ksMo(a) && !HV.ksDaLam(a)) || (a.ketThuc < b.ketThuc ? 1 : -1); }).map(function (k) { var l = LMS.byId('lop', k.lop), mo = HV.ksMo(k), lam = HV.ksDaLam(k), tt = lam ? U.badge('Đã trả lời', 'ok') : mo ? U.badge('Chưa trả lời · hạn ' + LMS.fmtDate(k.ketThuc), 'warn') : k.batDau > LMS.iso(LMS.TODAY) ? U.badge('Mở ngày ' + LMS.fmtDate(k.batDau), 'navy') : U.badge('Đã đóng', ''); return '<a class="tb-it" style="color:inherit;text-decoration:none" href="' + HV.url('khao-sat.html', { ks: k.id }) + '"><span class="ic" style="width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--ems-navy-soft);color:var(--ems-navy);flex:none">' + HV.svg('form', 18) + '</span><span style="flex:1;min-width:0"><b>' + esc(k.ten) + '</b><div class="small muted">' + (l ? '<span class="mono">' + esc(l.ma) + '</span> · ' : 'Toàn Học viện · ') + (k.cauHoi || []).length + ' câu · ' + (k.anDanh ? 'ẩn danh' : 'ghi tên') + (k.batDau ? ' · ' + LMS.fmtDate(k.batDau) + ' – ' + LMS.fmtDate(k.ketThuc) : '') + '</div></span>' + tt + '</a>'; }).join('') : '<div class="empty">Chưa có khảo sát</div>') + '</div>';
+    if (cho.length) s = s.replace('</div></div><div class="panel">', '</div></div><div class="note info">Bạn có ' + cho.length + ' khảo sát chưa trả lời.</div><div class="panel">');
+    app.innerHTML = s;
+  }
+  function form(app, k) {
+    var l = LMS.byId('lop', k.lop), mo = HV.ksMo(k), phieu = (k.phieu || []).find(function (p) { return p.hv === HV.id(); }), tl = phieu ? JSON.parse(JSON.stringify(phieu.tl)) : {};
+    var s = '<div class="crumb"><a href="khao-sat.html">Khảo sát</a> › ' + esc(k.ten) + '</div><div class="page-head"><div><h1 style="font-size:20px">' + esc(k.ten) + '</h1><div class="sub">' + (l ? esc(l.ten) + ' · ' : '') + (k.anDanh ? 'Phiếu ẩn danh: giảng viên chỉ xem kết quả tổng hợp, không biết người trả lời' : 'Phiếu ghi tên') + (k.ketThuc ? ' · hạn ' + LMS.fmtDate(k.ketThuc) : '') + '</div></div></div>';
+    if (k.moTa) s += '<div class="note">' + esc(k.moTa) + '</div>';
+    if (phieu) s += '<div class="note ok">Bạn đã gửi phiếu lúc ' + LMS.fmtDT(phieu.luc) + (mo ? '. Có thể sửa câu trả lời đến hết hạn khảo sát.' : '.') + '</div>';
+    else if (!mo) s += '<div class="note warn">Khảo sát ' + (k.batDau > LMS.iso(LMS.TODAY) ? 'mở từ ngày ' + LMS.fmtDate(k.batDau) : 'đã đóng') + '.</div>';
+    s += '<div class="panel"><div class="panel-body stack" style="gap:18px">' + k.cauHoi.map(function (q, i) {
+      var v = tl[q.id], dis = mo ? '' : ' disabled', h = '<div class="q-it" data-q="' + q.id + '"><div class="qt">' + (i + 1) + '. ' + esc(q.noiDung) + (q.batBuoc ? ' <span style="color:var(--ems-danger)">*</span>' : '') + '</div>';
+      if (q.loai === 'thang') h += '<div class="scale">' + [1, 2, 3, 4, 5].map(function (n) { return '<label class="' + (v === n ? 'on' : '') + '"><input type="radio" name="' + q.id + '" value="' + n + '"' + (v === n ? ' checked' : '') + dis + ' hidden>' + n + '</label>'; }).join('') + '<span class="small muted" style="align-self:center">1 = rất không đồng ý · 5 = rất đồng ý</span></div>';
+      else if (q.loai === 'lua-chon') h += q.luaChon.map(function (o) { return '<label class="opt"><input type="radio" name="' + q.id + '" value="' + esc(o) + '"' + (v === o ? ' checked' : '') + dis + '> ' + esc(o) + '</label>'; }).join('');
+      else if (q.loai === 'nhieu') h += q.luaChon.map(function (o) { return '<label class="opt"><input type="checkbox" name="' + q.id + '" value="' + esc(o) + '"' + ((v || []).indexOf(o) >= 0 ? ' checked' : '') + dis + '> ' + esc(o) + '</label>'; }).join('');
+      else h += '<textarea name="' + q.id + '" rows="3"' + dis + '>' + esc(v || '') + '</textarea>';
+      return h + '</div>';
+    }).join('') + '<div class="note bad" id="err" hidden></div>' + (mo ? '<div class="row"><span class="muted small">Tiến độ: <b id="td"></b></span><button class="btn primary right" style="margin-left:auto" id="gui">' + (phieu ? 'Cập nhật phiếu' : 'Gửi phiếu') + '</button></div>' : '') + '</div></div>';
+    app.innerHTML = s;
+    function doc() { var o = {}; k.cauHoi.forEach(function (q) { if (q.loai === 'thang') { var c = app.querySelector('[name="' + q.id + '"]:checked'); if (c) o[q.id] = +c.value; } else if (q.loai === 'lua-chon') { var c2 = app.querySelector('[name="' + q.id + '"]:checked'); if (c2) o[q.id] = c2.value; } else if (q.loai === 'nhieu') { var a = [].slice.call(app.querySelectorAll('[name="' + q.id + '"]:checked')).map(function (x) { return x.value; }); if (a.length) o[q.id] = a; } else { var t = app.querySelector('[name="' + q.id + '"]').value.trim(); if (t) o[q.id] = t; } }); return o; }
+    function tien() { var o = doc(), n = k.cauHoi.filter(function (q) { return o[q.id] != null; }).length, e = document.getElementById('td'); if (e) e.textContent = n + '/' + k.cauHoi.length + ' câu'; app.querySelectorAll('.scale label').forEach(function (lb) { lb.classList.toggle('on', lb.querySelector('input').checked); }); }
+    app.querySelectorAll('input,textarea').forEach(function (x) { x.onchange = tien; x.oninput = tien; }); tien();
+    var g = document.getElementById('gui'); if (g) g.onclick = function () {
+      var o = doc(), thieu = k.cauHoi.filter(function (q) { return q.batBuoc && o[q.id] == null; }), err = document.getElementById('err');
+      if (thieu.length) { err.hidden = false; err.textContent = 'Còn ' + thieu.length + ' câu bắt buộc chưa trả lời: câu ' + thieu.map(function (q) { return k.cauHoi.indexOf(q) + 1; }).join(', '); var f = app.querySelector('[data-q="' + thieu[0].id + '"]'); if (f) f.scrollIntoView({ block: 'center' }); return; }
+      k.phieu = k.phieu || []; var cu = k.phieu.find(function (p) { return p.hv === HV.id(); });
+      if (cu) { cu.tl = o; cu.luc = new Date().toISOString(); } else k.phieu.push({ hv: HV.id(), luc: new Date().toISOString(), tl: o });
+      LMS.ksDongBo(k); LMS.commit(cu ? 'Cập nhật phiếu khảo sát' : 'Gửi phiếu khảo sát', 'Khảo sát', (l ? l.ma + ' · ' : '') + k.ten + (k.anDanh ? '' : ' · ' + HV.me().ma));
+      U.toast('Cảm ơn bạn đã gửi ý kiến', 'ok'); ksId = null; history.replaceState(null, '', 'khao-sat.html'); render();
+    };
+  }
+  LMS.onChange(render); render();
+})();
+</script>
+</body></html>

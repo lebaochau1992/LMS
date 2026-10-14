@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, tab = HV.qp('tab') || (HV.qp('phuc') ? 'pk' : 'bd');
+  function D() { return LMS.db; }
+  function chu(d) { if (d == null) return null; return d >= 8.5 ? ['A', 4] : d >= 8 ? ['B+', 3.5] : d >= 7 ? ['B', 3] : d >= 6.5 ? ['C+', 2.5] : d >= 5.5 ? ['C', 2] : d >= 5 ? ['D+', 1.5] : d >= 4 ? ['D', 1] : ['F', 0]; }
+  function ds() { return HV.lopCuaToi().filter(function (x) { return x.g.trangThai !== 'cho-khai-giang'; }).map(function (x) { var hp = LMS.hocPhanOfLop(x.l), tk = LMS.diemTongKet(x.l, HV.id()); return { l: x.l, g: x.g, hp: hp, tk: tk, chu: chu(tk), dat: tk != null && tk >= x.l.diemDat }; }); }
+  function render() {
+    var app = HV.shell('ket-qua.html', { title: 'Kết quả học tập' }), rows = ds();
+    var coTK = rows.filter(function (r) { return r.tk != null && r.g.trangThai === 'hoan-thanh'; }), tc = coTK.filter(function (r) { return r.dat; }).reduce(function (a, r) { return a + r.hp.soTC; }, 0);
+    var gpa = coTK.length ? Math.round(coTK.reduce(function (a, r) { return a + r.chu[1] * r.hp.soTC; }, 0) / coTK.reduce(function (a, r) { return a + r.hp.soTC; }, 0) * 100) / 100 : null;
+    var s = '<div class="page-head"><div><h1>Kết quả học tập</h1><div class="sub">Điểm theo từng lớp học phần, chứng chỉ và đề nghị phúc khảo</div></div><div class="actions"><button class="btn" id="pdf">' + HV.svg('doc', 14) + ' Xuất bảng điểm (PDF)</button></div></div>';
+    s += '<div class="kpis"><div class="kpi"><div class="k-label">Điểm trung bình tích lũy</div><div class="k-val">' + (gpa == null ? '—' : gpa.toFixed(2)) + '</div><div class="k-sub">' + (gpa == null ? 'chưa có học phần hoàn thành' : 'hệ 4 · ' + coTK.length + ' học phần có điểm') + '</div></div><div class="kpi"><div class="k-label">Tín chỉ tích lũy</div><div class="k-val">' + tc + '</div><div class="k-sub">từ học phần đạt</div></div><div class="kpi"><div class="k-label">Học phần đang học</div><div class="k-val">' + rows.filter(function (r) { return r.g.trangThai === 'dang-hoc' || r.g.trangThai === 'bao-luu'; }).length + '</div><div class="k-sub">điểm cập nhật theo từng cột</div></div><div class="kpi ' + (coTK.some(function (r) { return !r.dat; }) ? 'bad' : '') + '"><div class="k-label">Học phần chưa đạt</div><div class="k-val">' + coTK.filter(function (r) { return !r.dat; }).length + '</div><div class="k-sub">' + (coTK.length ? (coTK.some(function (r) { return !r.dat; }) ? 'cần đăng ký học lại' : 'không có') : 'chưa có kết quả') + '</div></div></div><div id="tabs"></div><div id="tb"></div>';
+    app.innerHTML = s;
+    HV.tabs(document.getElementById('tabs'), [['bd', 'Bảng điểm'], ['cc', 'Chứng chỉ'], ['pk', 'Phúc khảo']], tab, function (t) { tab = t; history.replaceState(null, '', HV.url('ket-qua.html', { tab: t })); render(); });
+    ({ bd: bangDiem, cc: chungChi, pk: phucKhao })[tab](document.getElementById('tb'), rows);
+    document.getElementById('pdf').onclick = function () { U.toast('Đã tạo bảng điểm PDF có mã xác thực của Học viện', 'ok'); };
+  }
+  function bangDiem(host, rows) {
+    host.innerHTML = '<div class="stack">' + rows.map(function (r) {
+      var l = r.l;
+      return '<div class="panel"><div class="panel-head"><div><h2>' + esc(r.hp.ten) + ' <span class="muted small">· ' + r.hp.soTC + ' TC</span></h2><div class="small muted"><span class="mono">' + esc(r.hp.ma) + '</span> · ' + esc(l.ten) + ' · ' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + '</div></div><span class="right" style="margin-left:auto">' + U.badge(HV.TT_GD[r.g.trangThai][0], HV.TT_GD[r.g.trangThai][1]) + '</span></div><div class="tbl-wrap"><table class="tbl"><thead><tr>' + l.cotDiem.map(function (c) { return '<th class="num">' + esc(c.ten) + ' <span class="muted">(' + c.ts + '%)</span></th>'; }).join('') + '<th class="num">Tổng kết</th><th class="num">Điểm chữ</th><th>Kết quả</th></tr></thead><tbody><tr>' + l.cotDiem.map(function (c, i) { var v = LMS.diemCot(l, HV.id(), i), ky = c.kyThi ? LMS.byId('kyThi', c.kyThi) : null; return '<td class="num"><b>' + (v == null ? '—' : v) + '</b>' + (v == null ? '<div class="t-sub">' + (ky ? (ky.congBo ? 'không dự thi' : new Date(ky.moLuc) > new Date() ? 'thi ' + LMS.fmtDate(ky.moLuc) : 'chờ công bố') : c.nguon === 'diem-danh' ? 'chưa có buổi' : 'chưa có điểm') + '</div>' : '') + '</td>'; }).join('') + '<td class="num"><b>' + (r.tk == null ? '—' : r.tk) + '</b></td><td class="num">' + (r.chu ? r.chu[0] : '—') + '</td><td>' + (r.tk == null ? '<span class="muted small">Chưa đủ cột điểm</span>' : U.badge(r.dat ? 'Đạt' : 'Chưa đạt', r.dat ? 'ok' : 'bad')) + '</td></tr></tbody></table></div></div>';
+    }).join('') + '<div class="small muted">Thang điểm 10, quy đổi điểm chữ và hệ 4 theo quy chế đào tạo tín chỉ: A (8,5–10) 4,0 · B+ (8,0–8,4) 3,5 · B (7,0–7,9) 3,0 · C+ (6,5–6,9) 2,5 · C (5,5–6,4) 2,0 · D+ (5,0–5,4) 1,5 · D (4,0–4,9) 1,0 · F (dưới 4) 0.</div></div>';
+  }
+  function chungChi(host, rows) {
+    var cc = rows.filter(function (r) { return r.g.trangThai === 'hoan-thanh' && r.dat; });
+    host.innerHTML = cc.length ? '<div class="lop-grid">' + cc.map(function (r) { var ma = 'VUTM-' + r.hp.ma + '-' + HV.me().ma.replace(/\D/g, ''); return '<div class="cert"><div class="row"><span class="seal">VUTM</span><div><b>Chứng nhận hoàn thành học phần</b><div class="small muted">Học viện Y Dược học cổ truyền Việt Nam</div></div></div><div style="font-size:17px;font-weight:700;margin-top:6px">' + esc(r.hp.ten) + '</div><div class="small">' + esc(HV.me().hoTen) + ' · ' + r.hp.soTC + ' tín chỉ · điểm ' + r.tk + ' (' + r.chu[0] + ')</div><div class="small muted">Cấp ngày ' + LMS.fmtDate(LMS.addDays(LMS.parse(r.l.ketThuc), 10)) + ' · Mã tra cứu <span class="mono">' + ma + '</span></div><div class="row" style="margin-top:6px"><button class="btn sm" data-tai="' + ma + '">Tải PDF</button><button class="btn sm" data-copy="' + ma + '">Sao chép liên kết xác thực</button></div></div>'; }).join('') + '</div>' : '<div class="panel"><div class="empty">Chưa có chứng chỉ. Chứng chỉ được cấp khi bạn hoàn thành lớp và đạt điểm tổng kết.</div></div>';
+    host.querySelectorAll('[data-tai]').forEach(function (b) { b.onclick = function () { U.toast('Đã tải chứng chỉ ' + b.dataset.tai + '.pdf', 'ok'); }; });
+    host.querySelectorAll('[data-copy]').forEach(function (b) { b.onclick = function () { var u = 'https://daotao.vutm.edu.vn/xac-thuc/' + b.dataset.copy; try { navigator.clipboard.writeText(u); } catch (e) { } U.toast('Đã sao chép ' + u, 'ok'); }; });
+  }
+  function phucKhao(host) {
+    var pk = (D().phucKhao || []).filter(function (x) { return x.hv === HV.id(); });
+    var co = HV.kyCuaToi().filter(function (k) { var t = HV.kyTT(k); return t.key === 'kq'; }).map(function (k) { var han = LMS.addDays(LMS.parse(k.congBoLuc || k.dongLuc), 7); return { k: k, han: han, con: han >= LMS.TODAY }; });
+    var chonKy = HV.qp('phuc');
+    host.innerHTML = '<div class="two"><div class="panel"><div class="panel-head"><h2>Gửi đề nghị phúc khảo</h2></div><div class="panel-body stack">' + (co.filter(function (x) { return x.con; }).length ? '<div class="field"><label>Bài thi</label><select class="sel" name="ky">' + U.opts(co.filter(function (x) { return x.con; }).map(function (x) { return { v: x.k.id, t: x.k.ten + ' · ' + HV.kyTT(x.k).label + ' · hạn ' + LMS.fmtDate(x.han) }; }), 'v', 't', chonKy || '') + '</select></div><div class="field"><label>Lý do <span class="req">*</span></label><textarea name="ly" rows="4" placeholder="Câu hỏi, nội dung đề nghị chấm lại"></textarea></div><div class="small muted">Phúc khảo trong 7 ngày kể từ ngày công bố điểm. Phòng khảo thí phản hồi trong 10 ngày làm việc.</div><div><button class="btn primary" id="gui">Gửi đề nghị</button></div>' : '<div class="muted">Không có bài thi trong thời hạn phúc khảo.</div>') + '</div></div><div class="panel"><div class="panel-head"><h2>Đề nghị đã gửi</h2></div>' + (pk.length ? '<div class="todo">' + pk.map(function (x) { var k = LMS.byId('kyThi', x.ky); return '<div class="row-it"><span class="ic ' + (x.tt === 'xong' ? 'ok' : 'warn') + '">' + HV.svg('doc') + '</span><span class="tx"><b>' + esc(k ? k.ten : '') + '</b><small>Gửi ' + LMS.fmtDT(x.luc) + ' · ' + esc(x.lyDo.slice(0, 80)) + '</small></span>' + U.badge(x.tt === 'xong' ? 'Đã trả lời' : 'Đang xử lý', x.tt === 'xong' ? 'ok' : 'warn') + '</div>'; }).join('') + '</div>' : '<div class="empty">Chưa gửi đề nghị phúc khảo</div>') + '</div></div>';
+    var g = document.getElementById('gui'); if (g) g.onclick = function () {
+      var v = U.formVals(host); if (!v.ly || v.ly.length < 10) { U.fieldErr(host, 'ly', 'Nhập lý do (tối thiểu 10 ký tự)'); return; }
+      if (pk.some(function (x) { return x.ky === v.ky && x.tt !== 'xong'; })) { U.toast('Bài thi này đã có đề nghị đang xử lý', 'bad'); return; }
+      D().phucKhao = D().phucKhao || []; D().phucKhao.push({ id: LMS.nextId('pk'), hv: HV.id(), ky: v.ky, lyDo: v.ly, luc: new Date().toISOString(), tt: 'cho-xu-ly' });
+      LMS.commit('Đề nghị phúc khảo', 'Kỳ thi', LMS.name('kyThi', v.ky, 'ma') + ' · ' + HV.me().ma); U.toast('Đã gửi đề nghị phúc khảo', 'ok'); render();
+    };
+  }
+  LMS.onChange(render); render();
+})();
+</script>
+</body></html>

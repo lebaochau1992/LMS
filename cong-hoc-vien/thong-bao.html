@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, loc = 'all', tbId = HV.qp('tb');
+  var LOAI = { 'chung': 'Chung', 'hoc-tap': 'Học tập', 'lich-hoc': 'Lịch học', 'bai-tap': 'Bài tập', 'thi': 'Thi, kiểm tra', 'khan': 'Khẩn', 'tu-dong': 'Hệ thống' };
+  function render() {
+    var app = HV.shell('thong-bao.html', { title: 'Thông báo' }), h = HV.id(), all = HV.tbCuaToi();
+    var cho = all.filter(function (t) { return t.yeuCauXacNhan && !(t.xacNhan || {})[h]; });
+    var list = all.filter(function (t) { return loc === 'all' || (loc === 'chua' ? !(t.xem || {})[h] : loc === 'xn' ? cho.indexOf(t) >= 0 : t.loai === loc); });
+    var s = '<div class="page-head"><div><h1>Thông báo</h1><div class="sub">' + all.length + ' thông báo từ giảng viên, Phòng đào tạo và hệ thống</div></div><div class="actions"><button class="btn" id="docHet">Đánh dấu đã đọc tất cả</button><a class="btn" href="ho-so.html?tab=tb">Cài đặt nhận thông báo</a></div></div>';
+    s += '<div class="panel"><div class="panel-head filters"><div class="seg">' + [['all', 'Tất cả ' + all.length], ['chua', 'Chưa đọc ' + HV.tbChuaDoc().length], ['xn', 'Cần xác nhận ' + cho.length], ['thi', 'Thi, kiểm tra'], ['lich-hoc', 'Lịch học'], ['bai-tap', 'Bài tập']].map(function (f) { return '<button data-f="' + f[0] + '"' + (loc === f[0] ? ' class="on"' : '') + '>' + f[1] + '</button>'; }).join('') + '</div></div>';
+    s += list.length ? list.map(function (t) { var u = !(t.xem || {})[h], l = LMS.byId('lop', t.lop); return '<div class="tb-it' + (u ? ' unread' : '') + '" data-tb="' + t.id + '"><span class="dotu' + (u ? '' : ' r') + '"></span><span style="flex:1;min-width:0"><div class="row" style="gap:6px"><b>' + esc(t.tieuDe) + '</b>' + U.badge(LOAI[t.loai] || 'Chung', t.loai === 'thi' || t.loai === 'khan' ? 'bad' : t.loai === 'bai-tap' ? 'warn' : '') + (t.ghim ? U.badge('Ghim', 'navy') : '') + (t.yeuCauXacNhan ? ((t.xacNhan || {})[h] ? U.badge('Đã xác nhận', 'ok') : U.badge('Cần xác nhận', 'warn')) : '') + '</div><div class="small muted">' + (l ? '<span class="mono">' + esc(l.ma) + '</span> · ' : '') + LMS.fmtDT(t.ngay) + '</div><div class="small" style="margin-top:4px;color:var(--ems-text-2)">' + esc(String(t.noiDung || '').slice(0, 160)) + (String(t.noiDung || '').length > 160 ? '…' : '') + '</div></span></div>'; }).join('') : '<div class="empty">Không có thông báo</div>';
+    app.innerHTML = s + '</div>';
+    app.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { loc = b.dataset.f; render(); }; });
+    app.querySelectorAll('[data-tb]').forEach(function (x) { x.onclick = function () { mo(LMS.byId('thongBao', x.dataset.tb)); }; });
+    document.getElementById('docHet').onclick = function () { all.forEach(function (t) { t.xem = t.xem || {}; if (!t.xem[h]) t.xem[h] = new Date().toISOString(); }); LMS.commit(null); U.toast('Đã đánh dấu đã đọc', 'ok'); render(); };
+  }
+  function mo(t) {
+    var h = HV.id(), l = LMS.byId('lop', t.lop); HV.docTB(t);
+    var foot = [{ label: 'Đóng', close: true }];
+    if (t.yeuCauXacNhan && !(t.xacNhan || {})[h]) foot.push({ label: 'Tôi đã đọc và nắm nội dung', cls: 'primary', onClick: function () { t.xacNhan = t.xacNhan || {}; t.xacNhan[h] = new Date().toISOString(); LMS.commit('Xác nhận đã đọc thông báo', 'Thông báo', (l ? l.ma + ' · ' : '') + t.tieuDe + ' · ' + HV.me().ma); U.toast('Đã xác nhận', 'ok'); render(); } });
+    U.modal({ title: t.tieuDe, onClose: render, body: '<div class="small muted">' + (l ? esc(l.ma + ' · ' + l.ten) + ' · ' : '') + LMS.fmtDT(t.ngay) + (t.nguoiGui ? ' · ' + esc(t.nguoiGui) : '') + '</div><div style="white-space:pre-wrap;margin-top:10px;line-height:1.6">' + esc(t.noiDung || '') + '</div>' + ((t.dinhKem || []).length ? '<div class="small" style="margin-top:10px">Đính kèm: ' + t.dinhKem.map(function (f) { var x = LMS.byId('thuVien', f); return esc(x ? x.ten : f); }).join(', ') + '</div>' : '') + (t.yeuCauXacNhan && (t.xacNhan || {})[h] ? '<div class="note ok" style="margin-top:10px">Bạn đã xác nhận lúc ' + LMS.fmtDT(t.xacNhan[h]) + '</div>' : ''), foot: foot });
+  }
+  LMS.onChange(render); render();
+  if (tbId) { var t0 = LMS.byId('thongBao', tbId); if (t0 && HV.tbCuaToi().indexOf(t0) >= 0) mo(t0); }
+})();
+</script>
+</body></html>

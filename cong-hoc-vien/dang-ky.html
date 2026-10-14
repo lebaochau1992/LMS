@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, tab = HV.qp('tab') || 'mo', lop0 = HV.qp('lop');
+  var DK = { 'cho-duyet': ['Chờ Phòng đào tạo duyệt', 'warn'], 'cho-thanh-toan': ['Chờ thanh toán', 'info'], 'da-duyet': ['Đã duyệt', 'ok'], 'tu-choi': ['Từ chối', 'bad'], 'da-huy': ['Đã hủy', ''] };
+  function D() { return LMS.db; }
+  function phi(l) { var k = l.khoanThu ? LMS.byId('khoanThu', l.khoanThu) : null; return k ? k.donGia : 0; }
+  function dkCua(l) { return D().dangKy.filter(function (d) { return d.lop === l.id && d.hv === HV.id(); }).sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; })[0] || null; }
+  function ttCua(l) { return D().thanhToan.filter(function (t) { return t.lop === l.id && t.hv === HV.id(); }).sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; })[0] || null; }
+  function trung(l) { var hp = LMS.hocPhanOfLop(l); return HV.gds().filter(function (g) { var x = LMS.byId('lop', g.lop); return x && x.id !== l.id && LMS.hocPhanOfLop(x).id === hp.id && (g.trangThai === 'dang-hoc' || g.trangThai === 'cho-khai-giang' || (g.trangThai === 'hoan-thanh' && g.ketQua !== 'khong-dat')); })[0] || null; }
+  function moDK() { return D().lop.filter(function (l) { return l.trangThai === 'tuyen-sinh' && l.tuDangKy !== false; }); }
+  function render() {
+    var app = HV.shell('dang-ky.html', { title: 'Đăng ký học' }), ds = moDK(), dks = D().dangKy.filter(function (d) { return d.hv === HV.id(); });
+    var s = '<div class="page-head"><div><h1>Đăng ký học & học phí</h1><div class="sub">Lớp đang tuyển sinh, đơn đăng ký và thanh toán học phí của bạn</div></div></div><div id="tabs"></div><div id="tb"></div>';
+    app.innerHTML = s;
+    HV.tabs(document.getElementById('tabs'), [['mo', 'Lớp đang tuyển sinh (' + ds.length + ')'], ['don', 'Đơn đăng ký & học phí (' + dks.length + ')']], tab, function (t) { tab = t; history.replaceState(null, '', HV.url('dang-ky.html', { tab: t })); render(); });
+    var host = document.getElementById('tb');
+    if (tab === 'mo') {
+      host.innerHTML = ds.length ? '<div class="lop-grid">' + ds.map(function (l) {
+        var hp = LMS.hocPhanOfLop(l), g = HV.gdLop(l.id), dk = dkCua(l), tr = g ? null : trung(l), p = phi(l), con = l.sucChua ? Math.max(0, l.sucChua - LMS.soHV(l.id)) : null, hanDK = LMS.addDays(LMS.parse(l.batDau), -1), qua = hanDK < LMS.TODAY;
+        var nut = g ? U.badge('Đã ghi danh · ' + HV.TT_GD[g.trangThai][0].toLowerCase(), 'ok') : dk && dk.trangThai !== 'tu-choi' && dk.trangThai !== 'da-huy' ? U.badge(DK[dk.trangThai][0], DK[dk.trangThai][1]) : tr ? U.badge('Trùng học phần', 'warn') : qua ? U.badge('Hết hạn đăng ký', '') : con === 0 ? U.badge('Hết chỗ', 'bad') : '<button class="btn sm primary" data-dk="' + l.id + '">Đăng ký</button>';
+        return '<div class="lop-card"><div class="lop-cover ' + HV.coverCls(l) + '">' + esc(hp.ten) + ' · ' + hp.soTC + ' TC<span class="st">' + U.badge('Khai giảng ' + LMS.fmtDate(l.batDau), 'navy') + '</span></div><div class="bd"><h3>' + esc(l.ten) + '</h3><div class="meta">' + esc(LMS.donViTen(l.khoa)) + ' · ' + esc(HV.HT[l.hinhThuc] || '') + '</div><div class="meta">' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + ' · ' + hp.bai.length + ' bài giảng' + (l.giangVien.length ? ' · GV ' + esc(l.giangVien.map(HV.gvTen).join(', ')) : '') + '</div><div class="meta">Hạn đăng ký ' + LMS.fmtDate(hanDK) + (con != null ? ' · còn ' + con + '/' + l.sucChua + ' chỗ' : '') + '</div>' + (tr ? '<div class="note warn small">Bạn ' + (tr.trangThai === 'hoan-thanh' ? 'đã hoàn thành' : 'đang học') + ' học phần này tại lớp ' + esc(LMS.name('lop', tr.lop, 'ma')) + '. Muốn học cải thiện điểm, liên hệ Phòng đào tạo.</div>' : '') + (dk && dk.trangThai === 'tu-choi' ? '<div class="note bad small">Đơn trước bị từ chối' + (dk.lyDo ? ': ' + esc(dk.lyDo) : '') + '. Bạn có thể gửi lại.</div>' : '') + '</div><div class="ft"><b style="font-size:14px;color:' + (p ? 'var(--ems-text)' : 'var(--ems-success)') + '">' + (p ? U.money(p) : 'Miễn phí') + '</b><span style="margin-left:auto">' + (dk && dk.trangThai === 'tu-choi' && !g && !tr ? '<button class="btn sm primary" data-dk="' + l.id + '">Gửi lại</button>' : nut) + '</span></div></div>';
+      }).join('') + '</div><div class="small muted" style="margin-top:10px">Lớp đã khai giảng không nhận đăng ký trực tuyến; liên hệ Phòng đào tạo nếu cần học bổ sung.</div>' : '<div class="panel"><div class="empty">Hiện chưa có lớp đang tuyển sinh</div></div>';
+      host.querySelectorAll('[data-dk]').forEach(function (b) { b.onclick = function () { dangKy(LMS.byId('lop', b.dataset.dk)); }; });
+    } else {
+      host.innerHTML = dks.length ? '<div class="panel">' + dks.sort(function (a, b) { return a.ngay < b.ngay ? 1 : -1; }).map(function (d) {
+        var l = LMS.byId('lop', d.lop), t = ttCua(l), p = phi(l), st = DK[d.trangThai] || [d.trangThai, ''];
+        return '<div class="tb-it" style="cursor:default;align-items:center"><span style="flex:1;min-width:0"><b>' + esc(l.ten) + '</b><div class="small muted"><span class="mono">' + esc(l.ma) + '</span> · gửi ' + LMS.fmtDate(d.ngay) + ' · ' + (p ? 'học phí ' + U.money(p) : 'miễn phí') + (t ? ' · <span class="mono">' + esc(t.ma) + '</span> ' + (t.trangThai === 'da-thanh-toan' ? 'đã thanh toán qua ' + esc(t.kenh) : 'chưa thanh toán') : '') + '</div>' + (d.lyDo ? '<div class="small" style="color:var(--ems-danger)">Lý do: ' + esc(d.lyDo) + '</div>' : '') + '</span><span class="row" style="gap:6px">' + U.badge(st[0], st[1]) + (t && t.trangThai !== 'da-thanh-toan' && d.trangThai !== 'tu-choi' && d.trangThai !== 'da-huy' ? '<button class="btn sm primary" data-tt="' + t.id + '">Thanh toán ' + U.money(t.soTien) + '</button>' : '') + (d.trangThai === 'cho-duyet' && !(t && t.trangThai === 'da-thanh-toan') ? '<button class="btn sm" data-huy="' + d.id + '">Hủy đơn</button>' : '') + (t && t.trangThai === 'da-thanh-toan' ? '<button class="btn sm" data-hd="' + t.id + '">Hóa đơn</button>' : '') + '</span></div>';
+      }).join('') + '</div>' : '<div class="panel"><div class="empty">Bạn chưa gửi đơn đăng ký nào</div></div>';
+      host.querySelectorAll('[data-tt]').forEach(function (b) { b.onclick = function () { thanhToan(LMS.byId('thanhToan', b.dataset.tt)); }; });
+      host.querySelectorAll('[data-huy]').forEach(function (b) { b.onclick = function () { var d = LMS.byId('dangKy', b.dataset.huy); U.confirm({ title: 'Hủy đơn đăng ký', message: 'Hủy đơn đăng ký lớp ' + LMS.name('lop', d.lop, 'ma') + '?', ok: 'Hủy đơn', danger: true }).then(function (y) { if (!y) return; d.trangThai = 'da-huy'; D().thanhToan.forEach(function (t) { if (t.lop === d.lop && t.hv === HV.id() && t.trangThai !== 'da-thanh-toan') t.trangThai = 'da-huy'; }); LMS.commit('Học viên hủy đơn đăng ký', 'Đăng ký học', LMS.name('lop', d.lop, 'ma') + ' · ' + HV.me().ma); render(); }); }; });
+      host.querySelectorAll('[data-hd]').forEach(function (b) { b.onclick = function () { U.toast('Đã tải hóa đơn điện tử ' + LMS.byId('thanhToan', b.dataset.hd).ma, 'ok'); }; });
+    }
+  }
+  function dangKy(l) {
+    var p = phi(l), hp = LMS.hocPhanOfLop(l), h = HV.me();
+    U.modal({ title: 'Đăng ký ' + l.ten, body: '<dl class="kv"><dt>Học phần</dt><dd>' + esc(hp.ten) + ' · ' + hp.soTC + ' tín chỉ</dd><dt>Thời gian</dt><dd>' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + '</dd><dt>Hình thức</dt><dd>' + esc(HV.HT[l.hinhThuc] || '') + '</dd><dt>Học phí</dt><dd><b>' + (p ? U.money(p) : 'Miễn phí') + '</b></dd><dt>Học viên</dt><dd>' + esc(h.hoTen) + ' · <span class="mono">' + esc(h.ma) + '</span> · ' + esc(h.email) + '</dd></dl><div class="note info" style="margin-top:10px">' + (p ? 'Sau khi gửi đơn, bạn thanh toán học phí trực tuyến hoặc chuyển khoản. Phòng đào tạo duyệt đơn và ghi danh vào lớp khi nhận đủ học phí.' : 'Phòng đào tạo duyệt đơn trong 2 ngày làm việc. Bạn nhận thông báo khi được ghi danh.') + '</div><label class="check" style="margin-top:10px"><input type="checkbox" name="ok"> Tôi đồng ý với quy định đào tạo và chính sách học phí</label>',
+      foot: [{ label: 'Hủy', close: true }, { label: p ? 'Gửi đơn và thanh toán' : 'Gửi đơn đăng ký', cls: 'primary', onClick: function (a) {
+        if (!a.body.querySelector('[name=ok]').checked) { U.toast('Xác nhận đồng ý quy định trước khi gửi', 'bad'); return false; }
+        if (HV.gdLop(l.id)) { U.toast('Bạn đã ghi danh lớp này', 'bad'); return; }
+        if (trung(l)) { U.toast('Bạn đã có lớp cùng học phần', 'bad'); return; }
+        var cu = dkCua(l); if (cu && ['cho-thanh-toan', 'cho-duyet'].indexOf(cu.trangThai) >= 0) { U.toast('Đơn đăng ký lớp này đang được xử lý', 'bad'); return; }
+        var d = { id: LMS.nextId('dk'), lop: l.id, hv: HV.id(), ngay: LMS.iso(LMS.TODAY), trangThai: p ? 'cho-thanh-toan' : 'cho-duyet' }; D().dangKy.push(d);
+        var t = null; if (p) { t = { id: LMS.nextId('tt'), ma: 'DH' + String(Date.now()).slice(-6), hv: HV.id(), lop: l.id, khoanThu: l.khoanThu, soTien: p, trangThai: 'cho-thanh-toan', kenh: '—', ngay: LMS.iso(LMS.TODAY) }; D().thanhToan.push(t); }
+        LMS.commit('Học viên đăng ký lớp', 'Đăng ký học', l.ma + ' · ' + h.ma); U.toast('Đã gửi đơn đăng ký ' + l.ma, 'ok');
+        tab = 'don'; history.replaceState(null, '', 'dang-ky.html?tab=don'); render(); if (t) thanhToan(t);
+      } }] });
+  }
+  function thanhToan(t) {
+    var l = LMS.byId('lop', t.lop);
+    U.modal({ title: 'Thanh toán học phí', body: '<dl class="kv"><dt>Mã đơn</dt><dd class="mono">' + esc(t.ma) + '</dd><dt>Lớp</dt><dd>' + esc(l.ten) + '</dd><dt>Số tiền</dt><dd><b>' + U.money(t.soTien) + '</b></dd></dl><div class="field" style="margin-top:10px"><label>Phương thức</label><div class="stack" style="gap:6px"><label class="opt"><input type="radio" name="k" value="VNPay" checked> Ví điện tử, thẻ ATM nội địa (VNPay)</label><label class="opt"><input type="radio" name="k" value="Chuyển khoản"> Chuyển khoản VietQR · nội dung ' + esc(t.ma) + ' ' + esc(HV.me().ma) + '</label></div></div><div class="small muted">Bản demo mô phỏng cổng thanh toán, không phát sinh giao dịch thật.</div>',
+      foot: [{ label: 'Để sau', close: true }, { label: 'Thanh toán', cls: 'primary', onClick: function (a) { var k = a.body.querySelector('[name=k]:checked').value; t.trangThai = 'da-thanh-toan'; t.kenh = k; t.ngay = LMS.iso(LMS.TODAY); var d = D().dangKy.filter(function (x) { return x.lop === t.lop && x.hv === t.hv && x.trangThai === 'cho-thanh-toan'; })[0]; if (d) d.trangThai = 'cho-duyet'; LMS.commit('Thanh toán học phí', 'Thanh toán', t.ma + ' · ' + HV.me().ma + ' · ' + k); U.toast('Thanh toán thành công. Phòng đào tạo ghi danh bạn vào lớp sau khi duyệt đơn.', 'ok'); render(); } }] });
+  }
+  LMS.onChange(render); render();
+  if (lop0) { var l0 = LMS.byId('lop', lop0); if (l0 && moDK().indexOf(l0) >= 0 && !HV.gdLop(l0.id) && !dkCua(l0)) dangKy(l0); else if (l0 && moDK().indexOf(l0) < 0 && !HV.gdLop(l0.id)) U.toast(l0.ma + ' không nhận đăng ký trực tuyến', 'bad'); }
+})();
+</script>
+</body></html>

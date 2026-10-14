@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, lopId = HV.qp('lop'), baiId = HV.qp('bai'), side = HV.qp('side') || 'bai';
+  var chay = null, dapAn = {}, daNop = false, luotQuiz = null;
+  function D() { return LMS.db; }
+  function render() {
+    if (chay) { clearInterval(chay); chay = null; }
+    var app = HV.shell('hoc.html', { title: 'Học bài' }), l = LMS.byId('lop', lopId);
+    if (!l || !HV.duocVao(l.id)) { app.innerHTML = '<div class="panel"><div class="empty">Bạn chưa ghi danh lớp này hoặc lớp không tồn tại. <a href="lop-cua-toi.html">Về Lớp của tôi</a></div></div>'; return; }
+    var bs = HV.baiCua(l), i = bs.findIndex(function (b) { return b.id === baiId; }); if (i < 0) { i = Math.min(HV.td(l.id).done, bs.length - 1); baiId = bs[i].id; }
+    var b = bs[i], st = HV.baiState(l, i), p = HV.tienDoLop(l);
+    if (st === 'khoa') { var cur = bs[HV.td(l.id).done]; app.innerHTML = '<div class="crumb"><a href="lop-cua-toi.html">Lớp của tôi</a> › <a href="' + HV.url('lop.html', { lop: l.id }) + '">' + esc(l.ma) + '</a></div><div class="panel"><div class="panel-body stack"><h1 style="font-size:18px">' + esc(b.ten) + '</h1><div class="note warn">Bài này mở sau khi bạn hoàn thành các bài trước theo điều kiện của học phần.</div><div><a class="btn primary" href="' + HV.url('hoc.html', { lop: l.id, bai: cur.id }) + '">Học tiếp ' + esc(cur.ten) + '</a></div></div></div>'; return; }
+    var dk = HV.dieuKienBai(l, b), me = HV.me(), t = HV.tdGhi(l.id);
+    t.lastAt = LMS.iso(LMS.TODAY); t.baiCuoi = b.id; LMS.commit(null);
+    var s = '<div class="crumb"><a href="lop-cua-toi.html">Lớp của tôi</a> › <a href="' + HV.url('lop.html', { lop: l.id, tab: 'bai' }) + '">' + esc(l.ten) + '</a> › Bài ' + (i + 1) + '/' + bs.length + '</div>';
+    s += '<div class="page-head"><div style="min-width:0"><h1 style="font-size:20px">' + esc(b.ten) + '</h1><div class="sub">' + b.phut + ' phút · ' + (st === 'xong' ? 'đã hoàn thành' : 'đang học') + ' · tiến độ lớp ' + p.done + '/' + p.tong + ' bài (' + p.pct + '%)</div></div><div class="actions"><button class="btn" id="bLoi">Báo lỗi nội dung</button></div></div>';
+    s += '<div class="player"><div class="stack">';
+    s += '<div class="panel"><div class="panel-body crit"><div class="' + (dk.vOk ? 'ok' : 'no') + '">' + HV.svg(dk.vOk ? 'check' : 'clock', 16) + (dk.coVideo ? ' Xem tối thiểu ' + dk.canXem + '% video · đã xem ' + dk.xem + '%' : ' Bài không có video bắt buộc') + '</div>' + (dk.coQuiz ? '<div class="' + (dk.qOk ? 'ok' : 'no') + '">' + HV.svg(dk.qOk ? 'check' : 'clock', 16) + ' Câu hỏi củng cố đạt từ ' + dk.canDiem + ' điểm · ' + (dk.diemQuiz == null ? 'chưa làm' : 'điểm cao nhất ' + dk.diemQuiz) + '</div>' : '') + '<div class="' + (st === 'xong' ? 'ok' : 'no') + '">' + HV.svg(st === 'xong' ? 'check' : 'lock', 16) + (st === 'xong' ? ' Đã hoàn thành bài' : ' Đạt đủ điều kiện sẽ tự hoàn thành bài và mở bài tiếp theo') + '</div></div></div>';
+    s += '<div class="panel"><div class="panel-body nd" id="nd">' + noiDung(l, b, dk, me) + '</div></div>';
+    var prev = bs[i - 1], next = bs[i + 1], nextOk = next && HV.baiState(l, i + 1) !== 'khoa';
+    s += '<div class="row">' + (prev ? '<a class="btn" href="' + HV.url('hoc.html', { lop: l.id, bai: prev.id }) + '">‹ Bài trước</a>' : '') + '<span class="right" style="margin-left:auto">' + (next ? (nextOk ? '<a class="btn primary" href="' + HV.url('hoc.html', { lop: l.id, bai: next.id }) + '">Bài tiếp theo ›</a>' : '<button class="btn" disabled title="Hoàn thành bài này để mở">Bài tiếp theo ' + HV.svg('lock', 12) + '</button>') : '<a class="btn" href="' + HV.url('lop.html', { lop: l.id }) + '">Về trang lớp</a>') + '</span></div>';
+    s += '</div><div class="panel sticky-side"><div class="side-tabs"><button data-s="bai"' + (side === 'bai' ? ' class="on"' : '') + '>Bài giảng</button><button data-s="hd"' + (side === 'hd' ? ' class="on"' : '') + '>Hỏi đáp' + (function () { var n = hdBai(l, b).length; return n ? ' · ' + n : ''; })() + '</button><button data-s="gc"' + (side === 'gc' ? ' class="on"' : '') + '>Ghi chú</button></div><div id="side"></div></div></div>';
+    app.innerHTML = s;
+    app.querySelectorAll('[data-s]').forEach(function (x) { x.onclick = function () { side = x.dataset.s; app.querySelectorAll('[data-s]').forEach(function (y) { y.classList.toggle('on', y === x); }); veSide(l, b, bs); }; });
+    veSide(l, b, bs); ganVideo(l, b); ganQuiz(l, b);
+    document.getElementById('bLoi').onclick = function () { baoLoi(l, b); };
+  }
+  function noiDung(l, b, dk, me) {
+    var h = '';
+    LMS.walkKhoi(b.khoi, function (k) {
+      if (k.loai === 'doan-van') h += k.html;
+      else if (k.loai === 'tieu-de') h += '<h2 style="font-size:16px;margin:14px 0 8px">' + esc(k.text) + '</h2>';
+      else if (k.loai === 'duong-ke') h += '<hr style="border:0;border-top:1px solid var(--ems-border);margin:12px 0">';
+      else if (k.loai === 'video') { var f = LMS.byId('thuVien', k.file), dai = k.giay || (f && f.giay) || b.phut * 60; h += '<div class="video" id="vid" data-giay="' + dai + '"><span class="wm">' + esc(me.ma) + ' · ' + esc(me.hoTen) + '</span><button class="play" id="vPlay" aria-label="Phát">' + HV.svg('play') + '</button><div class="bar"><span id="vT">' + mmss(dai * dk.xem / 100) + ' / ' + mmss(dai) + '</span><div class="trk"><span id="vTrk" style="width:' + dk.xem + '%"></span></div><select id="vSpeed" aria-label="Tốc độ phát"><option value="1">1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option></select></div></div><div class="small muted" style="margin-top:6px">' + esc(k.chuThich || (f ? f.ten : '')) + ' · không tua nhanh vượt phần chưa xem; hệ thống ghi nhận thời lượng đã xem</div>'; }
+      else if (k.loai === 'pdf') { var p = LMS.byId('thuVien', k.file); h += '<div class="row" style="border:1px solid var(--ems-border);border-radius:8px;padding:10px 12px;margin:10px 0;flex-wrap:nowrap">' + HV.svg('doc', 20) + '<div style="flex:1;min-width:0"><b style="font-size:13px">' + esc(p ? p.ten : 'Tài liệu') + '</b><div class="small muted">' + esc(k.chuThich || 'Tài liệu') + (p ? ' · ' + (p.kb / 1024).toFixed(1) + ' MB' : '') + '</div></div>' + (k.taiVe ? '<button class="btn sm" data-tai="' + esc(p ? p.ten : '') + '">Tải về</button>' : '<span class="small muted">Chỉ xem trực tuyến</span>') + '</div>'; }
+      else if (k.loai === 'quiz') h += '<div class="qz" id="qz" data-k="' + k.id + '"><div class="qz-h">' + HV.svg('form', 18) + esc(k.tieuDe || 'Câu hỏi củng cố') + '<span style="margin-left:auto;font-weight:500;font-size:12px">' + k.cauHoi.length + ' câu · đạt từ ' + dk.canDiem + ' điểm</span></div><div class="qz-b" id="qzB"></div></div>';
+    });
+    return h || '<div class="empty">Bài chưa có nội dung</div>';
+  }
+  function mmss(sec) { sec = Math.round(sec); var m = Math.floor(sec / 60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+  function ganVideo(l, b) {
+    var v = document.getElementById('vid'); if (!v) return;
+    var dai = +v.dataset.giay, bt = document.getElementById('vPlay'), trk = document.getElementById('vTrk'), tx = document.getElementById('vT');
+    document.querySelectorAll('[data-tai]').forEach(function (x) { x.onclick = function () { U.toast('Đã tải ' + x.dataset.tai, 'ok'); }; });
+    bt.onclick = function () {
+      if (chay) { clearInterval(chay); chay = null; bt.innerHTML = HV.svg('play'); return; }
+      bt.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:26px;height:26px"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>';
+      chay = setInterval(function () {
+        var t = HV.tdGhi(l.id), sp = +document.getElementById('vSpeed').value; t.xem[b.id] = Math.min(100, (t.xem[b.id] || 0) + 4 * sp); t.phutXem = (t.phutXem || 0) + Math.round(dai / 60 * .04 * sp);
+        trk.style.width = t.xem[b.id] + '%'; tx.textContent = mmss(dai * t.xem[b.id] / 100) + ' / ' + mmss(dai);
+        if (t.xem[b.id] >= 100) { clearInterval(chay); chay = null; }
+        kiemTraXong(l, b, !chay);
+      }, 600);
+    };
+  }
+  function kiemTraXong(l, b, veLai) {
+    var bs = HV.baiCua(l), i = bs.indexOf(b), dk = HV.dieuKienBai(l, b), t = HV.tdGhi(l.id);
+    if (dk.ok && i === t.done) { t.done = i + 1; LMS.commit('Hoàn thành bài', 'Học viên', HV.me().ma + ' · ' + l.ma + ' · ' + b.ten); U.toast('Đã hoàn thành ' + b.ten + (bs[i + 1] ? '. Bài tiếp theo đã mở.' : '. Bạn đã hoàn thành toàn bộ bài giảng.'), 'ok'); veLai = true; }
+    else LMS.commit(null);
+    if (veLai) { var dangChay = !!chay, sp = document.getElementById('vSpeed'); sp = sp ? sp.value : '1'; if (chay) { clearInterval(chay); chay = null; } render(); var v2 = document.getElementById('vSpeed'); if (v2) v2.value = sp; if (dangChay && (t.xem[b.id] || 0) < 100) { var bp = document.getElementById('vPlay'); if (bp) bp.click(); } }
+  }
+  function ganQuiz(l, b) {
+    var box = document.getElementById('qzB'); if (!box) return;
+    var k = HV.quizKhoi(b)[0];
+    function ve() {
+      box.innerHTML = k.cauHoi.map(function (q, n) {
+        var pa = HV.paQuiz(q, b), a = dapAn[q.id], h = '<div class="q-it"><div class="qt">Câu ' + (n + 1) + '. ' + esc(q.noiDung) + (q.loai === 'nhieu' ? ' <span class="muted small">(chọn nhiều)</span>' : '') + '</div>';
+        if (q.loai === 'ngan') { h += '<input class="inp" data-ngan="' + q.id + '" value="' + esc(a || '') + '" placeholder="Nhập câu trả lời ngắn"' + (daNop ? ' disabled' : '') + '>'; if (daNop) { var dung = dungNgan(q, a); h += '<div class="fb ' + (dung ? 'ok' : 'bad') + '">' + (dung ? 'Đúng' : 'Chưa đúng · đáp án: ' + esc((q.dapAn || []).join(', '))) + '</div>'; } }
+        else pa.forEach(function (o, j) { var chon = q.loai === 'nhieu' ? (a || []).indexOf(j) >= 0 : a === j; var cls = daNop ? (o.dung ? ' dung' : chon ? ' sai' : '') : ''; h += '<label class="opt' + cls + '"><input type="' + (q.loai === 'nhieu' ? 'checkbox' : 'radio') + '" name="q_' + q.id + '" data-q="' + q.id + '" data-j="' + j + '"' + (chon ? ' checked' : '') + (daNop ? ' disabled' : '') + '> <span>' + String.fromCharCode(65 + j) + '. ' + esc(o.t) + '</span></label>'; });
+        return h + '</div>';
+      }).join('') + '<div class="row">' + (daNop ? '<b>Kết quả: ' + luotQuiz + '/10 điểm</b><span class="muted small">' + (luotQuiz >= HV.dieuKienBai(l, b).canDiem ? 'Đạt điều kiện câu hỏi củng cố' : 'Chưa đạt, xem lại bài và làm lại') + '</span><button class="btn sm right" style="margin-left:auto" id="qLai">Làm lại</button>' : '<span class="muted small">Làm lại không giới hạn, hệ thống lấy điểm cao nhất</span><button class="btn primary right" style="margin-left:auto" id="qNop">Nộp câu trả lời</button>') + '</div>';
+      box.querySelectorAll('[data-q]').forEach(function (x) { x.onchange = function () { var q = k.cauHoi.find(function (y) { return y.id === x.dataset.q; }); if (q.loai === 'nhieu') { var arr = dapAn[q.id] || []; var j = +x.dataset.j; dapAn[q.id] = x.checked ? arr.concat([j]) : arr.filter(function (v) { return v !== j; }); } else dapAn[q.id] = +x.dataset.j; }; });
+      box.querySelectorAll('[data-ngan]').forEach(function (x) { x.oninput = function () { dapAn[x.dataset.ngan] = x.value; }; });
+      var nop = document.getElementById('qNop'); if (nop) nop.onclick = function () {
+        var thieu = k.cauHoi.filter(function (q) { var a = dapAn[q.id]; return a == null || a === '' || (Array.isArray(a) && !a.length); }).length;
+        if (thieu) { U.toast('Còn ' + thieu + ' câu chưa trả lời', 'bad'); return; }
+        var dung = k.cauHoi.filter(function (q) { var pa = HV.paQuiz(q, b), a = dapAn[q.id]; if (q.loai === 'ngan') return dungNgan(q, a); if (q.loai === 'nhieu') { var dd = pa.map(function (o, j) { return o.dung ? j : -1; }).filter(function (j) { return j >= 0; }); return dd.length === a.length && dd.every(function (j) { return a.indexOf(j) >= 0; }); } return pa[a] && pa[a].dung; }).length;
+        luotQuiz = Math.round(dung / k.cauHoi.length * 100) / 10; daNop = true;
+        var t = HV.tdGhi(l.id); t.quiz[b.id] = Math.max(t.quiz[b.id] || 0, luotQuiz);
+        kiemTraXong(l, b, false); ve();
+      };
+      var lai = document.getElementById('qLai'); if (lai) lai.onclick = function () { daNop = false; dapAn = {}; ve(); };
+    }
+    ve();
+  }
+  function dungNgan(q, a) { var n = U.norm(a || '').trim(); return !!n && (q.dapAn || []).some(function (d) { var x = U.norm(d); return n === x || x.indexOf(n) >= 0 && n.length >= 6; }); }
+  function hdBai(l, b) { return D().hoiDap.filter(function (t) { return t.lop === l.id && t.bai === b.id && !t.xoa && !t.an && (!t.rieng || t.hv === HV.id()); }); }
+  function veSide(l, b, bs) {
+    var host = document.getElementById('side');
+    if (side === 'bai') { host.innerHTML = '<div class="bai-list">' + bs.map(function (x, i) { var st = HV.baiState(l, i), inner = '<span class="n">' + (st === 'xong' ? '✓' : st === 'khoa' ? HV.svg('lock', 12) : i + 1) + '</span><span class="t">' + esc(x.ten) + '<small>' + x.phut + ' phút</small></span>'; return st === 'khoa' ? '<div class="bai-it khoa">' + inner + '</div>' : '<a class="bai-it ' + st + (x.id === b.id ? ' on' : '') + '" href="' + HV.url('hoc.html', { lop: l.id, bai: x.id }) + '">' + inner + '</a>'; }).join('') + '</div>'; return; }
+    if (side === 'gc') {
+      var t = HV.tdGhi(l.id), gc = (t.ghiChu || {})[b.id] || [];
+      host.innerHTML = '<div class="panel-body stack" style="gap:8px"><textarea id="gcT" rows="3" placeholder="Ghi chú cho bài này (gắn mốc thời gian video)"></textarea><button class="btn sm primary" id="gcL">Lưu ghi chú</button>' + (gc.length ? gc.slice().reverse().map(function (g, n) { return '<div style="border:1px solid var(--ems-border);border-radius:8px;padding:8px 10px;font-size:13px"><div class="small muted">' + g.moc + ' · ' + LMS.fmtDT(g.luc) + '<button class="lnk right" style="float:right;color:var(--ems-danger);font-size:12px" data-xgc="' + (gc.length - 1 - n) + '">Xóa</button></div>' + esc(g.nd) + '</div>'; }).join('') : '<div class="muted small">Chưa có ghi chú. Ghi chú chỉ mình bạn xem.</div>') + '</div>';
+      document.getElementById('gcL').onclick = function () { var v = document.getElementById('gcT').value.trim(); if (!v) return; var dk = HV.dieuKienBai(l, b), vd = HV.videoKhoi(b), moc = vd ? mmss((vd.giay || b.phut * 60) * dk.xem / 100) : '—'; t.ghiChu = t.ghiChu || {}; (t.ghiChu[b.id] = t.ghiChu[b.id] || []).push({ nd: v, moc: moc, luc: new Date().toISOString() }); LMS.commit(null); veSide(l, b, bs); };
+      host.querySelectorAll('[data-xgc]').forEach(function (x) { x.onclick = function () { t.ghiChu[b.id].splice(+x.dataset.xgc, 1); LMS.commit(null); veSide(l, b, bs); }; });
+      return;
+    }
+    var ts = hdBai(l, b).sort(function (x, y) { return x.ngay < y.ngay ? 1 : -1; });
+    host.innerHTML = '<div class="panel-body stack" style="gap:8px"><textarea id="hq" rows="3" placeholder="Đặt câu hỏi về bài này"></textarea><div class="row"><label class="check small"><input type="radio" name="pv" value="lop" checked> Cả lớp cùng thấy</label><label class="check small"><input type="radio" name="pv" value="gv"> Chỉ giảng viên</label><button class="btn sm primary right" style="margin-left:auto" id="hqG">Gửi câu hỏi</button></div></div>' +
+      (ts.length ? ts.map(function (t) { var n = (t.traLoi || []).filter(function (r) { return !r.xoa; }), gv = n.some(function (r) { return r.vaiTro !== 'hv'; }); return '<a class="tb-it" style="color:inherit;text-decoration:none;flex-direction:column;gap:2px" href="' + HV.url('hoi-dap.html', { hd: t.id }) + '"><div class="small muted">' + esc(LMS.name('hocVien', t.hv, 'hoTen')) + (t.hv === HV.id() ? ' (bạn)' : '') + ' · ' + LMS.fmtDT(t.ngay) + (t.rieng ? ' · riêng GV' : '') + '</div><div style="font-size:13px">' + esc(t.noiDung.slice(0, 140)) + '</div><div>' + U.badge(gv ? 'Giảng viên đã trả lời' : 'Chưa có trả lời của GV', gv ? 'ok' : 'warn') + ' <span class="small muted">' + n.length + ' trả lời</span></div></a>'; }).join('') : '<div class="empty" style="padding:16px">Chưa có câu hỏi cho bài này</div>');
+    document.getElementById('hqG').onclick = function () {
+      var v = document.getElementById('hq').value.trim(); if (v.length < 5) { U.toast('Nhập nội dung câu hỏi (tối thiểu 5 ký tự)', 'bad'); return; }
+      var rieng = host.querySelector('[name=pv]:checked').value === 'gv';
+      D().hoiDap.push({ id: LMS.nextId('hd'), lop: l.id, bai: b.id, hv: HV.id(), noiDung: v, ngay: new Date().toISOString(), rieng: rieng, loai: 'cau-hoi', ghim: false, giaiQuyet: null, xoa: null, traLoi: [] });
+      LMS.commit('Đặt câu hỏi', 'Hỏi đáp', l.ma + ' · ' + HV.me().ma + ' · ' + v.slice(0, 60)); U.toast('Đã gửi câu hỏi. Giảng viên nhận thông báo và trả lời trong mục Hỏi đáp.', 'ok'); render();
+    };
+  }
+  function baoLoi(l, b) {
+    U.modal({ title: 'Báo lỗi nội dung', body: '<div class="small muted">' + esc(l.ma + ' · ' + b.ten) + '</div><div class="field"><label>Loại lỗi</label><select class="sel" name="loai">' + U.opts(['Video không phát được hoặc giật', 'Sai nội dung, lỗi chính tả', 'Tài liệu không tải được', 'Câu hỏi củng cố sai đáp án', 'Khác'], null, null, '') + '</select></div><div class="field"><label>Mô tả <span class="req">*</span></label><textarea name="mt" rows="4" placeholder="Mô tả vị trí, mốc thời gian video hoặc câu hỏi bị lỗi"></textarea></div>',
+      foot: [{ label: 'Hủy', close: true }, { label: 'Gửi báo lỗi', cls: 'primary', onClick: function (a) { var v = U.formVals(a.body); if (!v.mt) { U.fieldErr(a.body, 'mt', 'Nhập mô tả'); return false; } D().hoiDap.push({ id: LMS.nextId('hd'), lop: l.id, bai: b.id, hv: HV.id(), noiDung: '[Báo lỗi nội dung · ' + v.loai + '] ' + v.mt, ngay: new Date().toISOString(), rieng: true, loai: 'cau-hoi', ghim: false, giaiQuyet: null, xoa: null, traLoi: [] }); LMS.commit('Báo lỗi nội dung', 'Hỏi đáp', l.ma + ' · ' + b.ten); U.toast('Đã gửi báo lỗi tới giảng viên phụ trách', 'ok'); } }] });
+  }
+  LMS.onChange(function () { if (!chay) render(); }); render();
+})();
+</script>
+</body></html>

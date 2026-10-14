@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, loc = 'cua-toi', lopF = HV.qp('lop') || '', q = '', hdId = HV.qp('hd');
+  function D() { return LMS.db; }
+  function thay(t) { return !t.xoa && !t.an && HV.duocVao(t.lop) && (!t.rieng || t.hv === HV.id()); }
+  function tenNguoi(r) { return r.vaiTro === 'gv' ? HV.gvTen(r.nguoi) : r.vaiTro === 'qt' ? 'Phòng đào tạo' : LMS.name('hocVien', r.nguoi, 'hoTen'); }
+  function vt(v) { return v === 'gv' ? U.badge('Giảng viên', 'navy') : v === 'qt' ? U.badge('Phòng đào tạo', 'warn') : U.badge('Học viên', ''); }
+  function reps(t) { return (t.traLoi || []).filter(function (r) { return !r.xoa; }); }
+  function tt(t) { if (t.loai === 'binh-luan') return U.badge('Thảo luận', ''); if (t.giaiQuyet) return U.badge('Đã giải quyết', 'ok'); if (LMS.hdDaTraLoi(t)) return U.badge('Giảng viên đã trả lời', 'navy'); return U.badge('Chờ giảng viên trả lời', 'warn'); }
+  function mention(s) { return esc(s).replace(/(^|\s)@([^\s:,]+(?:\s[^\s:,@]+){0,3}):/g, '$1<b style="color:var(--ems-navy)">@$2</b>:'); }
+  function render() {
+    var app = HV.shell('hoi-dap.html', { title: 'Hỏi đáp' });
+    if (hdId) { var t0 = LMS.byId('hoiDap', hdId); if (t0 && thay(t0)) return chiTiet(app, t0); }
+    var all = D().hoiDap.filter(thay), mine = HV.hdCuaToi();
+    var list = (loc === 'cua-toi' ? mine : loc === 'moi' ? mine.filter(function (t) { return HV.hdMoi(t) > 0; }) : all).filter(function (t) { return (!lopF || t.lop === lopF) && (!q || U.norm(t.noiDung + ' ' + reps(t).map(function (r) { return r.noiDung; }).join(' ')).indexOf(U.norm(q)) >= 0); }).sort(function (a, b) { var la = reps(a).length ? reps(a)[reps(a).length - 1].ngay : a.ngay, lb = reps(b).length ? reps(b)[reps(b).length - 1].ngay : b.ngay; return la < lb ? 1 : -1; });
+    var nMoi = mine.filter(function (t) { return HV.hdMoi(t) > 0; }).length;
+    var s = '<div class="page-head"><div><h1>Hỏi đáp</h1><div class="sub">Đặt câu hỏi cho giảng viên, thảo luận với bạn cùng lớp theo từng bài giảng</div></div><div class="actions"><button class="btn primary" id="hoi">+ Đặt câu hỏi</button></div></div>';
+    s += '<div class="panel"><div class="panel-head filters"><div class="seg">' + [['cua-toi', 'Câu hỏi của tôi ' + mine.length], ['moi', 'Có trả lời mới ' + nMoi], ['lop', 'Tất cả trong lớp ' + all.length]].map(function (f) { return '<button data-f="' + f[0] + '"' + (loc === f[0] ? ' class="on"' : '') + '>' + f[1] + '</button>'; }).join('') + '</div><select class="sel" id="fl">' + U.opts(HV.lopCuaToi().map(function (x) { return x.l; }), 'id', function (l) { return l.ma + ' · ' + l.ten; }, lopF, 'Tất cả lớp') + '</select><input class="inp" id="fq" placeholder="Tìm nội dung" value="' + esc(q) + '"></div>';
+    s += list.length ? list.map(function (t) { var l = LMS.byId('lop', t.lop), b = LMS.hocPhanOfLop(l).bai.find(function (x) { return x.id === t.bai; }), n = HV.hdMoi(t); return '<a class="tb-it" style="color:inherit;text-decoration:none" href="' + HV.url('hoi-dap.html', { hd: t.id }) + '"><span class="avatar">' + esc(U.initials(LMS.name('hocVien', t.hv, 'hoTen'))) + '</span><span style="flex:1;min-width:0"><div class="small muted">' + esc(LMS.name('hocVien', t.hv, 'hoTen')) + (t.hv === HV.id() ? ' (bạn)' : '') + ' · <span class="mono">' + esc(l.ma) + '</span>' + (b ? ' · ' + esc(b.ten) : ' · Chung') + ' · ' + LMS.fmtDT(t.ngay) + '</div><div style="margin:2px 0 4px">' + esc(t.noiDung.slice(0, 200)) + '</div><div class="row" style="gap:6px">' + tt(t) + (t.rieng ? U.badge('Chỉ giảng viên', 'info') : '') + '<span class="small muted">' + reps(t).length + ' trả lời</span>' + (n ? U.badge(n + ' trả lời mới', 'ok') : '') + '</div></span></a>'; }).join('') : '<div class="empty">' + (loc === 'cua-toi' ? 'Bạn chưa đặt câu hỏi nào. Bấm "Đặt câu hỏi" hoặc hỏi ngay trong bài giảng.' : 'Không có câu hỏi phù hợp') + '</div>';
+    app.innerHTML = s + '</div>';
+    app.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { loc = b.dataset.f; render(); }; });
+    document.getElementById('fl').onchange = function (e) { lopF = e.target.value; render(); };
+    var fq = document.getElementById('fq'); fq.oninput = function () { q = fq.value; var p = fq.selectionStart; render(); var n = document.getElementById('fq'); n.focus(); n.setSelectionRange(p, p); };
+    document.getElementById('hoi').onclick = function () { datCauHoi(lopF); };
+  }
+  function datCauHoi(lop0) {
+    var ls = HV.lopCuaToi().filter(function (x) { return HV.duocVao(x.l.id); }).map(function (x) { return x.l; });
+    var api = U.modal({ title: 'Đặt câu hỏi', body: '<div class="form-grid"><div class="field"><label>Lớp <span class="req">*</span></label><select class="sel" name="lop">' + U.opts(ls, 'id', function (l) { return l.ma + ' · ' + l.ten; }, lop0 || (ls[0] || {}).id) + '</select></div><div class="field"><label>Bài giảng</label><select class="sel" name="bai"></select></div><div class="field full"><label>Nội dung <span class="req">*</span></label><textarea name="nd" rows="5" placeholder="Mô tả rõ câu hỏi, nêu bài, phút video hoặc trang tài liệu liên quan"></textarea></div><div class="field full"><label>Phạm vi</label><div class="row"><label class="check"><input type="radio" name="pv" value="lop" checked> Cả lớp cùng thấy, bạn cùng lớp có thể trả lời</label><label class="check"><input type="radio" name="pv" value="gv"> Chỉ giảng viên</label></div></div><div class="field full"><label class="check"><input type="checkbox" name="bl"> Đây là chủ đề thảo luận, không cần giảng viên trả lời</label></div></div>',
+      onOpen: function (a) { var sl = a.body.querySelector('[name=lop]'); function doi() { var l = LMS.byId('lop', sl.value); a.body.querySelector('[name=bai]').innerHTML = U.opts(HV.baiCua(l).filter(function (b, i) { return HV.baiState(l, i) !== 'khoa'; }), 'id', 'ten', '', 'Chung, không gắn bài'); } sl.onchange = doi; doi(); },
+      foot: [{ label: 'Hủy', close: true }, { label: 'Gửi câu hỏi', cls: 'primary', onClick: function (a) {
+        var v = U.formVals(a.body), pv = a.body.querySelector('[name=pv]:checked').value;
+        if (!v.nd || v.nd.length < 10) { U.fieldErr(a.body, 'nd', 'Nhập nội dung (tối thiểu 10 ký tự)'); return false; }
+        var t = { id: LMS.nextId('hd'), lop: v.lop, bai: v.bai || null, hv: HV.id(), noiDung: v.nd, ngay: new Date().toISOString(), rieng: pv === 'gv', loai: v.bl ? 'binh-luan' : 'cau-hoi', ghim: false, giaiQuyet: null, xoa: null, traLoi: [] };
+        D().hoiDap.push(t); LMS.commit('Đặt câu hỏi', 'Hỏi đáp', LMS.name('lop', v.lop, 'ma') + ' · ' + HV.me().ma + ' · ' + v.nd.slice(0, 60));
+        U.toast('Đã gửi. Giảng viên nhận thông báo, câu trả lời hiển thị ở mục Hỏi đáp và chuông thông báo.', 'ok'); hdId = t.id; history.replaceState(null, '', HV.url('hoi-dap.html', { hd: t.id })); render();
+      } }] });
+  }
+  function chiTiet(app, t) {
+    var h = HV.id(); t.hvXem = t.hvXem || {}; t.hvXem[h] = new Date().toISOString(); LMS.commit(null);
+    var l = LMS.byId('lop', t.lop), b = LMS.hocPhanOfLop(l).bai.find(function (x) { return x.id === t.bai; }), rs = reps(t), laChu = t.hv === h;
+    var s = '<div class="crumb"><a href="hoi-dap.html" id="ve">Hỏi đáp</a> › <span class="mono">' + esc(l.ma) + '</span>' + (b ? ' › ' + esc(b.ten) : '') + '</div>';
+    s += '<div class="panel"><div class="panel-body stack" style="gap:8px"><div class="row">' + U.person(LMS.name('hocVien', t.hv, 'hoTen') + (laChu ? ' (bạn)' : ''), LMS.fmtDT(t.ngay) + (t.sua ? ' · đã sửa' : '')) + '<span class="right row" style="margin-left:auto;gap:6px">' + tt(t) + (t.rieng ? U.badge('Chỉ giảng viên', 'info') : '') + '</span></div><div style="font-size:15px;white-space:pre-wrap">' + esc(t.noiDung) + '</div>' + (b ? '<div><a class="small" href="' + HV.url('hoc.html', { lop: l.id, bai: b.id }) + '">Mở bài giảng ' + esc(b.ten) + ' ›</a></div>' : '') + (laChu && !rs.length ? '<div class="row"><button class="btn sm" id="sua">Sửa câu hỏi</button><button class="btn sm danger" id="xoa">Xóa câu hỏi</button></div>' : '') + '</div></div>';
+    s += '<div class="panel"><div class="panel-head"><h2>' + rs.length + ' trả lời</h2></div><div class="panel-body stack" style="gap:12px">' + (rs.length ? rs.map(function (r) { var best = t.giaiQuyet === r.id; return '<div style="display:flex;gap:10px;padding:10px;border-radius:8px;' + (r.vaiTro !== 'hv' ? 'background:var(--ems-navy-soft);' : 'border:1px solid var(--ems-border);') + (best ? 'outline:2px solid var(--ems-success-line)' : '') + '"><span class="avatar">' + esc(U.initials(tenNguoi(r))) + '</span><div style="flex:1;min-width:0"><div class="row small" style="gap:6px"><b>' + esc(tenNguoi(r)) + (r.nguoi === h ? ' (bạn)' : '') + '</b>' + vt(r.vaiTro) + (best ? '<span style="color:var(--ems-success);font-weight:700">✓ Câu trả lời được chọn</span>' : '') + (r.sua ? '<span class="muted">(đã sửa)</span>' : '') + '<span class="muted" style="margin-left:auto">' + LMS.fmtDT(r.ngay) + '</span></div><div style="white-space:pre-wrap;margin-top:4px">' + mention(r.noiDung) + '</div><div class="row" style="gap:12px;margin-top:4px"><button class="lnk small" data-rep="' + r.id + '">↩ Trả lời</button>' + (laChu && t.loai !== 'binh-luan' && !t.giaiQuyet ? '<button class="lnk small" data-best="' + r.id + '">✓ Câu trả lời này giải quyết được thắc mắc</button>' : '') + '</div></div></div>'; }).join('') : '<div class="muted">Chưa có trả lời. Giảng viên nhận thông báo khi có câu hỏi mới.</div>') + '</div></div>';
+    s += '<div class="panel"><div class="panel-body stack" style="gap:8px"><textarea id="rt" rows="3" placeholder="' + (t.rieng && !laChu ? 'Chủ đề riêng với giảng viên' : 'Viết trả lời') + '"></textarea><div class="row"><span class="muted small" id="to"></span><button class="btn primary right" style="margin-left:auto" id="gui">Gửi trả lời</button></div></div></div>';
+    app.innerHTML = s;
+    var to = null;
+    document.getElementById('ve').onclick = function (e) { e.preventDefault(); hdId = null; history.replaceState(null, '', 'hoi-dap.html'); render(); };
+    app.querySelectorAll('[data-rep]').forEach(function (x) { x.onclick = function () { var r = rs.find(function (y) { return y.id === x.dataset.rep; }); to = r; var ta = document.getElementById('rt'); ta.value = '@' + tenNguoi(r) + ': '; ta.focus(); document.getElementById('to').textContent = 'Trả lời ' + tenNguoi(r); }; });
+    app.querySelectorAll('[data-best]').forEach(function (x) { x.onclick = function () { t.giaiQuyet = x.dataset.best; LMS.commit('Học viên chọn câu trả lời', 'Hỏi đáp', l.ma + ' · ' + t.noiDung.slice(0, 60)); U.toast('Đã đánh dấu câu hỏi đã giải quyết', 'ok'); render(); }; });
+    document.getElementById('gui').onclick = function () { var v = document.getElementById('rt').value.trim(); if (v.replace(/^@[^:]*:\s*/, '').length < 2) { U.toast('Nhập nội dung trả lời', 'bad'); return; } t.traLoi = t.traLoi || []; t.traLoi.push({ id: LMS.nextId('tl'), nguoi: h, vaiTro: 'hv', noiDung: v, ngay: new Date().toISOString(), xoa: null, traLoiCho: to ? to.id : null }); t.hvXem[h] = new Date().toISOString(); LMS.commit('Trả lời', 'Hỏi đáp', l.ma + ' · ' + HV.me().ma); U.toast('Đã gửi trả lời', 'ok'); render(); };
+    var sua = document.getElementById('sua'); if (sua) sua.onclick = function () { U.modal({ title: 'Sửa câu hỏi', body: '<div class="field"><textarea name="nd" rows="5">' + esc(t.noiDung) + '</textarea></div>', foot: [{ label: 'Hủy', close: true }, { label: 'Lưu', cls: 'primary', onClick: function (a) { var v = U.formVals(a.body).nd; if (!v || v.length < 10) { U.fieldErr(a.body, 'nd', 'Tối thiểu 10 ký tự'); return false; } t.noiDung = v; t.sua = { luc: new Date().toISOString(), nguoi: 'hv:' + h, ten: HV.me().hoTen }; LMS.commit('Sửa câu hỏi', 'Hỏi đáp', l.ma + ' · ' + HV.me().ma); render(); } }] }); };
+    var xoa = document.getElementById('xoa'); if (xoa) xoa.onclick = function () { U.confirm({ title: 'Xóa câu hỏi', message: 'Câu hỏi chưa có trả lời nào. Xóa câu hỏi này?', ok: 'Xóa', danger: true }).then(function (y) { if (!y) return; t.xoa = { nguoi: HV.me().hoTen, vaiTro: 'hv', luc: new Date().toISOString(), lyDo: 'Học viên tự xóa' }; LMS.commit('Học viên xóa câu hỏi', 'Hỏi đáp', l.ma + ' · ' + HV.me().ma); hdId = null; history.replaceState(null, '', 'hoi-dap.html'); render(); }); };
+  }
+  LMS.onChange(render); render();
+  var hoi = HV.qp('hoi'); if (hoi && !hdId) datCauHoi(hoi);
+})();
+</script>
+</body></html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var U = LMS.ui, esc = U.esc, tab = HV.qp('tab') || 'tuan', wk = monday(LMS.TODAY);
+  function monday(d) { d = LMS.parse(d); return LMS.addDays(d, -((d.getDay() + 6) % 7)); }
+  function thu(s) { return LMS.THU[LMS.parse(s).getDay()]; }
+  function render() {
+    if (LMS.dongBoBuoi(true)) LMS.save();
+    var app = HV.shell('lich-hoc.html', { title: 'Lịch học' });
+    var bs = HV.buoiCuaToi(), dang = bs.filter(function (b) { return LMS.buoiStatus(b).key === 'dang'; });
+    var s = '<div class="page-head"><div><h1>Lịch học</h1><div class="sub">Buổi học trực tuyến, kỳ thi và hạn nộp bài của các lớp bạn đang học</div></div><div class="actions"><button class="btn" id="ics">' + HV.svg('cal', 14) + ' Thêm vào lịch cá nhân (.ics)</button></div></div>';
+    dang.forEach(function (b) { var l = LMS.byId('lop', b.lop), d = HV.ddCuaToi(b); s += '<div class="note info" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">' + HV.svg('video', 22) + '<div style="flex:1;min-width:220px"><b>Đang diễn ra: ' + esc(l.ma + ' · ' + b.ten) + '</b><div class="small">' + esc(b.chuDe || '') + ' · ' + b.gio + '–' + b.den + ' · ' + esc(b.phong) + ' · ' + esc(d.label) + '</div></div><button class="btn primary" data-vao="' + b.id + '">' + (d.label === 'Đang trong phòng' ? 'Quay lại phòng học' : 'Vào phòng học') + '</button></div>'; });
+    s += '<div id="tabs"></div><div id="tb"></div>';
+    app.innerHTML = s;
+    HV.tabs(document.getElementById('tabs'), [['tuan', 'Lịch tuần'], ['ds', 'Danh sách buổi học'], ['dd', 'Chuyên cần']], tab, function (t) { tab = t; history.replaceState(null, '', HV.url('lich-hoc.html', { tab: t })); render(); });
+    ({ tuan: tuan, ds: ds, dd: ddTab })[tab](document.getElementById('tb'), bs);
+    app.querySelectorAll('[data-vao]').forEach(function (x) { x.onclick = function () { HV.vaoPhong(LMS.byId('buoiHoc', x.dataset.vao)); render(); }; });
+    document.getElementById('ics').onclick = function () { xuatIcs(bs); };
+  }
+  function suKien(a, z) {
+    var ev = [];
+    HV.buoiCuaToi().forEach(function (b) { var d = LMS.parse(b.ngay); if (d >= a && d <= z) ev.push({ d: b.ngay, gio: b.gio, k: 'buoi', b: b }); });
+    HV.kyCuaToi().forEach(function (k) { var d = LMS.parse(k.moLuc); if (d >= a && d <= z) ev.push({ d: LMS.iso(d), gio: LMS.fmtDT(k.moLuc).slice(11), k: 'thi', ky: k }); });
+    HV.btCuaToi().forEach(function (b) { var d = LMS.parse(b.hanNop); if (d >= a && d <= z) ev.push({ d: LMS.iso(d), gio: LMS.fmtDT(b.hanNop).slice(11), k: 'bt', bt: b }); });
+    return ev.sort(function (x, y) { return x.gio < y.gio ? -1 : 1; });
+  }
+  function tuan(host) {
+    var a = wk, z = LMS.addDays(wk, 6), ev = suKien(a, z), T = LMS.iso(LMS.TODAY);
+    var h = '<div class="row" style="margin:12px 0"><button class="btn sm" data-w="-1">‹ Tuần trước</button><button class="btn sm" data-w="0">Tuần này</button><button class="btn sm" data-w="1">Tuần sau ›</button><b style="margin-left:6px">' + LMS.fmtDate(a) + ' – ' + LMS.fmtDate(z) + '</b><span class="muted small right" style="margin-left:auto">' + ev.length + ' mục · <span style="color:var(--ems-navy)">■</span> buổi học <span style="color:var(--ems-danger)">■</span> kỳ thi <span style="color:var(--ems-warning)">■</span> hạn nộp</span></div><div class="cal">';
+    for (var i = 0; i < 7; i++) { var d = LMS.addDays(a, i); h += '<div class="ch' + (LMS.iso(d) === T ? ' today' : '') + '">' + LMS.THU[d.getDay()] + ' ' + LMS.fmtDate(d).slice(0, 5) + '</div>'; }
+    for (var j = 0; j < 7; j++) {
+      var dj = LMS.iso(LMS.addDays(a, j)), it = ev.filter(function (e) { return e.d === dj; });
+      h += '<div class="cd" data-d="' + LMS.THU[LMS.addDays(a, j).getDay()] + ' ' + LMS.fmtDate(dj).slice(0, 5) + '">' + it.map(function (e) {
+        if (e.k === 'buoi') { var b = e.b, s = LMS.buoiStatus(b), d = HV.ddCuaToi(b); return '<button class="ev' + (s.key === 'dang' ? ' live' : '') + (s.key === 'xong' || s.key === 'cho-xn' ? ' xong' : '') + '" data-b="' + b.id + '"' + (b.huy ? ' style="text-decoration:line-through"' : '') + '><span class="muted">' + b.gio + '–' + b.den + '</span><b>' + esc(LMS.byId('lop', b.lop).ma + ' · ' + b.ten) + '</b>' + esc(b.chuDe || '') + (d.label ? '<div style="font-weight:600">' + esc(d.label) + '</div>' : '') + '</button>'; }
+        if (e.k === 'thi') return '<a class="ev thi" href="' + HV.url('thi.html', { ky: e.ky.id }) + '" style="text-decoration:none"><span class="muted">' + e.gio + '</span><b>' + esc(e.ky.ten) + '</b>' + esc(HV.kyTT(e.ky).label) + '</a>';
+        return '<a class="ev bt" href="' + HV.url('bai-tap.html', { bt: e.bt.id }) + '" style="text-decoration:none"><span class="muted">Hạn ' + e.gio + '</span><b>' + esc(e.bt.ten) + '</b>' + esc(HV.btTT(e.bt).label) + '</a>';
+      }).join('') + (it.length ? '' : '<span class="small" style="color:var(--ems-faint)">—</span>') + '</div>';
+    }
+    host.innerHTML = h + '</div>';
+    host.querySelectorAll('[data-w]').forEach(function (x) { x.onclick = function () { var n = +x.dataset.w; wk = n ? LMS.addDays(wk, 7 * n) : monday(LMS.TODAY); tuan(host); }; });
+    host.querySelectorAll('[data-b]').forEach(function (x) { x.onclick = function () { chiTiet(LMS.byId('buoiHoc', x.dataset.b)); }; });
+  }
+  function ds(host, bs) {
+    host.innerHTML = '<div class="filters" style="margin:12px 0"><select class="sel" id="fl">' + U.opts(HV.lopCuaToi().filter(function (x) { return LMS.coDiemDanh(x.l); }).map(function (x) { return x.l; }), 'id', function (l) { return l.ma + ' · ' + l.ten; }, '', 'Tất cả lớp') + '</select><select class="sel" id="ft">' + U.opts([{ v: 'sap', t: 'Sắp diễn ra' }, { v: 'qua', t: 'Đã diễn ra' }], 'v', 't', 'sap', 'Tất cả thời gian') + '</select></div><div id="lt"></div>';
+    var fl = '', ft = 'sap';
+    var tb = U.table(host.querySelector('#lt'), { rows: function () { return bs.filter(function (b) { var k = LMS.buoiStatus(b).key; return (!fl || b.lop === fl) && (!ft || (ft === 'sap' ? (k === 'sap' || k === 'hom-nay' || k === 'dang') : (k === 'xong' || k === 'cho-xn' || k === 'chua-dd'))); }); }, pageSize: 15, sort: 'ngay', dir: 1, onRowClick: function (b) { chiTiet(b); }, columns: [
+      { key: 'ngay', label: 'Ngày', sortVal: function (b) { return b.ngay + b.gio; }, render: function (b) { return '<b>' + thu(b.ngay) + ' ' + LMS.fmtDate(b.ngay) + '</b><div class="t-sub">' + b.gio + '–' + b.den + '</div>'; } },
+      { key: 'lop', label: 'Lớp · buổi', render: function (b) { return '<span class="mono">' + esc(LMS.byId('lop', b.lop).ma) + '</span> · ' + esc(b.ten) + '<div class="t-sub">' + esc(b.chuDe || '') + '</div>'; }, sortable: false },
+      { key: 'gv', label: 'Giảng viên · phòng', render: function (b) { return esc(HV.gvTen(b.gv)) + '<div class="t-sub">' + esc(b.phong) + '</div>'; }, sortable: false },
+      { key: 'st', label: 'Trạng thái', render: function (b) { var s = LMS.buoiStatus(b); return U.badge(s.key === 'cho-xn' || s.key === 'xong' ? 'Đã diễn ra' : s.label, s.key === 'dang' ? 'info' : s.key === 'sap' || s.key === 'hom-nay' ? 'navy' : s.key === 'huy' ? '' : 'ok'); }, sortable: false },
+      { key: 'dd', label: 'Điểm danh của tôi', render: function (b) { var d = HV.ddCuaToi(b); return d.label ? U.badge(d.label, d.tone) + (d.tam ? '<div class="t-sub">tạm tính</div>' : '') : '<span class="muted">—</span>'; }, sortable: false }
+    ] });
+    host.querySelector('#fl').onchange = function (e) { fl = e.target.value; tb.render(true); };
+    host.querySelector('#ft').onchange = function (e) { ft = e.target.value; tb.render(true); };
+  }
+  function ddTab(host) {
+    var ls = HV.lopCuaToi().filter(function (x) { return LMS.coDiemDanh(x.l); });
+    host.innerHTML = '<div class="stack" style="margin-top:12px">' + (ls.length ? ls.map(function (x) {
+      var cc = LMS.chuyenCanHV(x.l.id, HV.id()), bs = LMS.buoiCuaLop(x.l.id).filter(function (b) { return !b.huy && b.diemDanh; });
+      return '<div class="panel"><div class="panel-head"><h2>' + esc(x.l.ten) + '</h2><span class="right" style="margin-left:auto">' + (cc ? U.badge('Chuyên cần ' + cc.pct + '%', cc.pct >= LMS.CC_CANH_BAO ? 'ok' : cc.pct >= LMS.CC_NGUY_CO ? 'warn' : 'bad') : U.badge('Chưa có dữ liệu', '')) + '</span></div><div class="panel-body stack" style="gap:8px">' + (cc ? '<div class="stat-row"><span>Có mặt <b>' + cc.co + '</b></span><span>Có phép <b>' + cc.phep + '</b></span><span>Vắng <b>' + cc.vang + '</b></span><span>Đã điểm danh <b>' + cc.tong + ' buổi</b></span></div>' + (cc.pct < LMS.CC_CANH_BAO ? '<div class="note warn">Tỷ lệ có mặt dưới ' + LMS.CC_CANH_BAO + '%. Cột Chuyên cần chiếm ' + (x.l.cotDiem.find(function (c) { return c.nguon === 'diem-danh'; }) || { ts: 0 }).ts + '% điểm tổng kết.</div>' : '') + '<div style="display:flex;gap:4px;flex-wrap:wrap">' + bs.map(function (b) { var v = b.diemDanh[HV.id()]; return '<button class="chip" data-b="' + b.id + '" title="' + esc(b.ten + ' · ' + LMS.fmtDate(b.ngay)) + '" style="cursor:pointer;border-color:' + (v === 'co' ? 'var(--ems-success-line)' : v === 'phep' ? 'var(--ems-warning-line)' : 'var(--ems-danger-line)') + '">' + esc(b.ten.replace('Buổi ', 'B')) + ' ' + (v === 'co' ? '✓' : v === 'phep' ? 'P' : 'V') + '</button>'; }).join('') + '</div>' : '<div class="muted">Lớp chưa có buổi điểm danh.</div>') + '</div></div>';
+    }).join('') : '<div class="panel"><div class="empty">Các lớp của bạn là lớp tự học, không áp dụng điểm danh.</div></div>') + '</div>';
+    host.querySelectorAll('[data-b]').forEach(function (x) { x.onclick = function () { chiTiet(LMS.byId('buoiHoc', x.dataset.b)); }; });
+  }
+  function chiTiet(b) {
+    var l = LMS.byId('lop', b.lop), s = LMS.buoiStatus(b), d = HV.ddCuaToi(b), me = HV.id(), xp = (b.xinPhep || {})[me], t = (b.thamGia || {})[me];
+    var truoc = s.key === 'sap' || s.key === 'hom-nay', batDauSom = LMS.buoiMoc(b).bd.getTime() - Date.now() < 15 * 60000;
+    var h = '<div class="stack" style="gap:10px"><div><b>' + esc(l.ma + ' · ' + b.ten) + '</b>' + (b.chuDe ? ' · ' + esc(b.chuDe) : '') + '<div class="small muted">' + thu(b.ngay) + ' ' + LMS.fmtDate(b.ngay) + ' · ' + b.gio + '–' + b.den + ' · GV ' + esc(HV.gvTen(b.gv)) + ' · ' + esc(b.phong) + '</div></div>';
+    if (b.huy) h += '<div class="note">Buổi học đã hủy' + (b.lyDoHuy ? ': ' + esc(b.lyDoHuy) : '') + '.' + (b.buBang ? ' Buổi học bù: ' + (function () { var x = LMS.byId('buoiHoc', b.buBang); return x ? thu(x.ngay) + ' ' + LMS.fmtDate(x.ngay) + ' ' + x.gio : ''; })() : '') + '</div>';
+    if (s.key === 'dang' || (truoc && batDauSom)) h += '<div class="note info">Phòng học mở trước giờ học 15 phút. Hệ thống ghi nhận giờ vào, giờ rời để điểm danh: có mặt khi tham gia từ ' + LMS.cfgDD().nguong + '% thời lượng buổi.</div>';
+    if (t) { var a = LMS.ddTuDong(b, me); h += '<div class="panel"><div class="panel-body small">Nhật ký phòng học của bạn: vào ' + t.vao + (t.ra ? ' · rời ' + t.ra : ' · đang trong phòng') + ' · ' + a.phut + ' phút (' + a.pct + '%)' + (t.lan > 1 ? ' · ' + t.lan + ' lần vào' : '') + '</div></div>'; }
+    if (!truoc && !b.huy && s.key !== 'dang') { h += '<div>Điểm danh: ' + (d.label ? U.badge(d.label, d.tone) : '—') + (d.tam ? ' <span class="small muted">tạm tính, giảng viên xác nhận trước ' + LMS.fmtDT(LMS.hanXacNhan(b)) + '</span>' : '') + '</div>'; var dc = (b.dieuChinh || {})[me]; if (dc) h += '<div class="small muted">Giảng viên điều chỉnh: ' + esc(dc.ghiChu) + '</div>'; h += '<div class="small muted">Kết quả điểm danh chưa đúng? Gửi phản hồi cho giảng viên qua Hỏi đáp (chỉ giảng viên thấy).</div>'; }
+    if (truoc && !b.huy) h += '<div class="panel"><div class="panel-body stack" style="gap:8px"><b>Xin vắng buổi này</b>' + (xp ? '<div>' + U.badge(xp.tt === 'duyet' ? 'Đã duyệt' : xp.tt === 'tu-choi' ? 'Bị từ chối' : 'Chờ giảng viên duyệt', xp.tt === 'duyet' ? 'ok' : xp.tt === 'tu-choi' ? 'bad' : 'warn') + ' <span class="small muted">gửi ' + LMS.fmtDT(xp.luc) + ' · ' + esc(xp.lyDo) + '</span></div>' : '<div class="field"><select class="sel" name="ly">' + U.opts(['Ốm, có giấy khám bệnh', 'Trực bệnh viện theo lịch khoa', 'Việc gia đình đột xuất', 'Đi công tác theo quyết định của đơn vị', 'Lý do khác'], null, null, '') + '</select></div><div class="field"><textarea name="gc" rows="2" placeholder="Ghi chú thêm, minh chứng (nếu có)"></textarea></div>') + '<div class="small muted">Đơn được duyệt và bạn không vào phòng học thì buổi này tính Có phép.</div></div></div>';
+    h += '</div>';
+    var foot = [{ label: 'Đóng', close: true }];
+    if (truoc && !b.huy && !xp) foot.push({ label: 'Gửi đơn xin vắng', onClick: function (api) { var v = U.formVals(api.body); b.xinPhep = b.xinPhep || {}; b.xinPhep[me] = { lyDo: v.ly + (v.gc ? ' – ' + v.gc : ''), luc: new Date().toISOString(), tt: 'cho', boi: null }; LMS.commit('Gửi đơn xin vắng', 'Buổi học', l.ma + ' · ' + b.ten + ' · ' + HV.me().ma); U.toast('Đã gửi đơn xin vắng. Giảng viên duyệt trước buổi học.', 'ok'); render(); } });
+    if (xp && xp.tt === 'cho') foot.push({ label: 'Rút đơn xin vắng', cls: 'danger', onClick: function () { delete b.xinPhep[me]; LMS.commit('Rút đơn xin vắng', 'Buổi học', l.ma + ' · ' + b.ten + ' · ' + HV.me().ma); U.toast('Đã rút đơn xin vắng', 'ok'); render(); } });
+    if (s.key === 'dang' || (truoc && batDauSom && s.key === 'hom-nay')) foot.push({ label: t && !t.ra ? 'Quay lại phòng học' : 'Vào phòng học', cls: 'primary', onClick: function () { if (s.key !== 'dang') { U.toast('Phòng học mở lúc ' + b.gio, 'bad'); return false; } HV.vaoPhong(b); render(); } });
+    U.modal({ title: 'Buổi học', body: h, foot: foot });
+  }
+  function xuatIcs(bs) {
+    var sap = bs.filter(function (b) { return !b.huy && LMS.buoiMoc(b).kt.getTime() > Date.now(); });
+    if (!sap.length) { U.toast('Không có buổi học sắp tới để xuất', 'bad'); return; }
+    function f(d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''); }
+    var ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//EGO LMS//Lich hoc//VI'].concat(sap.map(function (b) { var m = LMS.buoiMoc(b), l = LMS.byId('lop', b.lop); return ['BEGIN:VEVENT', 'UID:' + b.id + '@ego-lms', 'DTSTART:' + f(m.bd), 'DTEND:' + f(m.kt), 'SUMMARY:' + l.ma + ' ' + b.ten + (b.chuDe ? ' - ' + b.chuDe : ''), 'LOCATION:' + b.phong, 'END:VEVENT'].join('\r\n'); })).concat(['END:VCALENDAR']).join('\r\n');
+    try { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.download = 'lich-hoc-' + HV.me().ma + '.ics'; document.body.appendChild(a); a.click(); a.remove(); U.toast('Đã xuất ' + sap.length + ' buổi học sắp tới', 'ok'); } catch (e) { U.toast('Trình duyệt chặn tải tệp', 'bad'); }
+  }
+  LMS.onChange(render); render();
+  var b0 = HV.qp('buoi'); if (b0 && LMS.byId('buoiHoc', b0)) chiTiet(LMS.byId('buoiHoc', b0));
+  setInterval(function () { if (!document.querySelector('.overlay')) render(); }, 60000);
+})();
+</script>
+</body></html>

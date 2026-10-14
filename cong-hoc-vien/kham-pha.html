@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng học viên · EGO LMS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../edot.css">
+<link rel="stylesheet" href="hv.css">
+<link rel="stylesheet" href="kham-pha.css">
+</head><body>
+<script src="../lms-core.js"></script>
+<script src="hv-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* Trang Khám phá khóa học: trang mặc định của Cổng học viên.
+     Khách chưa có tài khoản: tìm hiểu, chọn học phần, gửi đơn đăng ký.
+     Học viên đã đăng nhập: quay lại việc học trong một thao tác, xem học phần tiếp theo trong lộ trình. */
+  var U = LMS.ui, esc = U.esc, KMODE = 'egoLmsDemo.kp';
+  var TODAY = LMS.TODAY, DAY = 86400000;
+  var f = { q: '', khoa: '', tt: '', ht: '', phi: '', sx: 'uu-tien' };
+  var VAI = (function () { var v = HV.qp('vai'); if (v === 'khach' || v === 'hv') { luuVai(v); return v; } try { v = localStorage.getItem(KMODE); } catch (e) { v = null; } return v === 'hv' ? 'hv' : 'khach'; })();
+  function luuVai(v) { try { localStorage.setItem(KMODE, v); } catch (e) { } }
+  function D() { return LMS.db; }
+  function laHV() { return VAI === 'hv'; }
+
+  /* ---------- dữ liệu ---------- */
+  function phiL(l) { var k = l.khoanThu ? LMS.byId('khoanThu', l.khoanThu) : null; return k ? k.donGia : 0; }
+  function baiHP(hp) { return hp.bai.filter(function (b) { return b.xuatBan !== false && b.hien !== false; }); }
+  function phutHP(hp) { return baiHP(hp).reduce(function (s, b) { return s + (b.phut || 0); }, 0); }
+  function hanDK(l) { return LMS.addDays(LMS.parse(l.batDau), -1); }
+  function conNgay(d) { return Math.ceil((d - TODAY) / DAY); }
+  function conCho(l) { return l.sucChua ? Math.max(0, l.sucChua - LMS.soHV(l.id) - D().dangKy.filter(function (d) { return d.lop === l.id && (d.trangThai === 'cho-duyet' || d.trangThai === 'cho-thanh-toan'); }).length) : null; }
+  function moDK(l) { return l.trangThai === 'tuyen-sinh' && l.tuDangKy !== false && hanDK(l) >= TODAY && conCho(l) !== 0; }
+  function lopHP(hp) { return D().lop.filter(function (l) { return l.hocPhan === hp.id && ['tuyen-sinh', 'dang-hoc', 'ket-thuc'].indexOf(l.trangThai) >= 0; }); }
+  function hps() { return D().hocPhan.filter(function (h) { return h.trangThai === 'hoat-dong' && baiHP(h).length && lopHP(h).length; }); }
+  function moLop() { return D().lop.filter(moDK).sort(function (a, b) { return a.batDau < b.batDau ? -1 : 1; }); }
+  function ttHP(hp) {
+    var ls = lopHP(hp), mo = ls.filter(moDK).sort(function (a, b) { return a.batDau < b.batDau ? -1 : 1; });
+    if (mo.length) return { k: 'ts', ls: mo };
+    var dang = ls.filter(function (l) { return l.trangThai === 'dang-hoc'; });
+    if (dang.length) return { k: 'dang', ls: dang };
+    return { k: 'chua', ls: [] };
+  }
+  var TT = { ts: ['Đang tuyển sinh', 'ok'], dang: ['Đang diễn ra', 'navy'], chua: ['Chưa mở đợt mới', ''] };
+  function lopThamChieu(hp) { var st = ttHP(hp); if (st.ls.length) return st.ls[0]; return lopHP(hp).sort(function (a, b) { return a.batDau < b.batDau ? 1 : -1; })[0]; }
+  function gvHP(hp) { var o = []; lopHP(hp).sort(function (a, b) { return moDK(a) === moDK(b) ? (a.batDau < b.batDau ? 1 : -1) : moDK(a) ? -1 : 1; }).forEach(function (l) { l.giangVien.forEach(function (g) { if (o.indexOf(g) < 0) o.push(g); }); }); return o; }
+  function ctHP(hp) { return D().chuongTrinh.filter(function (c) { return (c.hocPhan || []).indexOf(hp.id) >= 0; })[0]; }
+  function kyHieu(hp) { var c = ctHP(hp); return c ? c.ma : hp.ma.slice(0, 4); }
+  function khoaNgan(id) { return LMS.donViTen(id).replace(/^Khoa /, ''); }
+  function lichTomTat(l) {
+    var bs = LMS.buoiCuaLop(l.id).filter(function (b) { return !b.huy; });
+    if (!bs.length) return l.hinhThuc === 'tu-hoc' ? 'Tự học theo lộ trình, không có buổi học cố định' : 'Công bố trước ngày khai giảng';
+    var m = {}; bs.forEach(function (b) { var k = LMS.THU[LMS.parse(b.ngay).getDay()] + ' ' + b.gio + '–' + b.den; m[k] = (m[k] || 0) + 1; });
+    return Object.keys(m).sort(function (a, b) { return m[b] - m[a]; }).slice(0, 2).join(', ') + ' · ' + bs.length + ' buổi trực tuyến';
+  }
+  function giaHP(hp) { var l = lopThamChieu(hp); return l ? phiL(l) : 0; }
+  function nhanTin() { D().nhanTin = D().nhanTin || []; return D().nhanTin; }
+  function daNhanTin(hp) { return laHV() && nhanTin().some(function (x) { return x.hp === hp.id && x.hv === HV.id(); }); }
+
+  /* trạng thái của học viên đang đăng nhập với một học phần */
+  function meHP(hp) {
+    if (!laHV()) return null;
+    var ids = lopHP(hp).map(function (l) { return l.id; }), pr = ['dang-hoc', 'cho-khai-giang', 'bao-luu', 'hoan-thanh'];
+    var g = HV.gds().filter(function (x) { return ids.indexOf(x.lop) >= 0 && pr.indexOf(x.trangThai) >= 0; }).sort(function (a, b) { return pr.indexOf(a.trangThai) - pr.indexOf(b.trangThai); })[0];
+    if (g) return { k: g.trangThai, l: LMS.byId('lop', g.lop) };
+    var d = D().dangKy.filter(function (x) { return x.hv === HV.id() && ids.indexOf(x.lop) >= 0 && (x.trangThai === 'cho-duyet' || x.trangThai === 'cho-thanh-toan'); })[0];
+    return d ? { k: 'don', l: LMS.byId('lop', d.lop), d: d } : null;
+  }
+  function tienDo(l) { return HV.tienDoLop(l); }
+
+  /* ---------- lọc ---------- */
+  function locDS() {
+    var n = U.norm(f.q);
+    var list = hps().filter(function (hp) {
+      var st = ttHP(hp), ls = lopHP(hp);
+      if (n && U.norm([hp.ten, hp.ma, hp.moTa, LMS.donViTen(hp.khoa)].concat(gvHP(hp).map(HV.gvTen)).concat(ls.map(function (l) { return l.ma + ' ' + l.ten; })).concat(baiHP(hp).map(function (b) { return b.ten; })).join(' ')).indexOf(n) < 0) return false;
+      if (f.khoa && hp.khoa !== f.khoa) return false;
+      if (f.tt && st.k !== f.tt) return false;
+      if (f.ht && !(st.ls.length ? st.ls : ls).some(function (l) { return l.hinhThuc === f.ht; })) return false;
+      if (f.phi && (f.phi === 'mien' ? giaHP(hp) > 0 : !giaHP(hp))) return false;
+      return true;
+    });
+    var ord = { ts: 0, dang: 1, chua: 2 };
+    list.sort(function (a, b) {
+      var sa = ttHP(a), sb = ttHP(b);
+      if (f.sx === 'ten') return a.ten.localeCompare(b.ten, 'vi');
+      if (f.sx === 'tc') return b.soTC - a.soTC || a.ten.localeCompare(b.ten, 'vi');
+      if (f.sx === 'khai-giang') { var x = sa.k === 'ts' ? sa.ls[0].batDau : '9', y = sb.k === 'ts' ? sb.ls[0].batDau : '9'; return x < y ? -1 : x > y ? 1 : a.ten.localeCompare(b.ten, 'vi'); }
+      return ord[sa.k] - ord[sb.k] || (sa.k === 'ts' && sa.ls[0].batDau !== sb.ls[0].batDau ? (sa.ls[0].batDau < sb.ls[0].batDau ? -1 : 1) : a.ten.localeCompare(b.ten, 'vi'));
+    });
+    return list;
+  }
+
+  /* ---------- phần tử giao diện ---------- */
+  function ic(k, w) { return HV.svg(k, w); }
+  function ngayThang(d) { d = LMS.parse(d); return '<span class="kp-date"><b>' + String(d.getDate()).padStart(2, '0') + '</b><small>TH ' + (d.getMonth() + 1) + '</small></span>'; }
+  function header() {
+    var nav = '<nav class="kp-nav" id="kpNav"><a href="#khoa-hoc" class="on">Khóa học</a><a href="#lo-trinh">Lộ trình đào tạo</a>' + (laHV() ? '<a href="#giang-vien">Giảng viên</a>' : '<a href="#cach-dang-ky">Hướng dẫn đăng ký</a>') + '<a href="#tra-cuu">Tra cứu</a><a href="#hoi-dap">Hỏi đáp</a></nav>';
+    var act;
+    if (laHV()) {
+      var h = HV.me(), nb = HV.tbChuaDoc().length;
+      act = '<div class="kp-act"><a class="icon-btn kp-bell hide-m" href="thong-bao.html" aria-label="Thông báo" title="Thông báo">' + ic('bell', 18) + (nb ? '<span class="dot">' + nb + '</span>' : '') + '</a><a class="btn primary" href="index.html"><span class="hide-m">Vào Cổng học viên</span><span class="show-m">Vào học</span></a><button class="kp-user" id="kpUser" aria-haspopup="true"><span class="avatar">' + esc(U.initials(h.hoTen)) + '</span><span class="hide-m">' + esc(h.hoTen.split(' ').slice(-1)[0]) + '</span></button><button class="icon-btn kp-ham" id="kpHam" aria-label="Mở menu">' + ic('menu', 18) + '</button></div>';
+    } else {
+      act = '<div class="kp-act"><button class="btn" id="kpLogin">Đăng nhập</button><a class="btn primary hide-m" href="#khoa-hoc" data-go-ts>Đăng ký học</a><button class="icon-btn kp-ham" id="kpHam" aria-label="Mở menu">' + ic('menu', 18) + '</button></div>';
+    }
+    return '<header class="kp-top" id="kpTop"><div class="kp-wrap"><a class="kp-brand" href="kham-pha.html"><span class="seal">VUTM</span><span><b>Cổng đào tạo trực tuyến</b><small>Học viện Y Dược học cổ truyền Việt Nam</small></span></a>' + nav + act + '</div></header>';
+  }
+  function heroKhach() {
+    var mo = moLop(), ds = hps();
+    var nHV = {}; D().ghiDanh.forEach(function (g) { nHV[g.hv] = 1; });
+    var nCN = D().ghiDanh.filter(function (g) { return g.trangThai === 'hoan-thanh'; }).length;
+    var nGV = D().giangVien.filter(function (g) { return g.trangThai !== 'ngung'; }).length;
+    var khoa = D().donVi.filter(function (d) { return d.laKhoa && ds.some(function (h) { return h.khoa === d.id; }); });
+    var s = '<section class="kp-hero"><div class="kp-wrap"><div><span class="eb"><span class="kp-dot"></span>Đợt tuyển sinh tháng ' + (mo.length ? LMS.parse(mo[0].batDau).getMonth() + 1 : TODAY.getMonth() + 1) + '/' + TODAY.getFullYear() + '</span>';
+    s += '<h1>Học phần Y học cổ truyền trực tuyến, có giảng viên đồng hành</h1><p class="lead">Bài giảng video theo lộ trình, buổi học trực tuyến với giảng viên, kiểm tra có giám sát và chứng nhận hoàn thành có mã tra cứu. Tài khoản học tập do Học viện cấp sau khi đơn đăng ký được duyệt.</p>';
+    s += '<form class="kp-srch" id="kpSrch" role="search"><input id="kpQ" placeholder="Tìm học phần, bài giảng, giảng viên…" value="' + esc(f.q) + '" aria-label="Tìm khóa học"><button class="btn primary" type="submit">Tìm khóa học</button></form>';
+    s += '<div class="kp-chips"><button data-chip="tt:ts">Đang tuyển sinh (' + ds.filter(function (h) { return ttHP(h).k === 'ts'; }).length + ')</button><button data-chip="phi:mien">Miễn phí</button>' + khoa.map(function (k) { return '<button data-chip="khoa:' + k.id + '">' + esc(khoaNgan(k.id)) + '</button>'; }).join('') + '</div>';
+    s += '<div class="kp-stats"><div><b>' + ds.length + '</b><span>học phần trực tuyến</span></div><div><b>' + nGV + '</b><span>giảng viên phụ trách</span></div><div><b>' + Object.keys(nHV).length + '</b><span>học viên đã theo học</span></div><div><b>' + nCN + '</b><span>chứng nhận đã cấp</span></div></div></div>';
+    s += '<aside class="kp-intake"><h3>Lớp đang nhận đăng ký</h3><div class="small muted" style="margin-bottom:6px">Đăng ký trực tuyến đến hết hạn của từng lớp</div>';
+    s += mo.length ? mo.slice(0, 3).map(function (l) { var hp = LMS.hocPhanOfLop(l), c = conNgay(hanDK(l)), p = phiL(l); return '<div class="it" data-hp="' + hp.id + '" tabindex="0">' + ngayThang(l.batDau) + '<span class="tx"><b>' + esc(l.ten) + '</b><small>Khai giảng ' + LMS.fmtDate(l.batDau) + ' · ' + esc(HV.HT[l.hinhThuc] || '') + '</small><small>Hạn đăng ký ' + LMS.fmtDate(hanDK(l)) + ' · <span class="kp-count">còn ' + c + ' ngày</span> · ' + (p ? U.money(p) : 'miễn phí') + '</small></span></div>'; }).join('') + '<a class="btn primary" style="width:100%;justify-content:center;margin-top:8px" href="#khoa-hoc" data-go-ts>Xem lớp đang tuyển sinh</a>'
+      : '<div class="note info">Hiện chưa có lớp nhận đăng ký. Chọn "Nhận thông báo" ở học phần quan tâm để được báo khi mở đợt mới.</div>';
+    return s + '</aside></div></section>';
+  }
+  function tiepTuc() {
+    var tiep = null; HV.dangHoc().forEach(function (x) { var t = HV.td(x.l.id), bs = HV.baiCua(x.l); if (t.done < bs.length && (!tiep || (t.lastAt || '') > (tiep.t.lastAt || ''))) tiep = { l: x.l, b: bs[t.done], t: t }; });
+    return tiep;
+  }
+  function heroHV() {
+    var h = HV.me(), dh = HV.dangHoc(), vc = HV.viecCanLam(), live = vc.filter(function (v) { return v.ic === 'video' && v.uu === 0; })[0], tiep = tiepTuc();
+    var ten = h.hoTen.split(' ').slice(-1)[0];
+    var s = '<section class="kp-me"><div class="kp-wrap"><h1>Chào ' + esc(ten) + '</h1><div class="sub">' + LMS.THU[TODAY.getDay()] + ', ' + LMS.fmtDate(TODAY) + ' · ' + dh.length + ' lớp đang học · ' + vc.length + ' việc cần làm</div><div class="kp-me-grid">';
+    s += '<div class="kp-card">' + (live ? '<div class="kp-live"><span class="ic">' + ic('video') + '</span><span style="flex:1;min-width:0"><b style="display:block;font-size:13.5px">' + esc(live.t) + '</b><span class="small muted">' + esc(live.s) + '</span></span><a class="btn primary sm" href="' + live.go + '">' + esc(live.cta) + '</a></div>' : '');
+    if (tiep) { var dk = HV.dieuKienBai(tiep.l, tiep.b), p = tienDo(tiep.l); s += '<div class="eyebrow">Tiếp tục học</div><b style="font-size:16px;display:block">' + esc(tiep.b.ten) + '</b><div class="small muted" style="margin:2px 0 8px">' + esc(tiep.l.ten) + ' · ' + tiep.b.phut + ' phút · tiến độ lớp ' + p.done + '/' + p.tong + ' bài</div><div class="pbar"><span style="width:' + p.pct + '%"></span></div><div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><a class="btn primary" href="' + HV.url('hoc.html', { lop: tiep.l.id, bai: tiep.b.id }) + '">' + ic('play', 14) + ' Học tiếp</a><a class="btn" href="lop-cua-toi.html">Lớp của tôi</a><a class="btn" href="lich-hoc.html">Lịch học</a></div>' + (dk.xem ? '' : ''); }
+    else s += '<div class="eyebrow">Lớp của tôi</div><div class="muted">Bạn chưa có lớp đang học. Chọn học phần đang tuyển sinh bên dưới để đăng ký.</div>';
+    s += '</div><div class="kp-card"><div class="row" style="align-items:center"><div class="eyebrow" style="margin:0">Việc cần làm</div><a class="small" style="margin-left:auto;color:var(--ems-navy);font-weight:600" href="index.html">Tất cả ở Tổng quan ›</a></div><div class="kp-todo" style="margin-top:6px">';
+    var ds = vc.filter(function (v) { return v !== live; }).slice(0, 4);
+    s += ds.length ? ds.map(function (v) { return '<a href="' + v.go + '"><span class="ic">' + ic(v.ic) + '</span><span class="tx"><b>' + esc(v.t) + '</b><small>' + esc(v.s) + '</small></span><span class="go">' + esc(v.cta) + ' ›</span></a>'; }).join('') : '<div class="muted small" style="padding:10px 0">Không có việc cần xử lý.</div>';
+    return s + '</div></div></div></div></section>';
+  }
+  function card(hp) {
+    var st = ttHP(hp), me = meHP(hp), bs = baiHP(hp), gv = gvHP(hp), o = st.ls[0], gia = giaHP(hp);
+    var s = '<article class="kc" data-hp="' + hp.id + '" tabindex="0" aria-label="' + esc(hp.ten) + '"><div class="kc-cv ' + HV.coverCls({ hocPhan: hp.id }) + '"><span class="k">' + esc(khoaNgan(hp.khoa)) + '</span><span class="m">' + esc(hp.ma) + ' · ' + hp.soTC + ' tín chỉ</span><span class="st">' + (me ? U.badge({ 'dang-hoc': 'Bạn đang học', 'hoan-thanh': 'Đã hoàn thành', 'cho-khai-giang': 'Đã ghi danh', 'bao-luu': 'Đang bảo lưu', don: 'Đơn chờ xử lý' }[me.k], me.k === 'hoan-thanh' ? 'ok' : 'navy') : U.badge(TT[st.k][0], TT[st.k][1])) + '</span><span class="glyph">' + esc(kyHieu(hp)) + '</span></div>';
+    s += '<div class="kc-bd"><h3>' + esc(hp.ten) + '</h3><div class="meta">' + bs.length + ' bài giảng · ' + Math.round(phutHP(hp) / 60) + ' giờ học liệu · ' + esc(HV.HT[(me ? me.l : (o || lopThamChieu(hp))).hinhThuc] || '') + '</div><div class="meta">Giảng viên: ' + (gv.length ? esc(gv.slice(0, 2).map(HV.gvTen).join(', ')) + (gv.length > 2 ? ' và ' + (gv.length - 2) + ' giảng viên khác' : '') : 'Tự học có hướng dẫn') + '</div>';
+    if (me) {
+      var l = me.l;
+      if (me.k === 'dang-hoc') { var p = tienDo(l); s += '<div class="kc-in me">Bạn đang học lớp <b>' + esc(l.ma) + '</b> · ' + p.done + '/' + p.tong + ' bài<div class="pbar" style="margin-top:6px"><span style="width:' + p.pct + '%"></span></div></div>'; }
+      else if (me.k === 'hoan-thanh') s += '<div class="kc-in ok">Bạn đã hoàn thành học phần tại lớp <b>' + esc(l.ma) + '</b></div>';
+      else if (me.k === 'cho-khai-giang') s += '<div class="kc-in me">Đã ghi danh lớp <b>' + esc(l.ma) + '</b> · khai giảng ' + LMS.fmtDate(l.batDau) + '</div>';
+      else if (me.k === 'bao-luu') s += '<div class="kc-in">Đang bảo lưu tại lớp <b>' + esc(l.ma) + '</b></div>';
+      else s += '<div class="kc-in me">Đơn đăng ký lớp <b>' + esc(l.ma) + '</b> đang ' + (me.d.trangThai === 'cho-thanh-toan' ? 'chờ thanh toán' : 'chờ Phòng Đào tạo duyệt') + '</div>';
+    } else if (st.k === 'ts') {
+      var c = conNgay(hanDK(o)), cc = conCho(o);
+      s += '<div class="kc-in ok"><b>Khai giảng ' + LMS.fmtDate(o.batDau) + '</b> · lớp ' + esc(o.ma) + '<br>Hạn đăng ký ' + LMS.fmtDate(hanDK(o)) + ' · <span class="kp-count">còn ' + c + ' ngày</span>' + (cc != null ? ' · còn ' + cc + '/' + o.sucChua + ' chỗ' : '') + (st.ls.length > 1 ? '<br>và ' + (st.ls.length - 1) + ' lớp khác đang tuyển sinh' : '') + '</div>';
+    } else if (st.k === 'dang') s += '<div class="kc-in">Lớp ' + esc(o.ma) + ' đang học đến ' + LMS.fmtDate(o.ketThuc) + '. Đợt tiếp theo chưa công bố.</div>';
+    else s += '<div class="kc-in">Chưa có lớp mở. Nhận thông báo khi Học viện mở đợt mới.</div>';
+    s += '</div><div class="kc-ft">';
+    if (me) s += '<span class="small muted">' + (me.k === 'hoan-thanh' ? 'Đã đạt' : me.k === 'don' ? 'Đơn ' + esc(me.d.ma || '') : 'Lớp ' + esc(me.l.ma)) + '</span>' + ctaHV(me);
+    else s += '<span class="gia' + (gia ? '' : ' free') + '">' + (st.k === 'ts' || gia ? (gia ? U.money(gia) : 'Miễn phí') : '') + '</span>' + (st.k === 'ts' ? (st.ls.length > 1 ? '<button class="btn primary sm" data-xem="' + hp.id + '" data-tab="lop">Chọn lớp</button>' : '<button class="btn primary sm" data-dk="' + o.id + '">Đăng ký</button>') : daNhanTin(hp) ? '<button class="btn sm" disabled>Đã đăng ký nhận tin</button>' : '<button class="btn sm" data-tin="' + hp.id + '">' + ic('bell', 13) + ' Nhận thông báo</button>');
+    return s + '</div></article>';
+  }
+  function ctaHV(me) {
+    if (me.k === 'dang-hoc') return '<a class="btn primary sm" href="' + HV.url('hoc.html', { lop: me.l.id }) + '">Học tiếp</a>';
+    if (me.k === 'hoan-thanh') return '<a class="btn sm" href="ket-qua.html?tab=cc">Xem chứng nhận</a>';
+    if (me.k === 'don') return '<a class="btn sm" href="dang-ky.html?tab=don">' + (me.d.trangThai === 'cho-thanh-toan' ? 'Thanh toán' : 'Xem đơn') + '</a>';
+    return '<a class="btn sm" href="' + HV.url('lop.html', { lop: me.l.id }) + '">Xem lớp</a>';
+  }
+  function goiY() {
+    if (!laHV()) return '';
+    var out = [];
+    D().chuongTrinh.filter(function (k) { return D().chuongTrinh.some(function (x) { return x.cha === k.id && (x.hocPhan || []).length; }); }).forEach(function (k) {
+      var con = D().chuongTrinh.filter(function (x) { return x.cha === k.id; }).map(function (x) { return LMS.byId('hocPhan', (x.hocPhan || [])[0]); }).filter(Boolean);
+      con.forEach(function (hp, i) { if (!i || meHP(hp) || hps().indexOf(hp) < 0) return; var tr = meHP(con[i - 1]); if (tr && (tr.k === 'dang-hoc' || tr.k === 'hoan-thanh')) out.push({ hp: hp, sau: con[i - 1], tr: tr }); });
+    });
+    if (!out.length) return '';
+    return '<section class="kp-sec"><div class="kp-wrap"><div class="kp-sec-h"><div><h2>Học phần tiếp theo trong lộ trình của bạn</h2><p>Gợi ý theo học phần bạn đang học và đã hoàn thành</p></div></div><div class="kp-grid">' + out.map(function (x) { return card(x.hp).replace('<div class="kc-bd">', '<div class="kc-bd"><span class="small" style="color:var(--ems-navy);font-weight:700">Học sau ' + esc(x.sau.ten) + (x.tr.k === 'hoan-thanh' ? ' (đã hoàn thành)' : ' (đang học)') + '</span>'); }).join('') + '</div></div></section>';
+  }
+  function khoaHoc() {
+    var ds = hps(), list = locDS(), khoa = D().donVi.filter(function (d) { return d.laKhoa && ds.some(function (h) { return h.khoa === d.id; }); });
+    var s = '<section class="kp-sec" id="khoa-hoc"><div class="kp-wrap"><div class="kp-sec-h"><div><h2>Khóa học</h2><p>Mỗi khóa là một học phần của chương trình đào tạo; lớp đang tuyển sinh nhận đăng ký trực tuyến</p></div></div>';
+    s += '<div class="kp-bar"><input class="inp" id="fq" placeholder="Tìm học phần, bài giảng, giảng viên" value="' + esc(f.q) + '" aria-label="Tìm trong danh sách"><select class="sel" id="fkhoa" aria-label="Khoa">' + U.opts(khoa, 'id', 'ten', f.khoa, 'Tất cả khoa') + '</select><select class="sel" id="ftt" aria-label="Tình trạng">' + U.opts([{ v: 'ts', t: 'Đang tuyển sinh' }, { v: 'dang', t: 'Đang diễn ra' }, { v: 'chua', t: 'Chưa mở đợt mới' }], 'v', 't', f.tt, 'Mọi tình trạng') + '</select><select class="sel" id="fht" aria-label="Hình thức">' + U.opts([{ v: 'truc-tuyen-gv', t: 'Trực tuyến có giảng viên' }, { v: 'tu-hoc', t: 'Tự học trực tuyến' }], 'v', 't', f.ht, 'Mọi hình thức') + '</select><select class="sel" id="fphi" aria-label="Học phí">' + U.opts([{ v: 'mien', t: 'Miễn phí' }, { v: 'phi', t: 'Có học phí' }], 'v', 't', f.phi, 'Mọi học phí') + '</select><select class="sel" id="fsx" aria-label="Sắp xếp">' + U.opts([{ v: 'uu-tien', t: 'Đang tuyển sinh trước' }, { v: 'khai-giang', t: 'Khai giảng gần nhất' }, { v: 'ten', t: 'Tên A–Z' }, { v: 'tc', t: 'Nhiều tín chỉ' }], 'v', 't', f.sx) + '</select></div>';
+    var ch = [];
+    if (f.q) ch.push(['q', '"' + f.q + '"']); if (f.khoa) ch.push(['khoa', LMS.donViTen(f.khoa)]); if (f.tt) ch.push(['tt', TT[f.tt][0]]); if (f.ht) ch.push(['ht', HV.HT[f.ht]]); if (f.phi) ch.push(['phi', f.phi === 'mien' ? 'Miễn phí' : 'Có học phí']);
+    s += '<div class="kp-active"><span><b style="color:var(--ems-text)">' + list.length + '</b> / ' + ds.length + ' khóa học</span>' + ch.map(function (c) { return '<span class="chip" data-bo="' + c[0] + '" role="button" tabindex="0" title="Bỏ điều kiện lọc">' + esc(c[1]) + '</span>'; }).join('') + (ch.length ? '<button class="btn ghost sm" id="boLoc">Xóa lọc</button>' : '') + '</div>';
+    s += list.length ? '<div class="kp-grid">' + list.map(card).join('') + '</div>' : '<div class="kp-empty"><b style="display:block;color:var(--ems-text);margin-bottom:4px">Không có khóa học phù hợp</b>Thử bỏ bớt điều kiện lọc hoặc tìm theo tên học phần, giảng viên.<div style="margin-top:10px"><button class="btn" id="boLoc2">Xóa lọc</button></div></div>';
+    return s + '</div></section>';
+  }
+  function cachDangKy() {
+    if (laHV()) return '';
+    return '<section class="kp-sec" id="cach-dang-ky"><div class="kp-wrap"><div class="kp-sec-h"><div><h2>Đăng ký học như thế nào</h2><p>Bốn bước từ chọn học phần đến vào lớp</p></div></div><div class="kp-steps">' +
+      [['Chọn lớp đang tuyển sinh', 'Xem mục tiêu, lịch học, giảng viên, học phí; học thử bài đầu tiên trước khi đăng ký.'],
+       ['Gửi đơn đăng ký', 'Điền họ tên, CCCD, điện thoại, email. Đã có tài khoản thì đăng nhập để đăng ký nhanh.'],
+       ['Thanh toán và chờ duyệt', 'Lớp có học phí: chuyển khoản theo mã đơn. Phòng Đào tạo duyệt đơn trong 2 ngày làm việc.'],
+       ['Nhận tài khoản, vào học', 'Tài khoản học tập và lịch học gửi qua email. Đăng nhập, vào lớp từ ngày khai giảng.']].map(function (x, i) { return '<div class="kp-step"><span class="n">' + (i + 1) + '</span><b>' + x[0] + '</b><p>' + x[1] + '</p></div>'; }).join('') +
+      '</div><div class="kp-note">' + ic('shield') + '<span>Tài khoản học tập do Học viện cấp sau khi đơn được duyệt, không tự tạo tài khoản trên cổng. Sinh viên, học viên đã có tài khoản đăng nhập bằng tài khoản được cấp; quên mật khẩu chọn <b>Quên mật khẩu</b> ở hộp đăng nhập.</span></div></div></section>';
+  }
+  function loTrinh() {
+    var kh = D().chuongTrinh.filter(function (k) { return D().chuongTrinh.some(function (x) { return x.cha === k.id && (x.hocPhan || []).length; }); });
+    var goc = D().chuongTrinh.filter(function (c) { return !c.cha; })[0];
+    return '<section class="kp-sec" id="lo-trinh"><div class="kp-wrap"><div class="kp-sec-h"><div><h2>Lộ trình đào tạo</h2><p>' + esc(goc ? goc.ten : '') + ': học phần sắp xếp theo khối kiến thức, học theo thứ tự từ trên xuống</p></div></div><div class="kp-path">' + kh.map(function (k) {
+      return '<div class="kp-blk"><h3>' + esc(k.ten) + '</h3>' + D().chuongTrinh.filter(function (x) { return x.cha === k.id; }).map(function (c, i) {
+        var hp = LMS.byId('hocPhan', (c.hocPhan || [])[0]); if (!hp) return '';
+        var me = meHP(hp), st = ttHP(hp), cls = me ? (me.k === 'hoan-thanh' ? ' xong' : me.k === 'dang-hoc' ? ' dang' : '') : '';
+        var nhan = me ? (me.k === 'hoan-thanh' ? 'Đã hoàn thành' : me.k === 'dang-hoc' ? 'Đang học · ' + tienDo(me.l).pct + '%' : me.k === 'don' ? 'Đơn chờ xử lý' : 'Đã ghi danh') : TT[st.k][0];
+        return '<div class="kp-node' + cls + '" data-hp="' + hp.id + '" tabindex="0"><span class="n">' + (me && me.k === 'hoan-thanh' ? '✓' : i + 1) + '</span><span class="tx"><b>' + esc(hp.ten) + '</b><small>' + esc(hp.ma) + ' · ' + hp.soTC + ' tín chỉ · ' + nhan + '</small></span>' + (st.k === 'ts' && !me ? U.badge('Mở đăng ký', 'ok') : '') + '</div>';
+      }).join('') + '</div>';
+    }).join('') + '</div></div></section>';
+  }
+  function giangVien() {
+    var ds = D().giangVien.filter(function (g) { return g.trangThai !== 'ngung'; }), mau = ['#00327d', '#0f766e', '#7c3aed', '#b45309', '#be123c', '#0369a1', '#4d7c0f', '#475569'];
+    return '<section class="kp-sec" id="giang-vien"><div class="kp-wrap"><div class="kp-sec-h"><div><h2>Giảng viên</h2><p>Giảng viên các khoa của Học viện trực tiếp phụ trách lớp, buổi học trực tuyến và hỏi đáp</p></div></div><div class="kp-gv">' + ds.map(function (g, i) {
+      var hpDay = []; D().lop.forEach(function (l) { if (l.giangVien.indexOf(g.id) >= 0) { var hp = LMS.hocPhanOfLop(l); if (hp && hpDay.indexOf(hp.ten) < 0) hpDay.push(hp.ten); } });
+      return '<div class="g"><span class="av" style="background:' + mau[i % mau.length] + '">' + esc(U.initials(g.hoTen)) + '</span><span style="min-width:0"><b>' + esc((g.hocHam ? g.hocHam + ' ' : '') + g.hoTen) + '</b><small>' + esc(LMS.donViTen(g.donVi)) + '</small><small>' + esc(hpDay.join(', ') || 'Chưa phân công lớp') + '</small></span></div>';
+    }).join('') + '</div></div></section>';
+  }
+  function traCuu() {
+    var mau = D().ghiDanh.filter(function (g) { return g.trangThai === 'hoan-thanh'; })[0], vd = '';
+    if (mau) { var hv = LMS.byId('hocVien', mau.hv), hp = LMS.hocPhanOfLop(LMS.byId('lop', mau.lop)); vd = 'VUTM-' + hp.ma + '-' + hv.ma.replace(/\D/g, ''); }
+    return '<section class="kp-sec" id="tra-cuu"><div class="kp-wrap"><div class="kp-two"><div class="kp-box"><h3>Tra cứu chứng nhận</h3><p class="s">Nhập mã in trên chứng nhận hoàn thành học phần để xác thực</p><form class="kp-row" id="fCN"><input class="inp mono" id="maCN" placeholder="' + (vd ? 'VD: ' + vd : 'Mã chứng nhận') + '" aria-label="Mã chứng nhận"><button class="btn primary" type="submit">Tra cứu</button></form><div id="kqCN"></div></div>' +
+      (laHV() ? '<div class="kp-box"><h3>Đơn đăng ký và học phí của bạn</h3><p class="s">Theo dõi trạng thái đơn, thanh toán, hóa đơn trong Cổng học viên</p><a class="btn" href="dang-ky.html?tab=don">Mở Đăng ký học & học phí</a></div>'
+        : '<div class="kp-box"><h3>Tra cứu đơn đăng ký</h3><p class="s">Dùng mã đơn trong email xác nhận và 4 số cuối điện thoại đã đăng ký</p><form class="kp-row" id="fDon"><input class="inp mono" id="maDon" placeholder="Mã đơn, VD: DK260930" aria-label="Mã đơn" style="flex:2 1 160px"><input class="inp mono" id="sdt4" placeholder="4 số cuối SĐT" maxlength="4" inputmode="numeric" aria-label="4 số cuối điện thoại" style="flex:1 1 110px"><button class="btn primary" type="submit">Tra cứu</button></form><div id="kqDon"></div></div>') + '</div></div></section>';
+  }
+  function hoiDap() {
+    var cd = LMS.cfgDD ? LMS.cfgDD() : { nguong: 70 };
+    var q = [
+      ['Ai được đăng ký học trên cổng?', 'Sinh viên, học viên liên thông của Học viện và người học có nhu cầu bồi dưỡng chuyên môn y học cổ truyền. Một số học phần yêu cầu đã hoàn thành học phần trước trong lộ trình.'],
+      ['Chưa có tài khoản thì đăng ký thế nào?', 'Chọn lớp đang tuyển sinh, bấm Đăng ký và điền đơn. Sau khi đơn được duyệt, Học viện gửi tài khoản học tập tới email của bạn. Cổng không cho tự tạo tài khoản.'],
+      ['Học phí thanh toán ra sao, có hoàn phí không?', 'Lớp có học phí thanh toán chuyển khoản theo mã đơn hoặc thanh toán trực tuyến sau khi đăng nhập. Hóa đơn điện tử gửi qua email. Hoàn phí theo quy định học phí của Học viện khi lớp chưa khai giảng.'],
+      ['Buổi học trực tuyến và điểm danh tính thế nào?', 'Vào phòng học từ Lịch học, phòng mở trước giờ học 15 phút. Hệ thống ghi giờ vào, giờ rời; tham gia từ ' + cd.nguong + '% thời lượng buổi được tính có mặt. Không tham gia được thì gửi đơn xin vắng trước buổi học.'],
+      ['Điều kiện hoàn thành và chứng nhận?', 'Hoàn thành bài giảng theo tiêu chí của học phần và đạt điểm tổng kết của lớp. Chứng nhận có mã tra cứu công khai ngay trên trang này.'],
+      ['Quên mật khẩu hoặc cần hỗ trợ?', 'Chọn Quên mật khẩu ở hộp đăng nhập để nhận liên kết đặt lại qua email đã đăng ký. Cần hỗ trợ khác, liên hệ Phòng Đào tạo theo thông tin cuối trang.']
+    ];
+    if (laHV()) q = q.slice(2);
+    return '<section class="kp-sec" id="hoi-dap"><div class="kp-wrap"><div class="kp-sec-h"><div><h2>Câu hỏi thường gặp</h2></div></div><div class="kp-faq">' + q.map(function (x, i) { return '<details' + (i === 0 ? ' open' : '') + '><summary>' + x[0] + '</summary><div class="a">' + x[1] + '</div></details>'; }).join('') + '</div>' +
+      (laHV() ? '' : '<div class="kp-org" style="margin-top:14px"><span class="ic">' + ic('user') + '</span><span style="flex:1;min-width:240px"><b style="display:block;font-size:15px">Đơn vị cử cán bộ, sinh viên đi học</b><span class="small muted">Gửi danh sách người học: Phòng Đào tạo ghi danh vào lớp đang tuyển sinh hoặc mở lớp riêng, cấp tài khoản theo danh sách, xuất hóa đơn cho đơn vị.</span></span><button class="btn" id="kpDonVi">Gửi yêu cầu đào tạo</button></div>') + '</div></section>';
+  }
+  function footer() {
+    return '<footer class="kp-foot"><div class="kp-wrap"><div><b>Học viện Y Dược học cổ truyền Việt Nam</b><div>Số 2 Trần Phú, Đại Mỗ, Hà Nội</div><div>(84-24) 3382 4929 · hocvienyduoc@ms.vutm.edu.vn</div><div style="margin-top:6px">Phòng Đào tạo tiếp nhận hỗ trợ 7:30–17:00, thứ Hai đến thứ Sáu</div></div><div><b>Đào tạo</b><a href="#khoa-hoc">Khóa học</a><a href="#lo-trinh">Lộ trình đào tạo</a>' + (laHV() ? '' : '<a href="#cach-dang-ky">Hướng dẫn đăng ký</a>') + '<a href="#tra-cuu">Tra cứu chứng nhận</a></div><div><b>Quy định</b><a href="#hoi-dap">Câu hỏi thường gặp</a><a href="#" data-qd>Quy chế đào tạo trực tuyến</a><a href="#" data-qd>Quy định học phí và hoàn phí</a><a href="#" data-qd>Chính sách bảo vệ dữ liệu cá nhân</a></div></div><div class="cp">© ' + TODAY.getFullYear() + ' Học viện Y Dược học cổ truyền Việt Nam · Cổng đào tạo trực tuyến</div></footer>';
+  }
+  function demoBar() { return '<div class="kp-demo" role="group" aria-label="Chọn vai trò xem trang"><span>Bản demo · xem với vai trò</span><button data-vai="khach" class="' + (laHV() ? '' : 'on') + '">Khách chưa có tài khoản</button><button data-vai="hv" class="' + (laHV() ? 'on' : '') + '">Học viên ' + esc(HV.me().ma) + '</button></div>'; }
+
+  /* ---------- vẽ trang ---------- */
+  function render(giuCuon) {
+    var y = window.scrollY;
+    document.body.className = 'kp'; var root = document.getElementById('kpRoot'); if (!root) { root = document.createElement('div'); root.id = 'kpRoot'; document.body.insertBefore(root, document.body.firstChild); }
+    document.title = (laHV() ? 'Khám phá khóa học' : 'Cổng đào tạo trực tuyến') + ' · Học viện Y Dược học cổ truyền Việt Nam';
+    root.innerHTML = header() + '<main>' + (laHV() ? heroHV() + goiY() : heroKhach()) + khoaHoc() + cachDangKy() + loTrinh() + giangVien() + traCuu() + hoiDap() + '</main>' + footer() + demoBar();
+    ganSuKien();
+    if (giuCuon) window.scrollTo(0, y);
+  }
+  function veDS() {
+    var host = document.getElementById('khoa-hoc'), tmp = document.createElement('div'); tmp.innerHTML = khoaHoc();
+    host.replaceWith(tmp.firstChild); ganDS();
+  }
+  function ganDS() {
+    var root = document.getElementById('khoa-hoc');
+    var q = root.querySelector('#fq'); q.oninput = function () { f.q = q.value; var p = q.selectionStart; veDS(); var n = document.getElementById('fq'); n.focus(); n.setSelectionRange(p, p); var hq = document.getElementById('kpQ'); if (hq) hq.value = f.q; };
+    [['fkhoa', 'khoa'], ['ftt', 'tt'], ['fht', 'ht'], ['fphi', 'phi'], ['fsx', 'sx']].forEach(function (x) { root.querySelector('#' + x[0]).onchange = function (e) { f[x[1]] = e.target.value; veDS(); }; });
+    root.querySelectorAll('[data-bo]').forEach(function (c) { c.onclick = c.onkeydown = function (e) { if (e.type === 'keydown' && e.key !== 'Enter') return; f[c.dataset.bo] = ''; veDS(); }; });
+    ['boLoc', 'boLoc2'].forEach(function (id) { var b = root.querySelector('#' + id); if (b) b.onclick = function () { f = { q: '', khoa: '', tt: '', ht: '', phi: '', sx: f.sx }; veDS(); var hq = document.getElementById('kpQ'); if (hq) hq.value = ''; }; });
+    ganThe(root);
+  }
+  function ganThe(root) {
+    root.querySelectorAll('[data-hp]').forEach(function (c) { c.onclick = function (e) { if (e.target.closest('a,button')) return; chiTiet(LMS.byId('hocPhan', c.dataset.hp)); }; c.onkeydown = function (e) { if (e.key === 'Enter' && e.target === c) chiTiet(LMS.byId('hocPhan', c.dataset.hp)); }; });
+    root.querySelectorAll('[data-dk]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); dangKy(LMS.byId('lop', b.dataset.dk)); }; });
+    root.querySelectorAll('[data-tin]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); nhanThongBao(LMS.byId('hocPhan', b.dataset.tin)); }; });
+    root.querySelectorAll('[data-xem]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); chiTiet(LMS.byId('hocPhan', b.dataset.xem), b.dataset.tab); }; });
+  }
+  function cuonDen(id) { var el = document.getElementById(id); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' }); }
+  function ganSuKien() {
+    ganDS();
+    ganThe(document.querySelector('.kp-hero') || document.body.querySelector('main'));
+    document.querySelectorAll('#lo-trinh [data-hp], .kp-intake [data-hp]').forEach(function (n) { n.onclick = function () { chiTiet(LMS.byId('hocPhan', n.dataset.hp)); }; n.onkeydown = function (e) { if (e.key === 'Enter') n.click(); }; });
+    var top = document.getElementById('kpTop');
+    document.querySelectorAll('.kp-nav a').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); top.classList.remove('open'); cuonDen(a.getAttribute('href').slice(1)); }; });
+    var ham = document.getElementById('kpHam'); if (ham) ham.onclick = function () { top.classList.toggle('open'); };
+    document.querySelectorAll('[data-go-ts]').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); f.tt = 'ts'; veDS(); cuonDen('khoa-hoc'); }; });
+    var srch = document.getElementById('kpSrch'); if (srch) srch.onsubmit = function (e) { e.preventDefault(); f.q = document.getElementById('kpQ').value.trim(); veDS(); cuonDen('khoa-hoc'); };
+    document.querySelectorAll('[data-chip]').forEach(function (b) { b.onclick = function () { var p = b.dataset.chip.split(':'); f[p[0]] = p[1]; veDS(); cuonDen('khoa-hoc'); }; });
+    var lg = document.getElementById('kpLogin'); if (lg) lg.onclick = function () { dangNhap(); };
+    var us = document.getElementById('kpUser'); if (us) us.onclick = function (e) { e.stopPropagation(); menuTK(); };
+    document.querySelectorAll('[data-vai]').forEach(function (b) { b.onclick = function () { VAI = b.dataset.vai; luuVai(VAI); render(false); window.scrollTo(0, 0); }; });
+    var fc = document.getElementById('fCN'); if (fc) fc.onsubmit = function (e) { e.preventDefault(); traCN(document.getElementById('maCN').value); };
+    var fd = document.getElementById('fDon'); if (fd) fd.onsubmit = function (e) { e.preventDefault(); traDon(document.getElementById('maDon').value, document.getElementById('sdt4').value); };
+    var dv = document.getElementById('kpDonVi'); if (dv) dv.onclick = yeuCauDonVi;
+    document.querySelectorAll('[data-qd]').forEach(function (a) { a.onclick = function (e) { e.preventDefault(); U.toast('Văn bản quy định đăng tải bản PDF do Phòng Đào tạo cung cấp', ''); }; });
+  }
+  function menuTK() {
+    var old = document.getElementById('kpPop'); if (old) { old.remove(); return; }
+    var h = HV.me(), p = document.createElement('div'); p.className = 'kp-pop'; p.id = 'kpPop';
+    p.innerHTML = '<div class="ph"><b style="display:block">' + esc(h.hoTen) + '</b><small class="muted">' + esc(h.ma) + ' · ' + esc(h.email) + '</small></div><a href="index.html">Tổng quan</a><a href="lop-cua-toi.html">Lớp của tôi</a><a href="lich-hoc.html">Lịch học</a><a href="ket-qua.html">Kết quả học tập</a><a href="dang-ky.html?tab=don">Đơn đăng ký & học phí</a><a href="ho-so.html">Hồ sơ & cài đặt</a><a href="#" id="kpOut">Đăng xuất</a>';
+    document.body.appendChild(p);
+    p.querySelector('#kpOut').onclick = function (e) { e.preventDefault(); VAI = 'khach'; luuVai(VAI); render(false); window.scrollTo(0, 0); U.toast('Đã đăng xuất', 'ok'); };
+    setTimeout(function () { document.addEventListener('click', function dong(e) { if (!p.contains(e.target)) { p.remove(); document.removeEventListener('click', dong); } }); }, 0);
+  }
+
+  /* ---------- chi tiết học phần ---------- */
+  function chiTiet(hp, tab) {
+    var st = ttHP(hp), me = meHP(hp), bs = baiHP(hp), ref = lopThamChieu(hp), gv = gvHP(hp), tc = HV.tieuChi(ref, bs[0]) || {};
+    var tabs = [['gt', 'Giới thiệu'], ['nd', 'Nội dung · ' + bs.length + ' bài'], ['lop', 'Lớp & lịch khai giảng'], ['gv', 'Giảng viên']];
+    var body = '<div class="kd-head"><span class="kd-cv ' + HV.coverCls({ hocPhan: hp.id }) + '">' + esc(kyHieu(hp)) + '</span><div style="min-width:0"><div class="small muted">' + esc(LMS.donViTen(hp.khoa)) + '</div><div class="kd-meta">' + U.badge(TT[st.k][0], TT[st.k][1]) + '<span class="badge">' + esc(hp.ma) + '</span><span class="badge">' + hp.soTC + ' tín chỉ</span><span class="badge">' + bs.length + ' bài · ' + Math.round(phutHP(hp) / 60) + ' giờ</span></div></div></div>';
+    if (me) body += '<div class="note ' + (me.k === 'hoan-thanh' ? 'ok' : 'info') + '" style="margin-bottom:10px">' + (me.k === 'dang-hoc' ? 'Bạn đang học học phần này tại lớp ' + esc(me.l.ma) + ' · tiến độ ' + tienDo(me.l).pct + '%.' : me.k === 'hoan-thanh' ? 'Bạn đã hoàn thành học phần này tại lớp ' + esc(me.l.ma) + '.' : me.k === 'don' ? 'Đơn đăng ký lớp ' + esc(me.l.ma) + ' đang ' + (me.d.trangThai === 'cho-thanh-toan' ? 'chờ thanh toán.' : 'chờ duyệt.') : 'Bạn đã ghi danh lớp ' + esc(me.l.ma) + '.') + '</div>';
+    body += '<div class="kp-tabs" role="tablist">' + tabs.map(function (t) { return '<button data-t="' + t[0] + '" role="tab">' + t[1] + '</button>'; }).join('') + '</div><div id="kdBody"></div>';
+    var chinh = null;
+    if (me) chinh = { label: me.k === 'dang-hoc' ? 'Học tiếp' : me.k === 'hoan-thanh' ? 'Xem chứng nhận' : me.k === 'don' ? 'Xem đơn đăng ký' : 'Vào lớp', cls: 'primary', onClick: function () { location.href = me.k === 'dang-hoc' ? HV.url('hoc.html', { lop: me.l.id }) : me.k === 'hoan-thanh' ? 'ket-qua.html?tab=cc' : me.k === 'don' ? 'dang-ky.html?tab=don' : HV.url('lop.html', { lop: me.l.id }); } };
+    else if (st.k === 'ts' && st.ls.length === 1) chinh = { label: 'Đăng ký lớp ' + st.ls[0].ma, cls: 'primary', onClick: function (a) { a.close(); dangKy(st.ls[0]); return false; } };
+    else if (st.k === 'ts') chinh = { label: 'Chọn lớp để đăng ký', cls: 'primary', close: false, onClick: function (a) { mo('lop', a); } };
+    else if (!daNhanTin(hp)) chinh = { label: 'Nhận thông báo khi mở lớp', cls: 'primary', onClick: function (a) { a.close(); nhanThongBao(hp); return false; } };
+    var api = U.modal({ title: hp.ten, size: 'lg', body: body, noFocus: true, foot: [{ label: 'Đóng', close: true }].concat(chinh ? [chinh] : []) });
+    function mo(t, a) {
+      a = a || api;
+      a.body.querySelectorAll('[data-t]').forEach(function (b) { b.classList.toggle('on', b.dataset.t === t); b.setAttribute('aria-selected', b.dataset.t === t); });
+      var h = a.body.querySelector('#kdBody'), s = '';
+      if (t === 'gt') {
+        s = '<p style="margin-top:0">' + esc(hp.moTa || '') + '</p>' + (hp.chuanDauRa && hp.chuanDauRa.length ? '<b>Mục tiêu học phần</b><ul style="margin:4px 0 12px;padding-left:18px">' + hp.chuanDauRa.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>' : '');
+        s += '<dl class="kv"><dt>Đối tượng</dt><dd>Sinh viên, học viên liên thông ngành Y học cổ truyền; người học bồi dưỡng chuyên môn</dd><dt>Hình thức</dt><dd>' + esc(HV.HT[ref.hinhThuc] || '') + '</dd><dt>Hoàn thành bài</dt><dd>' + [tc.xemOn !== false && tc.xem ? 'xem tối thiểu ' + tc.xem + '% video' : '', tc.quizOn !== false && tc.quizDiem ? 'câu hỏi củng cố từ ' + tc.quizDiem + ' điểm' : ''].filter(Boolean).join(', ') + (hp.quyTac === 'tien-quyet' ? '; bài sau mở khi hoàn thành bài trước' : '') + '</dd><dt>Đánh giá</dt><dd>' + ref.cotDiem.map(function (c) { return esc(c.ten) + ' ' + c.ts + '%'; }).join(' · ') + '</dd><dt>Điều kiện đạt</dt><dd>Điểm tổng kết từ ' + ref.diemDat + '/10; cấp chứng nhận có mã tra cứu</dd></dl>';
+      } else if (t === 'nd') {
+        s = '<div class="bai-list">' + bs.map(function (b, i) { var mo2 = b.hocThu || (me && (me.k === 'dang-hoc' || me.k === 'hoan-thanh')); return '<div class="bai-it' + (mo2 ? '' : ' khoa') + '"><span class="n">' + (i + 1) + '</span><span class="t">' + esc(b.ten) + '<small>' + b.phut + ' phút' + (b.video ? ' · video' : '') + (b.quiz ? ' · ' + b.quiz + ' câu củng cố' : '') + '</small></span>' + (b.hocThu && !(me && me.k === 'dang-hoc') ? '<button class="btn sm" data-thu="' + b.id + '">Học thử</button>' : '') + '</div>'; }).join('') + '</div>';
+      } else if (t === 'lop') {
+        var ls = lopHP(hp).sort(function (a2, b2) { var oa = moDK(a2) ? 0 : a2.trangThai === 'dang-hoc' ? 1 : 2, ob = moDK(b2) ? 0 : b2.trangThai === 'dang-hoc' ? 1 : 2; return oa - ob || (a2.batDau < b2.batDau ? 1 : -1); });
+        s = ls.map(function (l) {
+          var open = moDK(l), p = phiL(l), cc = conCho(l), nhan = open ? U.badge('Đang tuyển sinh', 'ok') : l.trangThai === 'dang-hoc' ? U.badge('Đang học', 'navy') : U.badge('Đã kết thúc', '');
+          var x = '<div class="kd-lop' + (open ? ' open' : '') + '"><div class="hd"><b>' + esc(l.ten) + '</b><span class="mono small muted">' + esc(l.ma) + '</span>' + nhan + '</div><dl><dt>Thời gian</dt><dd>' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + '</dd>';
+          if (open) x += '<dt>Lịch học</dt><dd>' + esc(lichTomTat(l)) + '</dd><dt>Hình thức</dt><dd>' + esc(HV.HT[l.hinhThuc] || '') + '</dd><dt>Giảng viên</dt><dd>' + esc(l.giangVien.map(HV.gvTen).join(', ') || '—') + '</dd><dt>Hạn đăng ký</dt><dd>' + LMS.fmtDate(hanDK(l)) + ' · còn ' + conNgay(hanDK(l)) + ' ngày' + (cc != null ? ' · còn ' + cc + '/' + l.sucChua + ' chỗ' : '') + '</dd><dt>Học phí</dt><dd><b>' + (p ? U.money(p) : 'Miễn phí') + '</b></dd>';
+          else x += '<dt>Giảng viên</dt><dd>' + esc(l.giangVien.map(HV.gvTen).join(', ') || '—') + '</dd>';
+          x += '</dl>' + (open && !me ? '<div class="kd-ft"><button class="btn primary sm" data-dk2="' + l.id + '">Đăng ký lớp này</button></div>' : !open && l.trangThai === 'dang-hoc' ? '<div class="small muted" style="margin-top:6px">Lớp đã khai giảng, không nhận đăng ký mới.</div>' : '') + '</div>';
+          return x;
+        }).join('') || '<div class="muted">Chưa có lớp.</div>';
+        if (st.k !== 'ts' && !me) s += '<div class="note info">Chưa có lớp nhận đăng ký. ' + (daNhanTin(hp) ? 'Bạn đã đăng ký nhận thông báo khi mở lớp.' : 'Chọn "Nhận thông báo khi mở lớp" để được báo qua email.') + '</div>';
+      } else {
+        var mau = ['#00327d', '#0f766e', '#7c3aed', '#b45309'];
+        s = gv.length ? '<div class="kp-gv">' + gv.map(function (id, i) { var g = LMS.byId('giangVien', id); return '<div class="g"><span class="av" style="background:' + mau[i % 4] + '">' + esc(U.initials(g.hoTen)) + '</span><span><b>' + esc(g.hoTen) + '</b><small>' + esc(LMS.donViTen(g.donVi)) + '</small><small>' + esc(lopHP(hp).filter(function (l) { return l.giangVien.indexOf(id) >= 0; }).map(function (l) { return l.ma; }).join(', ')) + '</small></span></div>'; }).join('') + '</div>' : '<div class="muted">Học phần tự học có hướng dẫn.</div>';
+      }
+      h.innerHTML = s;
+      h.querySelectorAll('[data-thu]').forEach(function (x) { x.onclick = function () { hocThu(hp, bs.find(function (y) { return y.id === x.dataset.thu; })); }; });
+      h.querySelectorAll('[data-dk2]').forEach(function (x) { x.onclick = function () { a.close(); dangKy(LMS.byId('lop', x.dataset.dk2)); }; });
+    }
+    api.body.querySelectorAll('[data-t]').forEach(function (b) { b.onclick = function () { mo(b.dataset.t); }; });
+    mo(tab || 'gt');
+  }
+  function hocThu(hp, b) {
+    var nd = (b.khoi || []).filter(function (k) { return k.loai === 'doan-van'; }).map(function (k) { return k.html; }).join('');
+    U.modal({ title: 'Học thử · ' + b.ten, size: 'lg', body: '<div class="note info">Học thử bài đầu tiên của ' + esc(hp.ten) + '. Đăng ký học để mở toàn bộ bài giảng và được ghi nhận tiến độ.</div><div class="video" style="margin-top:10px"><button class="play" aria-label="Phát">' + HV.svg('play') + '</button><div class="bar"><span>0:00 / ' + b.phut + ':00</span><div class="trk"><span style="width:0"></span></div></div></div><div class="nd" style="margin-top:10px">' + nd + '</div>' });
+  }
+
+  /* ---------- đăng ký ---------- */
+  function tomTatLop(l) { var p = phiL(l); return '<div class="kp-sum"><b>' + esc(l.ten) + '</b> <span class="mono muted">' + esc(l.ma) + '</span><div>Khai giảng ' + LMS.fmtDate(l.batDau) + ' · ' + esc(lichTomTat(l)) + '</div><div>Hạn đăng ký ' + LMS.fmtDate(hanDK(l)) + ' · học phí <b>' + (p ? U.money(p) : 'miễn phí') + '</b></div></div>'; }
+  function maDon() { var s; do { s = 'DK' + String(Math.floor(100000 + Math.random() * 900000)); } while (D().dangKy.some(function (d) { return d.ma === s; })); return s; }
+  function dangKy(l) {
+    if (!moDK(l)) { U.toast('Lớp đã hết hạn đăng ký hoặc hết chỗ', 'bad'); return; }
+    if (laHV()) dangKyHV(l); else dangKyKhach(l);
+  }
+  function dangKyHV(l) {
+    var hp = LMS.hocPhanOfLop(l), me = meHP(hp), h = HV.me(), p = phiL(l);
+    if (me) { U.toast(me.k === 'don' ? 'Bạn đã có đơn đăng ký học phần này đang chờ xử lý' : me.k === 'hoan-thanh' ? 'Bạn đã hoàn thành học phần này. Học cải thiện điểm liên hệ Phòng Đào tạo.' : 'Bạn đã ghi danh học phần này tại lớp ' + me.l.ma, 'bad'); return; }
+    U.modal({ title: 'Đăng ký học', body: tomTatLop(l) + '<dl class="kv"><dt>Học viên</dt><dd>' + esc(h.hoTen) + ' · <span class="mono">' + esc(h.ma) + '</span></dd><dt>Email nhận thông báo</dt><dd>' + esc(h.email) + '</dd><dt>Điện thoại</dt><dd>' + esc(h.sdt || '') + '</dd></dl><label class="check" style="margin-top:12px"><input type="checkbox" name="ok"> Tôi đồng ý với quy chế đào tạo và quy định học phí</label>',
+      foot: [{ label: 'Hủy', close: true }, { label: p ? 'Gửi đơn và thanh toán' : 'Gửi đơn đăng ký', cls: 'primary', onClick: function (a) {
+        if (!a.body.querySelector('[name=ok]').checked) { U.toast('Xác nhận đồng ý quy chế trước khi gửi', 'bad'); return false; }
+        var d = { id: LMS.nextId('dk'), ma: maDon(), lop: l.id, hv: h.id, ngay: LMS.iso(TODAY), trangThai: p ? 'cho-thanh-toan' : 'cho-duyet', kenh: 'cong-hoc-vien' }; D().dangKy.push(d);
+        if (p) D().thanhToan.push({ id: LMS.nextId('tt'), ma: 'DH' + d.ma.slice(2), hv: h.id, lop: l.id, khoanThu: l.khoanThu, soTien: p, trangThai: 'cho-thanh-toan', kenh: '—', ngay: LMS.iso(TODAY) });
+        LMS.commit('Học viên đăng ký lớp', 'Đăng ký học', l.ma + ' · ' + h.ma + ' · ' + d.ma);
+        a.close(); render(true);
+        U.modal({ title: 'Đã gửi đơn đăng ký', body: '<div class="kp-ok"><div class="tick">' + ic('check') + '</div><b style="font-size:16px">Mã đơn <span class="mono">' + d.ma + '</span></b><ol>' + (p ? '<li>Thanh toán ' + U.money(p) + ' trong mục Đăng ký học & học phí.</li>' : '') + '<li>Phòng Đào tạo duyệt đơn trong 2 ngày làm việc.</li><li>Khi được ghi danh, lớp hiện trong Lớp của tôi và lịch học của bạn.</li></ol></div>', foot: [{ label: 'Đóng', close: true }, { label: p ? 'Thanh toán ngay' : 'Xem đơn', cls: 'primary', onClick: function () { location.href = 'dang-ky.html?tab=don'; } }] });
+        return false;
+      } }] });
+  }
+  function dangKyKhach(l) {
+    var p = phiL(l);
+    var form = '<div class="kp-form"><div class="field full"><label>Họ và tên <span class="req">*</span></label><input class="inp" name="hoTen" autocomplete="name"></div><div class="field"><label>Ngày sinh <span class="req">*</span></label><input class="inp" type="date" name="ngaySinh"></div><div class="field"><label>Giới tính</label><select class="sel" name="gioiTinh"><option>Nữ</option><option>Nam</option></select></div><div class="field"><label>Số CCCD <span class="req">*</span></label><input class="inp mono" name="cccd" inputmode="numeric" maxlength="12" placeholder="12 chữ số"></div><div class="field"><label>Điện thoại <span class="req">*</span></label><input class="inp mono" name="sdt" inputmode="tel" maxlength="10" autocomplete="tel"></div><div class="field full"><label>Email <span class="req">*</span></label><input class="inp" type="email" name="email" autocomplete="email"><div class="hint">Tài khoản học tập và thông báo duyệt đơn gửi tới email này</div></div><div class="field"><label>Đối tượng <span class="req">*</span></label><select class="sel" name="doiTuong"><option value="">Chọn đối tượng</option><option>Sinh viên Học viện</option><option>Học viên liên thông</option><option>Cán bộ do đơn vị cử đi học</option><option>Người học tự do</option></select></div><div class="field"><label>Nơi học tập, công tác</label><input class="inp" name="noiCongTac"></div><div class="field full"><label class="check"><input type="checkbox" name="ok"> Tôi đồng ý với quy chế đào tạo, quy định học phí và cho phép Học viện xử lý dữ liệu cá nhân để tổ chức lớp học</label></div></div>';
+    var api = U.modal({ title: 'Đăng ký học', size: 'lg', body: tomTatLop(l) + '<div class="note info" style="margin-bottom:12px">Đã có tài khoản học tập? <a href="#" id="dnNhanh" style="font-weight:700">Đăng nhập</a> để đăng ký nhanh, không cần nhập lại thông tin.</div><div id="trung"></div>' + form,
+      foot: [{ label: 'Hủy', close: true }, { label: 'Gửi đơn đăng ký', cls: 'primary', onClick: function (a) {
+        var v = U.formVals(a.body), ok = true;
+        function loi(n, m) { U.fieldErr(a.body, n, m); if (m) ok = false; }
+        loi('hoTen', v.hoTen.split(/\s+/).length < 2 ? 'Nhập đầy đủ họ và tên' : '');
+        var ns = v.ngaySinh ? LMS.parse(v.ngaySinh) : null, tuoi = ns ? (TODAY - ns) / (365.25 * DAY) : 0;
+        loi('ngaySinh', !ns ? 'Chọn ngày sinh' : tuoi < 16 ? 'Người học từ 16 tuổi trở lên' : tuoi > 80 ? 'Ngày sinh không hợp lệ' : '');
+        loi('cccd', !/^\d{12}$/.test(v.cccd) ? 'CCCD gồm đúng 12 chữ số' : '');
+        loi('sdt', !/^0\d{9}$/.test(v.sdt) ? 'Số điện thoại gồm 10 chữ số, bắt đầu bằng 0' : '');
+        loi('email', !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v.email) ? 'Email không đúng định dạng' : '');
+        loi('doiTuong', !v.doiTuong ? 'Chọn đối tượng' : '');
+        if (!ok) return false;
+        if (!v.ok) { U.toast('Xác nhận đồng ý quy chế trước khi gửi', 'bad'); return false; }
+        var cu = D().hocVien.filter(function (h) { return h.cccd === v.cccd || String(h.email).toLowerCase() === v.email.toLowerCase(); })[0], tr = a.body.querySelector('#trung');
+        if (cu && cu.taiKhoan) { tr.innerHTML = '<div class="note warn" style="margin-bottom:12px">CCCD hoặc email trùng hồ sơ học viên <b>' + esc(cu.ma) + '</b> đã có tài khoản học tập. Đăng nhập bằng tài khoản được cấp để đăng ký. <a href="#" id="dnTrung" style="font-weight:700">Đăng nhập</a></div>'; tr.querySelector('#dnTrung').onclick = function (e) { e.preventDefault(); a.close(); dangNhap(l.id); }; a.body.scrollTop = 0; return false; }
+        if (cu && D().dangKy.some(function (d) { return d.hv === cu.id && d.lop === l.id && (d.trangThai === 'cho-duyet' || d.trangThai === 'cho-thanh-toan'); })) { tr.innerHTML = '<div class="note warn" style="margin-bottom:12px">Bạn đã gửi đơn đăng ký lớp này, đơn đang chờ xử lý. Tra cứu trạng thái bằng mã đơn trong email xác nhận.</div>'; a.body.scrollTop = 0; return false; }
+        if (cu && cu.cccd !== v.cccd) { loi('email', 'Email đã dùng cho hồ sơ khác'); return false; }
+        var h = cu;
+        if (!h) {
+          var n = D().hocVien.reduce(function (m, x) { return Math.max(m, +String(x.ma).replace(/\D/g, '') || 0); }, 0) + 1;
+          h = { id: 'hv' + n, ma: 'HV' + String(n).padStart(4, '0'), hoTen: v.hoTen.replace(/\s+/g, ' '), gioiTinh: v.gioiTinh, ngaySinh: v.ngaySinh, cccd: v.cccd, sdt: v.sdt, email: v.email, diaChi: '', noiCongTac: v.noiCongTac, doiTuong: v.doiTuong, trangThai: 'hoat-dong', taiKhoan: null, ngayTao: LMS.iso(TODAY), nguon: 'dang-ky-truc-tuyen' };
+          D().hocVien.push(h);
+        }
+        var d = { id: LMS.nextId('dk'), ma: maDon(), lop: l.id, hv: h.id, ngay: LMS.iso(TODAY), trangThai: p ? 'cho-thanh-toan' : 'cho-duyet', kenh: 'dang-ky-truc-tuyen', doiTuong: v.doiTuong }; D().dangKy.push(d);
+        if (p) D().thanhToan.push({ id: LMS.nextId('tt'), ma: 'DH' + d.ma.slice(2), hv: h.id, lop: l.id, khoanThu: l.khoanThu, soTien: p, trangThai: 'cho-thanh-toan', kenh: '—', ngay: LMS.iso(TODAY) });
+        LMS.commit('Đơn đăng ký học trực tuyến', 'Đăng ký học', l.ma + ' · ' + h.hoTen + ' · ' + d.ma);
+        a.close(); render(true);
+        U.modal({ title: 'Đã gửi đơn đăng ký', body: '<div class="kp-ok"><div class="tick">' + ic('check') + '</div><b style="font-size:16px">Mã đơn <span class="mono">' + d.ma + '</span></b><div class="small muted">Xác nhận đã gửi tới ' + esc(h.email) + '</div><ol>' + (p ? '<li>Chuyển khoản ' + U.money(p) + ' theo hướng dẫn trong email, nội dung ghi mã đơn ' + d.ma + '.</li>' : '') + '<li>Phòng Đào tạo duyệt đơn trong 2 ngày làm việc.</li><li>Tài khoản học tập và hướng dẫn vào lớp gửi tới email trước ngày khai giảng ' + LMS.fmtDate(l.batDau) + '.</li><li>Tra cứu trạng thái đơn bằng mã đơn và 4 số cuối điện thoại tại mục Tra cứu.</li></ol></div>' });
+        return false;
+      } }] });
+    api.body.querySelector('#dnNhanh').onclick = function (e) { e.preventDefault(); api.close(); dangNhap(l.id); };
+  }
+  function dangNhap(sauDK) {
+    var tk = HV.tk();
+    var api = U.modal({ title: 'Đăng nhập', body: '<div class="field"><label>Tên đăng nhập</label><input class="inp" name="u" value="' + esc(tk ? tk.ten : HV.me().ma.toLowerCase()) + '" autocomplete="username"></div><div class="field" style="margin-top:10px"><label>Mật khẩu</label><input class="inp" type="password" name="p" autocomplete="current-password"></div><div class="row" style="margin-top:8px"><a href="#" id="quen" class="small" style="color:var(--ems-navy);font-weight:600">Quên mật khẩu?</a></div><div id="quenBox"></div><div class="note info" style="margin-top:12px">Tài khoản học tập do Học viện cấp. Chưa có tài khoản: chọn lớp đang tuyển sinh và gửi đơn đăng ký.</div><div class="small muted" style="margin-top:8px">Bản demo: đăng nhập với học viên ' + esc(HV.me().hoTen) + ', mật khẩu bất kỳ.</div>',
+      foot: [{ label: 'Hủy', close: true }, { label: 'Đăng nhập', cls: 'primary', onClick: function (a) {
+        var v = U.formVals(a.body);
+        if (!v.u || !v.p) { U.fieldErr(a.body, 'u', v.u ? '' : 'Nhập tên đăng nhập'); U.fieldErr(a.body, 'p', v.p ? '' : 'Nhập mật khẩu'); return false; }
+        VAI = 'hv'; luuVai(VAI);
+        if (sauDK) { a.close(); render(false); window.scrollTo(0, 0); dangKy(LMS.byId('lop', sauDK)); return false; }
+        location.href = 'index.html';
+      } }] });
+    api.body.querySelector('#quen').onclick = function (e) { e.preventDefault(); api.body.querySelector('#quenBox').innerHTML = '<div class="kp-row" style="margin-top:8px"><input class="inp" type="email" id="qe" placeholder="Email đã đăng ký"><button class="btn" id="qg">Gửi liên kết</button></div>'; api.body.querySelector('#qg').onclick = function () { var em = api.body.querySelector('#qe').value.trim(); if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(em)) { U.toast('Email không đúng định dạng', 'bad'); return; } U.toast('Nếu email có trong hệ thống, liên kết đặt lại mật khẩu đã được gửi', 'ok'); api.body.querySelector('#quenBox').innerHTML = ''; }; };
+  }
+  function nhanThongBao(hp) {
+    if (laHV()) { nhanTin().push({ hp: hp.id, hv: HV.id(), email: HV.me().email, luc: new Date().toISOString() }); LMS.commit(null); U.toast('Học viện sẽ báo qua email ' + HV.me().email + ' khi mở lớp ' + hp.ten, 'ok'); render(true); return; }
+    U.modal({ title: 'Nhận thông báo mở lớp', body: '<div class="small muted" style="margin-bottom:10px">' + esc(hp.ten) + ' · ' + esc(hp.ma) + '</div><div class="field"><label>Email nhận thông báo</label><input class="inp" type="email" name="em"></div>', foot: [{ label: 'Hủy', close: true }, { label: 'Đăng ký nhận tin', cls: 'primary', onClick: function (a) { var em = U.formVals(a.body).em; if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(em)) { U.fieldErr(a.body, 'em', 'Email không đúng định dạng'); return false; } nhanTin().push({ hp: hp.id, email: em, luc: new Date().toISOString() }); LMS.commit(null); U.toast('Đã ghi nhận. Học viện gửi thông báo tới ' + em + ' khi mở lớp mới.', 'ok'); } }] });
+  }
+  function yeuCauDonVi() {
+    U.modal({ title: 'Yêu cầu đào tạo cho đơn vị', body: '<div class="kp-form"><div class="field full"><label>Tên đơn vị <span class="req">*</span></label><input class="inp" name="dv"></div><div class="field"><label>Người liên hệ <span class="req">*</span></label><input class="inp" name="nguoi"></div><div class="field"><label>Điện thoại <span class="req">*</span></label><input class="inp mono" name="sdt" maxlength="10"></div><div class="field"><label>Email <span class="req">*</span></label><input class="inp" type="email" name="email"></div><div class="field"><label>Số người học dự kiến</label><input class="inp" type="number" min="1" name="sl"></div><div class="field full"><label>Học phần quan tâm</label><select class="sel" name="hp">' + U.opts(hps(), 'id', 'ten', '', 'Chọn học phần') + '</select></div></div>', foot: [{ label: 'Hủy', close: true }, { label: 'Gửi yêu cầu', cls: 'primary', onClick: function (a) { var v = U.formVals(a.body), ok = true; [['dv', !v.dv], ['nguoi', !v.nguoi], ['sdt', !/^0\d{9}$/.test(v.sdt)], ['email', !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v.email)]].forEach(function (x) { U.fieldErr(a.body, x[0], x[1] ? 'Kiểm tra lại thông tin' : ''); if (x[1]) ok = false; }); if (!ok) return false; D().yeuCauDonVi = D().yeuCauDonVi || []; D().yeuCauDonVi.push({ id: LMS.nextId('yc'), luc: new Date().toISOString(), donVi: v.dv, nguoi: v.nguoi, sdt: v.sdt, email: v.email, soLuong: +v.sl || null, hp: v.hp }); LMS.commit('Yêu cầu đào tạo của đơn vị', 'Đăng ký học', v.dv); U.toast('Đã gửi yêu cầu. Phòng Đào tạo liên hệ lại trong 2 ngày làm việc.', 'ok'); } }] });
+  }
+  function traCN(ma) {
+    var box = document.getElementById('kqCN'), m = String(ma || '').trim().toUpperCase().match(/^VUTM-([A-Z0-9]+)-(\d{1,6})$/);
+    if (!m) { box.innerHTML = '<div class="kp-res bad">Mã không đúng định dạng. Mã chứng nhận có dạng VUTM-mã học phần-số hiệu học viên.</div>'; return; }
+    var hp = D().hocPhan.filter(function (h) { return h.ma === m[1]; })[0], hv = D().hocVien.filter(function (h) { return h.ma === 'HV' + m[2].padStart(4, '0'); })[0];
+    var g = hp && hv ? D().ghiDanh.filter(function (x) { var l = LMS.byId('lop', x.lop); return x.hv === hv.id && x.trangThai === 'hoan-thanh' && l && l.hocPhan === hp.id; })[0] : null;
+    if (!g) { box.innerHTML = '<div class="kp-res bad">Không tìm thấy chứng nhận với mã <b class="mono">' + esc(m[0]) + '</b>. Kiểm tra lại mã hoặc liên hệ Phòng Đào tạo.</div>'; return; }
+    var l = LMS.byId('lop', g.lop);
+    box.innerHTML = '<div class="kp-res ok"><b>' + ic('check', 14) + ' Chứng nhận hợp lệ</b><dl><dt>Người học</dt><dd>' + esc(hv.hoTen) + '</dd><dt>Học phần</dt><dd>' + esc(hp.ten) + ' · ' + hp.soTC + ' tín chỉ</dd><dt>Lớp</dt><dd>' + esc(l.ma) + ' · ' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + '</dd><dt>Ngày cấp</dt><dd>' + LMS.fmtDate(LMS.addDays(LMS.parse(l.ketThuc), 10)) + '</dd><dt>Đơn vị cấp</dt><dd>Học viện Y Dược học cổ truyền Việt Nam</dd></dl></div>';
+  }
+  function traDon(ma, s4) {
+    var box = document.getElementById('kqDon'); ma = String(ma || '').trim().toUpperCase(); s4 = String(s4 || '').trim();
+    if (!/^DK\d{6}$/.test(ma) || !/^\d{4}$/.test(s4)) { box.innerHTML = '<div class="kp-res bad">Nhập mã đơn dạng DK123456 và đúng 4 số cuối điện thoại.</div>'; return; }
+    var d = D().dangKy.filter(function (x) { return x.ma === ma; })[0], h = d ? LMS.byId('hocVien', d.hv) : null;
+    if (!d || !h || String(h.sdt).slice(-4) !== s4) { box.innerHTML = '<div class="kp-res bad">Không tìm thấy đơn phù hợp. Kiểm tra lại mã đơn trong email xác nhận.</div>'; return; }
+    var l = LMS.byId('lop', d.lop), TTD = { 'cho-thanh-toan': 'Chờ thanh toán', 'cho-duyet': 'Chờ Phòng Đào tạo duyệt', 'da-duyet': 'Đã duyệt, đã ghi danh', 'tu-choi': 'Không được duyệt', 'da-huy': 'Đã hủy' };
+    box.innerHTML = '<div class="kp-res ' + (d.trangThai === 'tu-choi' || d.trangThai === 'da-huy' ? 'bad' : 'ok') + '"><b>' + esc(TTD[d.trangThai] || d.trangThai) + '</b><dl><dt>Người đăng ký</dt><dd>' + esc(h.hoTen) + '</dd><dt>Lớp</dt><dd>' + esc(l.ten) + ' · ' + esc(l.ma) + '</dd><dt>Ngày gửi</dt><dd>' + LMS.fmtDate(d.ngay) + '</dd>' + (d.lyDo ? '<dt>Lý do</dt><dd>' + esc(d.lyDo) + '</dd>' : '') + '</dl>' + (d.trangThai === 'da-duyet' ? '<div class="small" style="margin-top:8px">Tài khoản học tập đã gửi tới email ' + esc(h.email.replace(/^(.{2}).*(@.*)$/, '$1•••$2')) + '.</div>' : '') + '</div>';
+  }
+
+  render(false);
+  var hq = HV.qp('hp'); if (hq && LMS.byId('hocPhan', hq)) chiTiet(LMS.byId('hocPhan', hq), HV.qp('tab'));
+  var dq = HV.qp('dk'); if (dq && LMS.byId('lop', dq)) dangKy(LMS.byId('lop', dq));
+})();
+</script>
+</body></html>
