@@ -3,7 +3,7 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
    Mọi màn hình đọc/ghi cùng một kho dữ liệu (localStorage) nên thao tác ở màn này phản ánh ngay ở màn khác. */
 (function () {
   'use strict';
-  var KEY = 'egoLmsDemo.db.v22';
+  var KEY = 'egoLmsDemo.db.v23';
   var DD_MAC_DINH = { nguong: 70, muon: 15, hanXN: 48, tuDongChot: true };
   var KS_MAU = {
     'giua-ky': { ten: 'Khảo sát giữa kỳ', moTa: 'Lấy ý kiến giữa học phần để điều chỉnh cách dạy.', cau: [['Mục tiêu học phần được giới thiệu rõ ràng', 'thang'], ['Tốc độ giảng dạy phù hợp với khả năng tiếp thu', 'thang'], ['Tài liệu, video bài giảng đầy đủ và dễ truy cập', 'thang'], ['Mức độ khó của nội dung đến thời điểm này', 'lua-chon', ['Quá dễ', 'Phù hợp', 'Khó', 'Quá khó']], ['Nội dung anh/chị muốn giảng viên giảng kỹ hơn', 'nhieu', ['Lý thuyết kinh lạc', 'Vị trí huyệt', 'Kỹ thuật châm', 'Ca lâm sàng']], ['Góp ý cho nửa sau học phần', 'tu-luan']] },
@@ -33,7 +33,7 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     function pick(a) { return a[Math.floor(R() * a.length)]; }
     function int(a, b) { return a + Math.floor(R() * (b - a + 1)); }
     var T = TODAY;
-    var db = { meta: { version: 22, seededAt: iso(T), user: { ten: 'admin02', hoTen: 'Lê Bảo Châu', email: 'chaulb@vutm.edu.vn' } } };
+    var db = { meta: { version: 23, seededAt: iso(T), user: { ten: 'admin02', hoTen: 'Lê Bảo Châu', email: 'chaulb@vutm.edu.vn' } } };
 
     db.donVi = [
       { id: 'dv1', ma: 'BGD', ten: 'Ban Giám đốc', cha: null, laKhoa: false },
@@ -104,6 +104,15 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
       { ma: 'DLY', ten: 'Dược lý – Hóa dược', mon: [{ ma: 'DLY1', ten: 'Dược lý 1' }, { ma: 'HD1', ten: 'Hóa dược 1' }] },
       { ma: 'QLD', ten: 'Pháp chế – Quản lý dược', mon: [{ ma: 'PCD', ten: 'Pháp chế dược' }, { ma: 'KTD', ten: 'Quản lý và kinh tế dược' }] }
     ]);
+    taoCT({ id: 'ctck1', ma: 'CKI-YHCT', ten: 'Chuyên khoa cấp I Y học cổ truyền', khoa: 'dv6', maQLDT: 'CK62726001', doiTuong: 'Bác sĩ đã tốt nghiệp đại học ngành Y học cổ truyền', moTa: 'Các học phần lý thuyết chuyên ngành học trực tuyến; thực hành lâm sàng tại bệnh viện thực hành.' }, [
+      { ma: 'CN', ten: 'Học phần chuyên ngành', mon: [{ ma: 'NKYHCT', ten: 'Nội khoa Y học cổ truyền nâng cao' }, { ma: 'CCNC', ten: 'Châm cứu nâng cao' }] }
+    ]);
+    taoCT({ id: 'ctbd', ma: 'BD-CCCB', ten: 'Bồi dưỡng Châm cứu cơ bản', khoa: 'dv6', maQLDT: '', doiTuong: 'Bác sĩ, y sĩ đang hành nghề cần cập nhật kiến thức châm cứu (đào tạo liên tục)', moTa: 'Khóa bồi dưỡng ngắn hạn, dùng lại học liệu Châm cứu 1 và Châm cứu 2 của chương trình đại học.' }, [
+      { ma: 'CC', ten: 'Châm cứu', mon: [{ ma: 'BD-CC1', ten: 'Châm cứu 1', hp: 'hp1' }, { ma: 'BD-CC2', ten: 'Châm cứu 2', hp: 'hp2' }] }
+    ]);
+    /* danh mục xếp chương trình theo hệ đào tạo (cây thư mục, sửa tên tùy ý) */
+    db.heDaoTao = [{ id: 'he1', ten: 'Đào tạo đại học', cha: null }, { id: 'he2', ten: 'Đào tạo sau đại học', cha: null }, { id: 'he3', ten: 'Đào tạo cho người đi làm', cha: null }];
+    db.chuongTrinh.forEach(function (c) { if (!c.cha) c.he = { ct1: 'he1', ctd: 'he1', ctck1: 'he2', ctbd: 'he3' }[c.id] || null; });
 
     /* tài khoản, nhóm quyền */
     db.nhomQuyen = [
@@ -601,7 +610,7 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     db = {}; Object.keys(full).forEach(function (k) { db[k] = full[k]; });
     SCOPED.forEach(function (k) { if (!full[k]) return; var keep = set(v[k]); hidden[k] = full[k].filter(function (x) { return !keep[x.id]; }); db[k] = v[k]; });
   }
-  function load() { try { var s = localStorage.getItem(KEY); if (s) { var o = JSON.parse(s); if (o && o.meta && o.meta.version === 22) return o; } } catch (e) { } return null; }
+  function load() { try { var s = localStorage.getItem(KEY); if (s) { var o = JSON.parse(s); if (o && o.meta && o.meta.version === 23) return o; } } catch (e) { } return null; }
   function save() {
     if (db !== full) Object.keys(db).forEach(function (k) { full[k] = hidden[k] ? hidden[k].concat(db[k]) : db[k]; });
     var js = JSON.stringify(full);
@@ -1073,6 +1082,32 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     modal({ title: title, size: 'sm', body: '<div class="note bad">Không thể thực hiện vì dữ liệu đang được sử dụng:</div><ul style="margin:0;padding-left:18px">' + refs.slice(0, 10).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + (refs.length > 10 ? '<li>… và ' + (refs.length - 10) + ' mục khác</li>' : '') + '</ul>' + (hint ? '<div class="muted small">' + esc(hint) + '</div>' : '') });
   }
   var openMenu;
+  /* ô chọn nhiều dạng thẻ: mục đầu tiên là mục chính (vd giảng viên chính) */
+  function multiSelect(host, o) {
+    var val = (o.value || []).slice(), dis = !!o.disabled, mo = false, them = false;
+    host.classList.add('ms'); host.innerHTML = '<div class="ms-ctl" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false"></div><div class="ms-pop" role="listbox" hidden></div>';
+    var ctl = host.firstChild, pop = host.lastChild;
+    function optOf(id) { return (o.options || []).concat(o.extra || []).filter(function (x) { return x.id === id; })[0] || { id: id, label: id }; }
+    function ds() { var a = (o.options || []).slice(); if (them) (o.extra || []).forEach(function (x) { if (!a.some(function (y) { return y.id === x.id; })) a.push(x); }); val.forEach(function (id) { if (!a.some(function (y) { return y.id === id; })) a.push(optOf(id)); }); return a; }
+    function paint() {
+      host.classList.toggle('dis', dis); host.classList.toggle('open', mo);
+      ctl.innerHTML = val.length ? val.map(function (id, i) { var x = optOf(id); return '<span class="ms-chip' + (i === 0 && o.chinh ? ' main' : '') + '">' + esc(x.label) + (i === 0 && o.chinh ? ' · ' + esc(o.chinh) : '') + (dis ? '' : '<button type="button" data-x="' + esc(id) + '" aria-label="Bỏ ' + esc(x.label) + '">×</button>') + '</span>'; }).join('') : '<span class="ms-ph">' + esc(o.placeholder || 'Chọn') + '</span>';
+      ctl.setAttribute('aria-expanded', mo ? 'true' : 'false');
+      if (!mo) { pop.hidden = true; return; }
+      var list = ds();
+      pop.hidden = false;
+      pop.innerHTML = (list.length ? list.map(function (x) { var i = val.indexOf(x.id), r = o.role ? o.role(x.id, i) : (x.sub || ''); return '<label class="ms-opt' + (i >= 0 ? ' on' : '') + '"><input type="checkbox" value="' + esc(x.id) + '"' + (i >= 0 ? ' checked' : '') + '><span class="l">' + esc(x.label) + (x.note ? ' <small>' + esc(x.note) + '</small>' : '') + '</span><span class="r">' + esc(r || '') + '</span></label>'; }).join('') : '<div class="ms-empty">' + esc(o.empty || 'Không có lựa chọn') + '</div>') +
+        ((o.extra || []).length ? '<label class="ms-more"><input type="checkbox" data-them' + (them ? ' checked' : '') + '> ' + esc(o.extraLabel || 'Hiện thêm lựa chọn khác') + '</label>' : '');
+    }
+    function doi() { paint(); if (o.onChange) o.onChange(val.slice()); }
+    ctl.onclick = function (e) { var x = e.target.closest('[data-x]'); if (x) { e.stopPropagation(); val = val.filter(function (v) { return v !== x.dataset.x; }); doi(); return; } if (dis) return; mo = !mo; paint(); };
+    ctl.onkeydown = function (e) { if (dis) return; if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); mo = true; paint(); var f = pop.querySelector('input'); if (f) f.focus(); } else if (e.key === 'Escape' && mo) { e.stopPropagation(); mo = false; paint(); } };
+    pop.onkeydown = function (e) { if (e.key === 'Escape') { e.stopPropagation(); mo = false; paint(); ctl.focus(); } };
+    pop.onchange = function (e) { var c = e.target; if (c.hasAttribute('data-them')) { them = c.checked; paint(); return; } if (c.checked) { if (val.indexOf(c.value) < 0) val.push(c.value); } else val = val.filter(function (v) { return v !== c.value; }); var sc = pop.scrollTop; doi(); pop.scrollTop = sc; var f = pop.querySelector('input[value="' + c.value + '"]'); if (f) f.focus(); };
+    document.addEventListener('mousedown', function h(e) { if (!document.body.contains(host)) { document.removeEventListener('mousedown', h); return; } if (mo && !host.contains(e.target)) { mo = false; paint(); } });
+    paint();
+    return { get: function () { return val.slice(); }, set: function (v) { val = v.slice(); paint(); }, config: function (c) { for (var k in c) o[k] = c[k]; if (c.disabled != null) dis = c.disabled; if (c.value) val = c.value.slice(); paint(); } };
+  }
   function menu(anchor, items) {
     if (openMenu) openMenu.remove();
     var m = document.createElement('div'); m.className = 'menu';
@@ -1189,6 +1224,6 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     chuyenCanHV: chuyenCanHV, nhipHoc: nhipHoc, cfgNhip: cfgNhip, NHIP: NHIP, tienDoHV: tienDoHV, keHoachPct: keHoachPct, diemCot: diemCot, diemTongKet: diemTongKet, trangThaiThoiGian: trangThaiThoiGian, TT_LOP: TT_LOP,
     lopStats: lopStats, riskOf: riskOf, kyThiStatus: kyThiStatus, fileUsage: fileUsage, walkKhoi: walkKhoi, baiFiles: baiFiles, syncBai: syncBai, tieuChiBai: tieuChiBai, coDiemDanh: coDiemDanh, KS_MAU: KS_MAU, KS_NX: KS_NX, ksDongBo: ksDongBo, ksTrangThai: ksTrangThai, CC_CANH_BAO: CC_CANH_BAO, CC_NGUY_CO: CC_NGUY_CO, hdDaTraLoi: hdDaTraLoi, hdChoTL: hdChoTL, SK: SK, phienKy: phienKy, thoiLuongKy: thoiLuongKy, conLai: conLai, diemRuiRo: diemRuiRo, suKien: suKien, taoPhien: function (ky) { taoPhien(ky, Date.now()); }, refsOf: refsOf,
     btDoiTuong: btDoiTuong, nopCuaHV: nopCuaHV, btHanCuoi: btHanCuoi, btHetHan: btHetHan, diemBaiTap: diemBaiTap, btStatus: btStatus, btStats: btStats,
-    ui: { esc: esc, norm: norm, hl: hl, money: money, badge: badge, prog: prog, person: person, initials: initials, opts: opts, toast: toast, modal: modal, confirm: confirmBox, blocked: blocked, menu: menu, table: table, barChart: barChart, lineChart: lineChart, hbars: hbars, formVals: formVals, fieldErr: fieldErr }
+    ui: { esc: esc, norm: norm, hl: hl, money: money, badge: badge, prog: prog, person: person, initials: initials, opts: opts, toast: toast, modal: modal, confirm: confirmBox, blocked: blocked, menu: menu, multiSelect: multiSelect, table: table, barChart: barChart, lineChart: lineChart, hbars: hbars, formVals: formVals, fieldErr: fieldErr }
   };
 })();

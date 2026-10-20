@@ -132,3 +132,5 @@ Mọi màn hình dùng chung `edot.css` (design token EDOT) và `lms-core.js` (k
 - Phạm vi dữ liệu: `LMS.phamVi` {all, ids:{donViId:1}, ten, lyDo, donVi}; `LMS.phamViCua(taiKhoan)`; `LMS.dangNhap(ten)`. Khi tài khoản không thấy toàn bộ, `LMS.db` là bản đã lọc theo phạm vi (các bảng trong `SCOPED`), phần ngoài phạm vi được giữ riêng và ghép lại khi `save()`; màn hình không cần tự lọc theo đơn vị.
 
 - `thuMuc[]` {id, duongDan, donVi (null = dùng chung toàn Học viện), chuongTrinh (id chương trình gốc), moTa}: thư mục thư viện. Tệp vẫn lưu đường dẫn ở `thuVien[].thuMuc`; `LMS.thuMucCua(duongDan)` trả về thư mục quản lý (trùng đường dẫn hoặc thư mục cha gần nhất). `cauHinhMedia` {Video, PDF, Ảnh, Audio}: base-URL theo loại tệp.
+
+- `heDaoTao[]` {id, ten, cha}: danh mục xếp chương trình (cây). Chương trình gốc có thêm `he` (id mục, null = Chưa phân loại); thứ tự chương trình trong mục theo thứ tự mảng `chuongTrinh`. Trạng thái thu gọn mục lưu ở localStorage `egoLmsDemo.ctHe` theo từng trình duyệt.

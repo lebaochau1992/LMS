@@ -91,6 +91,15 @@ if(p && p.lop){ st.view='detail'; st.lop=p.lop; if(p.tab) st.tab=p.tab; if(p.ks)
 if(p && p.chuongTrinh) st.ct = p.chuongTrinh;
 
 function db(){ return LMS.db; }
+function gvOpts(khoa, giu){ var a=db().giangVien.filter(function(g){ return g.trangThai!=='ngung' && g.donVi===khoa; }), ngoai=db().giangVien.filter(function(g){ return g.trangThai!=='ngung' && g.donVi!==khoa; });
+  var m=function(g){ return { id:g.id, label:g.hoTen, note:g.taiKhoan?'':'· chưa có tài khoản', sub:LMS.donViTen(g.donVi) }; };
+  return { options:a.map(m), extra:ngoai.map(m) };
+}
+function gvPicker(host, khoa, value, l, disabled){
+  var o=gvOpts(khoa);
+  return U.multiSelect(host, { options:o.options, extra:o.extra, extraLabel:'Hiện cả giảng viên khoa khác', value:value, chinh:'chính', disabled:disabled, placeholder:'Chọn giảng viên phụ trách', empty:'Khoa phụ trách học phần chưa có giảng viên đang hoạt động',
+    role:function(id,i){ if(i<0) return (o.extra.some(function(x){ return x.id===id; })?LMS.donViTen((LMS.byId('giangVien',id)||{}).donVi):''); if(i===0) return 'Giảng viên chính'; return l&&(l.vaiTroGV||{})[id]==='tro-giang'?'Trợ giảng':'Giảng viên'; } });
+}
 function gvNames(ids){ return (ids||[]).map(function(id){ var g=LMS.byId('giangVien',id); return g?g.hoTen:'—'; }); }
 function ctDesc(ctId){ var ids=[ctId], grow=true; while(grow){ grow=false; db().chuongTrinh.forEach(function(c){ if(c.cha&&ids.indexOf(c.cha)>=0&&ids.indexOf(c.id)<0){ ids.push(c.id); grow=true; } }); } return ids; }
 function nextMa(){ var n=0; db().lop.forEach(function(l){ var m=+String(l.ma).replace(/\D/g,''); if(m>n) n=m; }); return 'L'+String(n+1).padStart(4,'0'); }
@@ -177,7 +186,6 @@ function wizard(pre){
     }
     if(w.step===2){
       var hp2=LMS.byId('hocPhan',w.hp); if(!f.khoa) f.khoa=hp2.khoa;
-      var gvs = d.giangVien.filter(function(g){ return g.trangThai!=='ngung'; }).sort(function(a,b){ return (a.donVi===f.khoa?0:1)-(b.donVi===f.khoa?0:1); });
       h += '<div class="form-grid">'+
         '<div class="field"><label>Mã lớp</label><input class="inp mono" name="ma" value="'+esc(f.ma)+'" readonly></div>'+
         '<div class="field"><label for="w_ten">Tên lớp <span class="req">*</span></label><input class="inp" id="w_ten" name="ten" value="'+esc(f.ten)+'" placeholder="VD: Lớp '+esc(hp2.ten)+' - K28"></div>'+
@@ -187,7 +195,7 @@ function wizard(pre){
         '<div class="field"><label for="w_kt">Ngày kết thúc <span class="req">*</span></label><input class="inp" type="date" id="w_kt" name="ketThuc" value="'+f.ketThuc+'"'+(f.batDau?' min="'+LMS.iso(LMS.addDays(LMS.parse(f.batDau),1))+'"':'')+'></div>'+
         '<div class="field"><label for="w_sc">Sức chứa (0 = không giới hạn)</label><input class="inp" type="number" min="0" id="w_sc" name="sucChua" value="'+f.sucChua+'"></div>'+
         '<div class="field"><label for="w_kthu">Khoản thu</label><select class="sel" id="w_kthu" name="khoanThu">'+U.opts(d.khoanThu.filter(function(k){return k.trangThai==='dang-dung';}),'id',function(k){ return k.ten+' · '+U.money(k.donGia*(1+k.vat/100)); },f.khoanThu,'Không thu phí')+'</select></div>'+
-        '<div class="field full"><label>Giảng viên phụ trách <span class="req">*</span></label><div class="gv-list" id="gvList">'+gvs.map(function(g){ return '<label class="check"><input type="checkbox" name="gv_'+g.id+'" data-gv="'+g.id+'"'+(f.gv.indexOf(g.id)>=0?' checked':'')+'> '+esc(g.hoTen)+' <span class="muted small">· '+esc(LMS.donViTen(g.donVi))+(g.taiKhoan?'':' · chưa có tài khoản')+'</span></label>'; }).join('')+'</div></div>'+
+        '<div class="field full"><label>Giảng viên phụ trách <span class="req">*</span></label><div id="gvMS"></div><div class="hint">Danh sách giảng viên của '+esc(LMS.donViTen(hp2.khoa))+' (khoa phụ trách học phần). Người chọn đầu tiên là giảng viên chính.</div></div>'+
         '<div class="field"><label for="w_dd">Điểm đạt tổng kết (thang 10)</label><input class="inp" type="number" step="0.5" min="0" max="10" id="w_dd" name="diemDat" value="'+f.diemDat+'"></div>'+
         '<div class="field" style="justify-content:flex-end"><label class="check"><input type="checkbox" name="tuDangKy"'+(f.tuDangKy?' checked':'')+'> Cho phép học viên tự đăng ký trên cổng</label></div>'+
       '</div>';
@@ -203,10 +211,10 @@ function wizard(pre){
       var qi=b.querySelector('#wq'); qi.oninput=function(){ w.q=this.value; b.querySelector('#wTree').innerHTML=tree(); bindTree(); }; setTimeout(function(){ qi.focus(); qi.setSelectionRange(qi.value.length,qi.value.length); },20);
       bindTree();
     }
-    if(w.step===2){ var bd=b.querySelector('#w_bd'); bd.onchange=function(){ var kt=b.querySelector('#w_kt'); if(this.value) kt.min=LMS.iso(LMS.addDays(LMS.parse(this.value),1)); }; }
+    if(w.step===2){ w.ms=gvPicker(b.querySelector('#gvMS'), LMS.byId('hocPhan',w.hp).khoa, f.gv, null, false); var bd=b.querySelector('#w_bd'); bd.onchange=function(){ var kt=b.querySelector('#w_kt'); if(this.value) kt.min=LMS.iso(LMS.addDays(LMS.parse(this.value),1)); }; }
   }
   function bindTree(){ api.body.querySelectorAll('.leaf').forEach(function(r){ r.onclick=function(){ w.hp=r.dataset.hp; w.ct=r.dataset.ct; paint(); }; r.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); r.click(); } }; }); }
-  function collect(){ if(w.step!==2) return; var v=U.formVals(api.body); var f=w.f; f.ten=v.ten; f.khoa=v.khoa; f.hinhThuc=v.hinhThuc; f.batDau=v.batDau; f.ketThuc=v.ketThuc; f.sucChua=+v.sucChua||0; f.khoanThu=v.khoanThu; f.tuDangKy=v.tuDangKy; f.diemDat=+v.diemDat||5; f.gv=[].slice.call(api.body.querySelectorAll('[data-gv]:checked')).map(function(x){ return x.dataset.gv; }); }
+  function collect(){ if(w.step!==2) return; var v=U.formVals(api.body); var f=w.f; f.ten=v.ten; f.khoa=v.khoa; f.hinhThuc=v.hinhThuc; f.batDau=v.batDau; f.ketThuc=v.ketThuc; f.sucChua=+v.sucChua||0; f.khoanThu=v.khoanThu; f.tuDangKy=v.tuDangKy; f.diemDat=+v.diemDat||5; f.gv=w.ms?w.ms.get():f.gv; }
   function next(){
     if(w.step===1){ if(!w.hp){ U.toast('Chọn một học phần trong cây chương trình','bad'); return; } var hp=LMS.byId('hocPhan',w.hp); if(!hp.bai.length){ U.toast('Học phần chưa có bài giảng, bổ sung ở màn Học phần trước khi mở lớp','bad'); return; } w.step=2; paint(); return; }
     if(w.step===2){ collect(); var b=api.body, f=w.f, ok=true;
@@ -216,7 +224,7 @@ function wizard(pre){
       chk('khoa', !!f.khoa, 'Chọn khoa quản lý');
       chk('batDau', !!f.batDau, 'Chọn ngày bắt đầu');
       chk('ketThuc', !!f.ketThuc && (!f.batDau || f.ketThuc > f.batDau), f.ketThuc?'Ngày kết thúc phải sau ngày bắt đầu':'Chọn ngày kết thúc');
-      var gvErr = b.querySelector('#gvList'); var gf = gvErr.closest('.field'); var e = gf.querySelector('.err')||gf.appendChild(Object.assign(document.createElement('div'),{className:'err'})); e.textContent = f.gv.length?'':'Chọn ít nhất một giảng viên'; if(!f.gv.length) ok=false;
+      var gvErr = b.querySelector('#gvMS'); var gf = gvErr.closest('.field'); var e = gf.querySelector('.err')||gf.appendChild(Object.assign(document.createElement('div'),{className:'err'})); e.textContent = f.gv.length?'':'Chọn ít nhất một giảng viên'; if(!f.gv.length) ok=false;
       if(!ok) return; w.step=3; paint(); return; }
     if(w.step===3){ var f=w.f;
       var lop = { id:LMS.nextId('lop'), ma:f.ma, ten:f.ten, chuongTrinh:w.ct, hocPhan:w.hp, khoa:f.khoa, batDau:f.batDau, ketThuc:f.ketThuc, giangVien:f.gv, hinhThuc:f.hinhThuc, sucChua:f.sucChua, khoanThu:f.khoanThu||null, tuDangKy:f.tuDangKy, trangThai:'ke-hoach', cotDiem:(f.hinhThuc==='truc-tuyen-gv'?[{ten:'Chuyên cần',ts:10,nguon:'diem-danh'}]:[]).concat([{ten:'Kiểm tra giữa kỳ',ts:40,nguon:'ky-thi',kyThi:null},{ten:'Thi cuối kỳ',ts:f.hinhThuc==='truc-tuyen-gv'?50:60,nguon:'ky-thi',kyThi:null}]), diemDat:f.diemDat };
@@ -283,8 +291,7 @@ function tabInfo(tb,l){
     '<div class="field"><label for="i_kt">Ngày kết thúc</label><input class="inp" type="date" id="i_kt" name="ketThuc" value="'+l.ketThuc+'" min="'+LMS.iso(LMS.addDays(LMS.parse(l.batDau),1))+'"'+ro()+'></div>'+
     '<div class="field"><label for="i_sc">Sức chứa</label><input class="inp" type="number" min="0" id="i_sc" name="sucChua" value="'+l.sucChua+'"'+ro()+'></div>'+
     '<div class="field"><label for="i_kthu">Khoản thu'+(c.lockKT?' <span class="lock">· đã khóa</span>':'')+'</label><select class="sel" id="i_kthu" name="khoanThu"'+ro(c.lockKT)+'>'+U.opts(d.khoanThu,'id',function(k){ return k.ten+' · '+U.money(k.donGia*(1+k.vat/100)); },l.khoanThu,'Không thu phí')+'</select></div>'+
-    '<div class="field full"><label>Giảng viên phụ trách <span class="req">*</span></label><div class="gv-list" id="gvList">'+gvs.map(function(g){ return '<label class="check"><input type="checkbox" data-gv="'+g.id+'"'+(l.giangVien.indexOf(g.id)>=0?' checked':'')+ro()+'> '+esc(g.hoTen)+' <span class="muted small">· '+esc(LMS.donViTen(g.donVi))+'</span>'+(g.taiKhoan?'':' '+U.badge('Chưa có tài khoản','bad'))+'</label>'; }).join('')+'</div></div>'+
-    '<div class="field full muted small" style="margin-top:-6px">Giảng viên chính: <b>'+esc(LMS.name('giangVien',l.giangVien[0],'hoTen'))+'</b> · đổi giảng viên chính, vai trò trợ giảng ở tab Giảng viên.</div>'+
+    '<div class="field full"><label>Giảng viên phụ trách <span class="req">*</span></label><div id="gvMS"></div><div class="hint" id="gvHint">Giảng viên của '+esc(LMS.donViTen(hp?hp.khoa:l.khoa))+' (khoa phụ trách học phần). Người đứng đầu là giảng viên chính; đổi vai trò trợ giảng ở tab Giảng viên.</div></div>'+
     '<div class="field"><label for="i_stc">Số tín chỉ (STC)</label><input class="inp" type="number" min="0" max="10" id="i_stc" name="soTC" value="'+(l.soTC!=null?l.soTC:(hp?hp.soTC||0:0))+'"'+ro()+'><div class="hint">Hiển thị ở bảng điểm học vụ; để 0 nếu không tính tín chỉ.</div></div>'+
     '<div class="field"><label for="i_dd">Điểm đạt tổng kết</label><input class="inp" type="number" step="0.5" min="0" max="10" id="i_dd" name="diemDat" value="'+l.diemDat+'"'+ro()+'></div>'+
     '<div class="field" style="justify-content:flex-end"><label class="check"><input type="checkbox" name="tuDangKy"'+(l.tuDangKy?' checked':'')+ro()+'> Cho phép học viên tự đăng ký trên cổng</label><label class="check"><input type="checkbox" name="tinhDiem"'+(l.tinhDiem!==false?' checked':'')+ro()+'> Tính điểm học phần</label></div>'+
@@ -292,6 +299,8 @@ function tabInfo(tb,l){
     '</form>';
   if(!c.lockAll) h += '<div class="row" style="margin-top:16px;justify-content:flex-end"><button class="btn" id="iReset">Hoàn tác</button><button class="btn primary" id="iSave">Lưu thông tin</button></div>';
   tb.innerHTML=h;
+  var gvMS=gvPicker(document.getElementById('gvMS'), hp?hp.khoa:l.khoa, l.giangVien, l, !!c.lockAll);
+  var hpSel=document.getElementById('i_hp'); if(hpSel) hpSel.addEventListener('change', function(){ var h2=LMS.byId('hocPhan',hpSel.value); if(!h2) return; var o=gvOpts(h2.khoa); gvMS.config({ options:o.options, extra:o.extra }); document.getElementById('gvHint').firstChild.textContent='Giảng viên của '+LMS.donViTen(h2.khoa)+' (khoa phụ trách học phần). Người đứng đầu là giảng viên chính; đổi vai trò trợ giảng ở tab Giảng viên.'; });
   document.getElementById('helpBtn').onclick=function(){ st.help=!st.help; renderDetail(); };
   var cvF=document.getElementById('cvF'); if(cvF) cvF.onchange=function(){ var f=cvF.files&&cvF.files[0]; if(!f) return; if(f.size>2*1024*1024){ U.toast('Ảnh vượt 2 MB','bad'); return; } var r=new FileReader(); r.onload=function(){ var im=new Image(); im.onload=function(){ var cv=document.createElement('canvas'); cv.width=480; cv.height=270; var x=cv.getContext('2d'), sc=Math.max(480/im.width,270/im.height); x.drawImage(im,(480-im.width*sc)/2,(270-im.height*sc)/2,im.width*sc,im.height*sc); l.anhBia=cv.toDataURL('image/jpeg',.8); LMS.commit('Đổi ảnh bìa','Lớp học',l.ma); U.toast('Đã cập nhật ảnh bìa','ok'); renderDetail(); }; im.src=r.result; }; r.readAsDataURL(f); };
   var cvX=document.getElementById('cvX'); if(cvX) cvX.onclick=function(){ l.anhBia=null; LMS.commit('Bỏ ảnh bìa','Lớp học',l.ma); renderDetail(); };
@@ -304,12 +313,11 @@ function tabInfo(tb,l){
     chk('khoa', !!v.khoa, 'Chọn khoa');
     chk('ketThuc', v.ketThuc > (c.lockBD?l.batDau:v.batDau), 'Ngày kết thúc phải sau ngày bắt đầu');
     chk('sucChua', +v.sucChua===0 || +v.sucChua>=c.minSC, 'Sức chứa không nhỏ hơn số học viên đang có ('+c.minSC+')');
-    var gv=[].slice.call(f.querySelectorAll('[data-gv]:checked')).map(function(x){return x.dataset.gv;});
-    if(!gv.length){ U.toast('Chọn ít nhất một giảng viên','bad'); ok=false; }
+    var gv=gvMS.get();
+    var gf=document.getElementById('gvMS').closest('.field'), ge=gf.querySelector('.err')||gf.appendChild(Object.assign(document.createElement('div'),{className:'err'})); ge.textContent=gv.length?'':'Chọn ít nhất một giảng viên'; if(!gv.length) ok=false;
     if(!ok) return;
     var before = { ten:l.ten, khoa:LMS.donViTen(l.khoa), hocPhan:LMS.name('hocPhan',l.hocPhan), ketThuc:l.ketThuc, sucChua:l.sucChua, giangVien:gvNames(l.giangVien).join(', ') };
     if(v.tuDangKy && l.trangThai!=='tuyen-sinh' && l.trangThai!=='dang-hoc'){ U.toast('Tự đăng ký chỉ bật được khi lớp đang tuyển sinh hoặc đang học','bad'); return; }
-    var gvCu=l.giangVien; gv.sort(function(a,b){ var x=gvCu.indexOf(a), y=gvCu.indexOf(b); return (x<0?99:x)-(y<0?99:y); });
     l.ten=v.ten; l.khoa=v.khoa; l.ketThuc=v.ketThuc; l.sucChua=+v.sucChua; l.giangVien=gv; l.diemDat=+v.diemDat||5; l.tuDangKy=v.tuDangKy; l.tinhChat=v.tinhChat; l.soTC=Math.max(0,+v.soTC||0); l.tinhDiem=v.tinhDiem; l.ghiChu=v.ghiChu;
     if(!c.lockHP && v.hocPhan && v.hocPhan!==l.hocPhan){ l.hocPhan=v.hocPhan; db().tienDo[l.id]={}; }
     var doiHT = !c.lockHT && v.hinhThuc && v.hinhThuc!==l.hinhThuc;
