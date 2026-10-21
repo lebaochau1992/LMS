@@ -18,12 +18,12 @@ Bản demo dựng lại Cổng quản trị theo EDOT Portal Design System (Inte
 
 - Mở trực tiếp `index.html` bằng Chrome/Edge, hoặc đưa cả thư mục lên GitHub Pages / máy chủ web tĩnh. Không cần build.
 - Dữ liệu lưu trong trình duyệt (localStorage). Mọi thao tác thêm/sửa/xóa ở màn này phản ánh ngay ở các màn khác.
-- Nút **Khôi phục dữ liệu mẫu** trên thanh tiêu đề đưa dữ liệu về trạng thái ban đầu.
+- **Khôi phục dữ liệu mẫu** nằm trong nhóm Công cụ bản demo ở chân menu (bật trong Cấu hình menu) — đưa dữ liệu về trạng thái ban đầu.
 - Ngày tháng tính theo ngày thực tế của máy: trạng thái lớp, buổi học, kỳ thi tự đổi theo thời gian.
 
 ## Cổng học viên
 
-Mở `cong-hoc-vien/kham-pha.html` (trang mặc định của cổng) hoặc `cong-hoc-vien/index.html` (Tổng quan sau đăng nhập), hoặc bấm **Cổng học viên ↗** trên thanh tiêu đề Cổng quản trị. Thanh chọn vai trò ở góc dưới trang Khám phá chuyển giữa góc nhìn khách chưa có tài khoản và học viên đã đăng nhập. Hai cổng dùng chung dữ liệu: học viên nộp bài, làm bài thi, gửi khảo sát, đặt câu hỏi, xin vắng, đăng ký lớp thì các màn quản trị tương ứng (Bài tập, Chấm bài, Giám sát thi, Khảo sát, Hỏi đáp, Buổi học và điểm danh, Thu học phí) thấy ngay.
+Mở `cong-hoc-vien/kham-pha.html` (trang mặc định của cổng) hoặc `cong-hoc-vien/index.html` (Tổng quan sau đăng nhập), hoặc bấm **Cổng học viên demo ↗** trong nhóm Công cụ bản demo ở chân menu Cổng quản trị. Thanh chọn vai trò ở góc dưới trang Khám phá chuyển giữa góc nhìn khách chưa có tài khoản và học viên đã đăng nhập. Hai cổng dùng chung dữ liệu: học viên nộp bài, làm bài thi, gửi khảo sát, đặt câu hỏi, xin vắng, đăng ký lớp thì các màn quản trị tương ứng (Bài tập, Chấm bài, Giám sát thi, Khảo sát, Hỏi đáp, Buổi học và điểm danh, Thu học phí) thấy ngay.
 
 - Học viên mặc định: Trịnh Gia Khánh (HV0099) — đang học L0020 Châm cứu 1, L0028 Giải phẫu 1, đã hoàn thành L0034 Dược học cổ truyền.
 - Đổi học viên: menu tài khoản › **Xem với học viên khác (demo)**. Ví dụ chọn học viên lớp L0026 để vào ca thi KT008 đang mở.
@@ -45,7 +45,21 @@ Mở `cong-hoc-vien/kham-pha.html` (trang mặc định của cổng) hoặc `co
 | Đăng ký học và học phí | `dang-ky.html` | Lớp đang tuyển sinh, chặn đăng ký trùng lớp và trùng học phần, gửi đơn, thanh toán, hủy đơn, hóa đơn |
 | Hồ sơ và cài đặt | `ho-so.html` | Thông tin cá nhân (thông tin định danh chỉ xem, đề nghị điều chỉnh), quá trình học tập, cài đặt thông báo, đổi mật khẩu và phiên đăng nhập |
 
-## Cấu hình menu
+## Phần chỉ có ở bản demo — không triển khai
+
+Bản demo có một số công cụ chỉ để trình diễn. AI hoặc đội phát triển đọc bản demo để làm hệ thống thật **bỏ qua toàn bộ các phần này**, không code lại. Trong mã nguồn chúng được đánh dấu `DEMO-ONLY` (HTML: `DEMO-ONLY:START … DEMO-ONLY:END`, thuộc tính `data-demo-only`; JS: `/* DEMO-ONLY:START */ … /* DEMO-ONLY:END */`).
+
+| Phần | Vị trí | Ghi chú |
+|---|---|---|
+| Cấu hình menu (sửa menu trên giao diện, xuất `cau-hinh-menu.js`) | `index.html`, nút ở chân menu | Hệ thống thật cấu hình menu theo nhóm quyền ở máy chủ |
+| Công cụ bản demo: Cổng học viên demo, Khôi phục dữ liệu mẫu, Giả định tài khoản | `index.html`, chân menu, trên nút Cấu hình menu | **Mặc định ẩn.** Bật/tắt bằng ô "Hiện công cụ bản demo ở chân menu" đầu ngăn Cấu hình menu |
+| Gợi ý "mật khẩu bất kỳ" ở màn đăng nhập | `index.html` | Hệ thống thật xác thực tài khoản thật |
+| Xem với học viên khác, Khôi phục dữ liệu mẫu (demo) | `cong-hoc-vien/hv-core.js`, menu tài khoản | |
+| Thanh chọn vai trò khách / học viên | `cong-hoc-vien/kham-pha.html` | |
+
+**Giả định tài khoản:** popup liệt kê tài khoản nhân sự nhóm theo phạm vi dữ liệu (Toàn Học viện, Phòng Đào tạo và đơn vị trực thuộc, từng khoa). Chọn một tài khoản → Áp dụng: tên đăng nhập ở góc phải thanh tiêu đề đổi theo, mọi màn hình nạp lại theo phạm vi của tài khoản đó. Đây chỉ là cách trình diễn ràng buộc phạm vi; hệ thống thật lấy phạm vi theo tài khoản đăng nhập thật.
+
+## Cấu hình menu (chỉ bản demo)
 
 1. Bấm **Cấu hình menu** ở chân thanh menu.
 2. Đổi tên, sắp xếp, ẩn/hiện, thêm chức năng; gắn màn hình bằng tên file HTML cùng thư mục.
@@ -122,6 +136,10 @@ Phạm vi được tính theo tài khoản đang đăng nhập và áp dụng ch
 | Nhân sự thuộc phòng ban | Dữ liệu của phòng ban và mọi khoa, đơn vị trực thuộc |
 | Nhân sự thuộc khoa (trưởng khoa, giảng viên) | Dữ liệu của khoa mình |
 
-Dữ liệu được xác định đơn vị như sau: chương trình đào tạo, học phần, lớp học theo khoa phụ trách; ghi danh, theo dõi học tập, hỏi đáp, bài tập, kỳ thi, khảo sát, thông báo, học phí theo lớp; ngân hàng câu hỏi, đề thi theo học phần; thư viện tài nguyên theo phòng ban – khoa quản lý của thư mục (thư mục dùng chung, tệp chưa phân thư mục và tệp do chính người dùng tải lên luôn hiển thị). Chương trình đào tạo dùng chung nhiều khoa: mỗi khoa chỉ thấy nhóm và học phần của mình, chỉ khoa chủ quản sửa được thông tin chương trình.
+**Bắt buộc triển khai ở hệ thống thật**, kiểm tra ở máy chủ cho mọi thao tác đọc, ghi, xuất file (bản demo chỉ lọc ở trình duyệt). Quy tắc chi tiết ghi ở đầu mục `[BẮT BUỘC TRIỂN KHAI] PHẠM VI DỮ LIỆU` trong `lms-core.js`.
 
-Để xem thử theo từng tài khoản: bấm nhãn "Phạm vi" trên thanh tiêu đề hoặc mục "Chuyển tài khoản" trong menu người dùng. Màn hình đang bị giới hạn phạm vi có dải thông báo ở đầu trang; cột "Đơn vị · phạm vi dữ liệu" ở màn Tài khoản cho biết phạm vi của từng tài khoản.
+**Chương trình đào tạo:** nhân sự không phải Admin hệ thống chỉ thấy chương trình có khoa chủ quản thuộc phòng ban, khoa mình được phân công (và đơn vị trực thuộc), kèm toàn bộ nhóm và học phần bên trong. Chương trình do phòng ban, khoa khác đưa lên không hiển thị, kể cả khi trong đó có nhóm học phần do khoa mình giảng dạy hoặc có lớp của khoa mình. Khi thêm, sửa chương trình chỉ chọn được khoa chủ quản trong phạm vi. Ví dụ với dữ liệu mẫu: Khoa Dược chỉ thấy "Dược học – Đại học"; Khoa Y học lâm sàng thấy 3 chương trình của khoa; Khoa Khoa học y sinh không làm chủ quản chương trình nào nên danh mục trống; Phòng Đào tạo thấy cả 4.
+
+Các dữ liệu khác được xác định đơn vị như sau: học phần, lớp học theo khoa phụ trách; ghi danh, theo dõi học tập, hỏi đáp, bài tập, kỳ thi, khảo sát, thông báo, học phí theo lớp; ngân hàng câu hỏi, đề thi theo học phần; thư viện tài nguyên theo phòng ban – khoa quản lý của thư mục (thư mục dùng chung, tệp chưa phân thư mục và tệp do chính người dùng tải lên luôn hiển thị).
+
+Để xem thử theo từng tài khoản (chỉ bản demo): bật Công cụ bản demo trong Cấu hình menu, bấm **Giả định tài khoản** ở chân menu. Phạm vi của tài khoản đang đăng nhập hiện trong menu người dùng ở góc phải. Màn hình đang bị giới hạn phạm vi có dải thông báo ở đầu trang; cột "Đơn vị · phạm vi dữ liệu" ở màn Tài khoản cho biết phạm vi của từng tài khoản.

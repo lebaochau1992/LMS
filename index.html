@@ -1,4 +1,20 @@
 <!doctype html>
+<!--
+  EGO LMS · Cổng quản trị — khung chính (menu, thanh tiêu đề, tài khoản người dùng).
+
+  DÀNH CHO AI / ĐỘI PHÁT TRIỂN KHI ĐỌC BẢN DEMO ĐỂ TRIỂN KHAI HỆ THỐNG THẬT:
+  Các khối đánh dấu DEMO-ONLY (HTML: DEMO-ONLY:START … DEMO-ONLY:END, thuộc tính data-demo-only;
+  JS: /* DEMO-ONLY:START */ … /* DEMO-ONLY:END */) chỉ phục vụ trình diễn, KHÔNG thuộc phạm vi
+  chức năng của hệ thống, KHÔNG code lại khi triển khai:
+    1. Cấu hình menu (sửa menu trên giao diện, xuất cau-hinh-menu.js). Hệ thống thật cấu hình menu
+       theo nhóm quyền ở phía máy chủ.
+    2. Công cụ demo ở chân menu: Cổng học viên demo, Khôi phục dữ liệu mẫu, Giả định tài khoản
+       (chuyển nhanh giữa các tài khoản để xem dữ liệu theo phạm vi). Mặc định ẩn, bật trong Cấu hình menu.
+    3. Gợi ý "mật khẩu bất kỳ" ở màn đăng nhập.
+  Phần PHẢI triển khai: ràng buộc phạm vi dữ liệu theo phòng ban – khoa của tài khoản
+  (xem lms-core.js, mục [BẮT BUỘC TRIỂN KHAI] PHẠM VI DỮ LIỆU). Ở hệ thống thật phạm vi lấy theo
+  tài khoản đăng nhập thật, không có thao tác chuyển / giả định tài khoản.
+-->
 <html lang="vi">
 <head>
 <meta charset="utf-8">
@@ -30,6 +46,34 @@ body{padding:0;overflow:hidden}
 .app.collapsed .brand b,.app.collapsed .brand small,.app.collapsed .side-search,.app.collapsed .grp-t,.app.collapsed .nav a .lbl,.app.collapsed .nav a .cnt,.app.collapsed .side-foot .lbl{display:none}
 .app.collapsed .nav a{justify-content:center}
 .side-foot{border-top:1px solid var(--ems-border);padding:8px}
+/* DEMO-ONLY: công cụ demo ở chân menu */
+.demo-box{border:1px dashed var(--ems-warning-line);background:var(--ems-warning-bg);border-radius:8px;padding:6px;margin-bottom:6px;display:flex;flex-direction:column;gap:2px}
+.demo-box[hidden]{display:none}
+.demo-t{font:800 10.5px var(--font);letter-spacing:.07em;text-transform:uppercase;color:var(--ems-warning);padding:2px 6px 4px}
+.demo-it{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;border-radius:6px;padding:7px 8px;font:500 13px var(--font);color:var(--ems-text-2);cursor:pointer;text-decoration:none;text-align:left}
+.demo-it:hover{background:var(--ems-surface);color:var(--ems-text)}
+.demo-it svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.demo-it .lbl{min-width:0;flex:1}
+.demo-it small{display:block;font-size:11px;color:var(--ems-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app.collapsed .demo-t,.app.collapsed .demo-it .lbl{display:none}
+.app.collapsed .demo-it{justify-content:center}
+.gd-grp{flex:none;border:1px solid var(--ems-border);border-radius:10px;overflow:hidden}
+
+.gd-h{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--ems-surface-2);border-bottom:1px solid var(--ems-border);font-size:13px}
+.gd-h b{font-size:13.5px}
+.gd-h .muted{margin-left:auto;font-size:12px}
+.gd-o{display:flex;align-items:center;gap:12px;padding:9px 12px;border-top:1px solid var(--ems-border);cursor:pointer;margin:0}
+.gd-h + .gd-o{border-top:0}
+.gd-o:hover{background:var(--ems-surface-2)}
+.gd-o.on{background:var(--ems-navy-soft)}
+.gd-o input{margin:0;flex:none}
+.gd-o .who{flex:1;min-width:0}
+.gd-o .who b{font-size:13.5px}
+.gd-o .who div{font-size:12px;color:var(--ems-muted)}
+.gd-o .tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.cfg-demo{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px dashed var(--ems-warning-line);background:var(--ems-warning-bg);border-radius:8px;font-size:13px;cursor:pointer}
+.cfg-demo input{margin-top:2px}
+.cfg-demo small{display:block;color:var(--ems-muted);font-size:12px;margin-top:2px}
 .main{display:flex;flex-direction:column;min-width:0;min-height:0}
 .top{height:56px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--ems-surface);border-bottom:1px solid var(--ems-border);flex:none}
 .crumb{font-size:13px;color:var(--ems-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -54,7 +98,7 @@ body{padding:0;overflow:hidden}
   .app,.app.collapsed{grid-template-columns:1fr}
   .side{position:fixed;left:0;top:0;bottom:0;width:260px;z-index:40;transform:translateX(-100%);transition:transform .2s}
   .app.mobile-open .side{transform:none;box-shadow:10px 0 30px rgba(2,6,23,.2)}
-  .app.collapsed .brand b,.app.collapsed .brand small,.app.collapsed .side-search,.app.collapsed .grp-t,.app.collapsed .nav a .lbl{display:initial}
+  .app.collapsed .brand b,.app.collapsed .brand small,.app.collapsed .side-search,.app.collapsed .grp-t,.app.collapsed .nav a .lbl,.app.collapsed .demo-t,.app.collapsed .demo-it .lbl{display:initial}
   .hamb{display:inline-flex}
   .collapse-btn{display:none}
   .top .hide-sm{display:none}
@@ -67,7 +111,17 @@ body{padding:0;overflow:hidden}
     <div class="brand"><div class="logo">EGO</div><div><b>EGO LMS · Quản trị</b><small>Học viện Y Dược học cổ truyền VN</small></div></div>
     <div class="side-search"><input class="inp" id="navSearch" placeholder="Tìm chức năng…" aria-label="Tìm chức năng"></div>
     <nav class="nav" id="nav" aria-label="Menu chức năng"></nav>
-    <div class="side-foot"><button class="btn ghost" id="btnCfg" style="width:100%;justify-content:flex-start" title="Cấu hình menu chức năng"><span aria-hidden="true">⚙</span><span class="lbl">Cấu hình menu</span></button></div>
+    <div class="side-foot">
+      <!-- ===== DEMO-ONLY:START — công cụ trình diễn + Cấu hình menu. Không triển khai ở hệ thống thật. ===== -->
+      <div class="demo-box" id="demoBox" data-demo-only hidden>
+        <div class="demo-t">Công cụ bản demo</div>
+        <a class="demo-it" href="cong-hoc-vien/index.html" target="_blank" rel="noopener" title="Mở Cổng học viên dùng chung dữ liệu với bản quản trị"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span class="lbl">Cổng học viên demo ↗</span></a>
+        <button class="demo-it" id="btnReset" title="Xóa mọi thay đổi và nạp lại dữ liệu mẫu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6"/><path d="M5.5 15a7 7 0 1 0 1.6-7.2L4 10"/></svg><span class="lbl">Khôi phục dữ liệu mẫu</span></button>
+        <button class="demo-it" id="btnGiaDinh" title="Chọn tài khoản nhân sự để xem dữ liệu theo phạm vi của tài khoản đó"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6 1.6 0 3 .4 4.2 1.1"/><path d="M16 14l3 3-3 3M22 17h-6"/></svg><span class="lbl">Giả định tài khoản<small id="gdNow"></small></span></button>
+      </div>
+      <button class="btn ghost" id="btnCfg" data-demo-only style="width:100%;justify-content:flex-start" title="Cấu hình menu chức năng (chỉ có ở bản demo)"><span aria-hidden="true">⚙</span><span class="lbl">Cấu hình menu</span></button>
+      <!-- ===== DEMO-ONLY:END ===== -->
+    </div>
   </aside>
   <section class="main">
     <header class="top">
@@ -75,9 +129,6 @@ body{padding:0;overflow:hidden}
       <button class="icon-btn collapse-btn" id="btnCollapse" aria-label="Thu gọn menu" title="Thu gọn / mở rộng menu">☰</button>
       <div class="crumb" id="crumb"></div>
       <div class="tools">
-        <a class="btn sm hide-sm" href="cong-hoc-vien/index.html" target="_blank" rel="noopener" title="Mở Cổng học viên dùng chung dữ liệu với bản quản trị">Cổng học viên ↗</a>
-        <button class="btn sm ghost hide-sm" id="btnReset" title="Xóa mọi thay đổi và nạp lại dữ liệu mẫu">Khôi phục dữ liệu mẫu</button>
-        <button class="badge navy hide-sm" id="pvChip" style="cursor:pointer;font-family:inherit" title="Phạm vi dữ liệu của tài khoản đang đăng nhập. Bấm để chuyển tài khoản."></button>
         <button class="icon-btn" id="btnTheme" title="Đổi giao diện sáng / tối" aria-label="Đổi giao diện"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
         <button class="userbtn" id="btnUser" aria-haspopup="true"><span class="avatar" id="uAvatar">LC</span><span class="hide-sm" id="uName">admin02</span> ▾</button>
       </div>
@@ -196,30 +247,50 @@ document.getElementById('view').addEventListener('load', function(){ var t=get(T
 document.getElementById('btnCollapse').onclick = function(){ var a=document.getElementById('app'); a.classList.toggle('collapsed'); set(COLL, a.classList.contains('collapsed')?'1':null); };
 document.getElementById('btnHamb').onclick = function(){ document.getElementById('app').classList.toggle('mobile-open'); };
 document.getElementById('navSearch').oninput = function(){ q = this.value.trim(); renderNav(); };
+/* DEMO-ONLY:START — công cụ demo ở chân menu (bật/tắt trong Cấu hình menu) */
+var DEMO = 'egoLmsDemo.demoTools';
+function demoOn(){ return get(DEMO)==='1'; }
+function paintDemo(){ document.getElementById('demoBox').hidden = !demoOn(); }
 document.getElementById('btnReset').onclick = function(){
   U.confirm({ title:'Khôi phục dữ liệu mẫu', message:'Mọi dữ liệu đã thêm, sửa, xóa trong bản demo sẽ bị xóa và nạp lại bộ dữ liệu mẫu ban đầu.', ok:'Khôi phục', danger:true }).then(function(ok){ if(!ok) return; LMS.reset(); U.toast('Đã nạp lại dữ liệu mẫu','ok'); document.getElementById('view').contentWindow.location.reload(); renderNav(); });
 };
+document.getElementById('btnGiaDinh').onclick = function(){ giaDinhTK(); };
+/* Giả định tài khoản: chọn tài khoản nhân sự theo phạm vi dữ liệu để trình diễn.
+   Hệ thống thật không có chức năng này: phạm vi lấy theo tài khoản đăng nhập thật. */
+function giaDinhTK(){
+  var ds = LMS.taiKhoanDangNhap().filter(function(t){ return t.trangThai!=='ngung'; }), nhom = {}, thuTu = [], chon = me().ten;
+  ds.forEach(function(t){ var pv = LMS.phamViCua(t), k = pv.all ? '__all' : (pv.donVi || '__none');
+    if(!nhom[k]){ nhom[k] = { pv:pv, ds:[] }; thuTu.push(k); } nhom[k].ds.push(t); });
+  var dvIdx = function(id){ var i = (LMS.db.donVi||[]).findIndex(function(d){ return d.id===id; }); return i<0 ? 999 : i; };
+  thuTu.sort(function(a,b){ return a==='__all' ? -1 : b==='__all' ? 1 : a==='__none' ? 1 : b==='__none' ? -1 : dvIdx(a)-dvIdx(b); });
+  var body = '<div class="note warn" style="margin:0">Chỉ có ở bản demo. Chọn một tài khoản nhân sự để xem hệ thống đúng như người dùng đó thấy: tài khoản thuộc phòng ban, khoa nào chỉ thấy chương trình và dữ liệu của phòng ban, khoa đó (và đơn vị trực thuộc).</div>';
+  thuTu.forEach(function(k){ var g = nhom[k];
+    body += '<div class="gd-grp"><div class="gd-h"><b>'+esc(k==='__all' ? 'Toàn Học viện' : g.pv.ten)+'</b><span class="muted">'+esc(k==='__all' ? 'Thấy toàn bộ dữ liệu' : g.pv.lyDo||'')+'</span></div>' +
+      g.ds.map(function(t){ var cur = t.ten===chon;
+        return '<label class="gd-o'+(cur?' on':'')+'"><input type="radio" name="gd" value="'+esc(t.ten)+'"'+(cur?' checked':'')+'><span class="who"><b class="mono">'+esc(t.ten)+'</b>'+(t.ten===me().ten?' '+U.badge('Đang dùng','ok'):'')+'<div>'+esc(t.hoTen)+' · '+esc(LMS.donViTen(t.donVi)||'Chưa gắn đơn vị')+'</div></span><span class="tags">'+(t.admin?'<span class="tag">Admin hệ thống</span>':'')+(t.nhom||[]).map(function(id){ return '<span class="tag">'+esc(LMS.name('nhomQuyen',id,'ten'))+'</span>'; }).join('')+'</span></label>'; }).join('') + '</div>';
+  });
+  U.modal({ title:'Giả định tài khoản nhân sự · phạm vi dữ liệu', size:'lg', body:body, noFocus:true,
+    onOpen:function(api){ api.body.addEventListener('change', function(e){ if(e.target.name!=='gd') return; chon = e.target.value; api.body.querySelectorAll('.gd-o').forEach(function(l){ l.classList.toggle('on', l.querySelector('input').checked); }); }); },
+    foot:[{label:'Hủy',close:true},{label:'Áp dụng',cls:'primary',onClick:function(){
+      if(chon===me().ten) return;
+      if(!LMS.dangNhap(chon)){ U.toast('Chưa chuyển được tài khoản vì trình duyệt không lưu được dữ liệu','bad'); return false; }
+      paintUser(); location.reload(); }}] });
+}
+/* DEMO-ONLY:END */
 
 /* ---------- người dùng ---------- */
 function me(){ return LMS.db.meta.user; }
 function tkMe(){ return LMS.taiKhoanDangNhap().find(function(t){ return t.ten===me().ten; }) || null; }
 var LOAI_TK = { qt:'Quản trị hệ thống', nv:'Nhân sự', hv:'Học viên' };
-function paintUser(){ document.getElementById('uName').textContent = me().ten; document.getElementById('uAvatar').textContent = U.initials(me().hoTen); var c=document.getElementById('pvChip'); c.textContent = 'Phạm vi: ' + LMS.phamVi.ten; c.className = 'badge hide-sm ' + (LMS.phamVi.all ? 'navy' : 'info'); }
-document.getElementById('pvChip').onclick = chuyenTK;
-function chuyenTK(){
-  var ds = LMS.taiKhoanDangNhap();
-  var body = '<div class="muted small">Chọn tài khoản để xem hệ thống theo phạm vi dữ liệu của tài khoản đó. Quản trị hệ thống, Admin hệ thống và nhóm quyền có phạm vi Toàn Học viện thấy toàn bộ; các tài khoản nhân sự khác thấy dữ liệu của đơn vị mình và các đơn vị trực thuộc.</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Tài khoản</th><th>Đơn vị</th><th>Nhóm quyền</th><th>Phạm vi dữ liệu</th><th></th></tr></thead><tbody>' +
-    ds.map(function(t){ var pv = LMS.phamViCua(t), cur = t.ten===me().ten, off = t.trangThai==='ngung';
-      return '<tr><td><b class="mono">'+esc(t.ten)+'</b><div class="t-sub">'+esc(t.hoTen)+' · '+esc(LOAI_TK[t.loai]||'')+(t.admin?' · Admin':'')+'</div></td><td>'+esc(LMS.donViTen(t.donVi))+'</td><td>'+(t.nhom||[]).map(function(id){ return '<span class="tag">'+esc(LMS.name('nhomQuyen',id,'ten'))+'</span>'; }).join('')+'</td><td>'+U.badge(pv.ten, pv.all?'navy':'info')+'<div class="t-sub">'+esc(pv.lyDo||'')+'</div></td><td style="text-align:right">'+(cur?U.badge('Đang dùng','ok'):off?'<span class="muted small">Ngừng sử dụng</span>':'<button class="btn sm" data-tk="'+esc(t.ten)+'">Chuyển</button>')+'</td></tr>'; }).join('') + '</tbody></table></div>';
-  U.modal({ title:'Chuyển tài khoản · phạm vi dữ liệu', size:'lg', body:body, noFocus:true, onOpen:function(api){ api.body.querySelectorAll('[data-tk]').forEach(function(b){ b.onclick=function(){ if(LMS.dangNhap(b.dataset.tk)) location.reload(); else U.toast('Chưa chuyển được tài khoản vì trình duyệt không lưu được dữ liệu','bad'); }; }); }, foot:[{label:'Đóng',cls:'primary',close:true}] });
-}
+function paintUser(){ document.getElementById('uName').textContent = me().ten; document.getElementById('uAvatar').textContent = U.initials(me().hoTen); document.getElementById('btnUser').title = me().hoTen + ' · Phạm vi dữ liệu: ' + LMS.phamVi.ten;
+  /* DEMO-ONLY */ var g = document.getElementById('gdNow'); if(g) g.textContent = me().ten + ' · ' + LMS.phamVi.ten; }
 document.getElementById('btnUser').onclick = function(e){
   e.stopPropagation();
   var ex = document.querySelector('.umenu'); if(ex){ ex.remove(); return; }
   var m = document.createElement('div'); m.className='menu umenu';
-  m.innerHTML = '<div class="who"><b>'+esc(me().hoTen)+'</b><div class="muted small">'+esc(me().email)+'</div></div><button data-a="info">Thông tin người dùng</button><button data-a="sw">Chuyển tài khoản</button><button data-a="pw">Đổi mật khẩu</button><hr><button data-a="out" class="danger">Đăng xuất</button>';
+  m.innerHTML = '<div class="who"><b>'+esc(me().hoTen)+'</b><div class="muted small">'+esc(me().email)+'</div><div class="small" style="margin-top:4px;color:var(--ems-navy)">Phạm vi: '+esc(LMS.phamVi.ten)+'</div></div><button data-a="info">Thông tin người dùng</button><button data-a="pw">Đổi mật khẩu</button><hr><button data-a="out" class="danger">Đăng xuất</button>';
   document.body.appendChild(m);
-  m.onclick = function(ev){ var a = ev.target.dataset.a; if(!a) return; m.remove(); if(a==='info') userInfo(); if(a==='sw') chuyenTK(); if(a==='pw') changePw(); if(a==='out') logout(); };
+  m.onclick = function(ev){ var a = ev.target.dataset.a; if(!a) return; m.remove(); if(a==='info') userInfo(); if(a==='pw') changePw(); if(a==='out') logout(); };
   setTimeout(function(){ document.addEventListener('mousedown', function h(ev){ if(!m.contains(ev.target)){ m.remove(); document.removeEventListener('mousedown',h);} }); },0);
 };
 function userInfo(){
@@ -249,13 +320,13 @@ function logout(){ set(SESSION,'0'); showLogin(); }
 function showLogin(){
   var l = document.createElement('div'); l.className='login'; l.id='login';
   l.innerHTML = '<form class="card" id="loginForm"><div class="row"><div class="logo" style="width:40px;height:40px;border-radius:10px;background:var(--ems-navy);color:#fff;display:grid;place-items:center;font-weight:800">EGO</div><div><h1 style="font-size:18px">EGO LMS · Quản trị</h1><div class="muted small">Học viện Y Dược học cổ truyền Việt Nam</div></div></div>'+
-    '<div class="field"><label for="lg1">Tên đăng nhập</label><input class="inp" id="lg1" name="u" autocomplete="username" value="'+esc(me().ten)+'"></div><div class="field"><label for="lg2">Mật khẩu</label><input class="inp" id="lg2" type="password" name="p" autocomplete="current-password"></div><button class="btn primary" type="submit" style="justify-content:center">Đăng nhập</button><div class="muted small">Bản demo: nhập tên đăng nhập của một tài khoản quản trị hoặc nhân sự, mật khẩu bất kỳ.</div></form>';
+    '<div class="field"><label for="lg1">Tên đăng nhập</label><input class="inp" id="lg1" name="u" autocomplete="username" value="'+esc(me().ten)+'"></div><div class="field"><label for="lg2">Mật khẩu</label><input class="inp" id="lg2" type="password" name="p" autocomplete="current-password"></div><button class="btn primary" type="submit" style="justify-content:center">Đăng nhập</button><div class="muted small" data-demo-only>Bản demo: nhập tên đăng nhập của một tài khoản quản trị hoặc nhân sự, mật khẩu bất kỳ.</div></form>';
   document.body.appendChild(l);
   l.querySelector('form').onsubmit = function(e){ e.preventDefault(); var v=U.formVals(this); if(!v.u||!v.p){ U.fieldErr(this, !v.u?'u':'p', 'Nhập đủ tên đăng nhập và mật khẩu'); return; } var u=String(v.u).trim().toLowerCase(); if(u!==me().ten){ if(!LMS.dangNhap(u)){ U.fieldErr(this,'u','Tài khoản không tồn tại, đã ngừng sử dụng hoặc là tài khoản học viên'); return; } set(SESSION,'1'); location.reload(); return; } set(SESSION,'1'); l.remove(); };
   setTimeout(function(){ l.querySelector('#lg2').focus(); },30);
 }
 
-/* ---------- cấu hình menu ---------- */
+/* DEMO-ONLY:START — Cấu hình menu trên giao diện. Hệ thống thật cấu hình menu theo nhóm quyền ở máy chủ. */
 document.getElementById('btnCfg').onclick = openCfg;
 function openCfg(){
   var work = JSON.parse(JSON.stringify(menu||[]));
@@ -267,7 +338,7 @@ function openCfg(){
   function status(){ var n=0,m=0; work.forEach(function(g){ (g.items||[]).forEach(function(it){ n++; if(it.path) m++; }); });
     return (source==='draft'?'<span class="status-warn">● Đang chạy theo bản nháp trên trình duyệt</span>':'<span class="status-ok">● Đang chạy theo file cau-hinh-menu.js</span>')+' · '+n+' chức năng, '+m+' đã gắn màn hình'; }
   function paint(){
-    var h = '<div class="modal-head"><h2>Cấu hình menu chức năng</h2><button class="icon-btn right" data-close aria-label="Đóng">✕</button></div><div class="modal-body" style="flex:1"><div class="small">'+status()+'</div>';
+    var h = '<div class="modal-head"><h2>Cấu hình menu chức năng</h2><button class="icon-btn right" data-close aria-label="Đóng">✕</button></div><div class="modal-body" style="flex:1"><label class="cfg-demo"><input type="checkbox" data-demo'+(demoOn()?' checked':'')+'><span><b>Hiện công cụ bản demo ở chân menu</b><small>Cổng học viên demo, Khôi phục dữ liệu mẫu, Giả định tài khoản nhân sự theo phạm vi. Mặc định ẩn; chỉ dùng khi trình diễn.</small></span></label><div class="small">'+status()+'</div>';
     work.forEach(function(g,gi){
       h += '<div class="cfg-grp"><div class="row"><input class="inp grow" data-g="'+gi+'" data-f="label" value="'+esc(g.label)+'" aria-label="Tên nhóm"><button class="icon-btn" data-gmove="'+gi+':-1" title="Lên">↑</button><button class="icon-btn" data-gmove="'+gi+':1" title="Xuống">↓</button><button class="icon-btn" data-gdel="'+gi+'" title="Xóa nhóm">✕</button></div>';
       (g.items||[]).forEach(function(it,ii){
@@ -284,7 +355,7 @@ function openCfg(){
   }
   function jsText(){ return '/* Cấu hình menu chức năng — EGO LMS · Cổng quản trị (xuất lúc '+LMS.fmtDT(new Date())+') */\nwindow.MENU_PAGES = '+JSON.stringify(pages,null,2)+';\n\nwindow.MENU_CONFIG = '+JSON.stringify(work,null,2)+';\n'; }
   box.addEventListener('input', function(e){ var t=e.target, g=t.dataset.g, i=t.dataset.i, f=t.dataset.f; if(g==null||!f) return; var o = i!=null ? work[g].items[i] : work[g]; o[f] = t.type==='checkbox' ? t.checked : t.value; if(f==='path'){ var n=t.parentNode.querySelector('.small'); var known=pages.indexOf(t.value)>=0; n.className='small '+(known?'status-ok':'status-warn'); n.textContent = t.value?(known?'có trong thư mục':'chưa khai báo ở MENU_PAGES'):'chưa gắn màn hình'; } });
-  box.addEventListener('change', function(e){ var t=e.target; if(t.type==='checkbox'&&t.dataset.f){ work[t.dataset.g].items[t.dataset.i].hidden=t.checked; } if(t.id==='cfgImport'&&t.files[0]){ var r=new FileReader(); r.onload=function(){ try{ var txt=String(r.result), m=txt.match(/MENU_CONFIG\s*=\s*(\[[\s\S]*\])\s*;?/); var arr=JSON.parse(m?m[1]:txt); if(!Array.isArray(arr)) throw 0; work=arr; paint(); U.toast('Đã nhập cấu hình từ '+t.files[0].name+'. Bấm Lưu nháp để áp dụng.'); }catch(err){ U.toast('File không đúng định dạng cấu hình menu','bad'); } }; r.readAsText(t.files[0],'UTF-8'); } });
+  box.addEventListener('change', function(e){ var t=e.target; if(t.hasAttribute('data-demo')){ set(DEMO, t.checked?'1':null); paintDemo(); U.toast(t.checked?'Đã hiện công cụ bản demo ở chân menu':'Đã ẩn công cụ bản demo','ok'); return; } if(t.type==='checkbox'&&t.dataset.f){ work[t.dataset.g].items[t.dataset.i].hidden=t.checked; } if(t.id==='cfgImport'&&t.files[0]){ var r=new FileReader(); r.onload=function(){ try{ var txt=String(r.result), m=txt.match(/MENU_CONFIG\s*=\s*(\[[\s\S]*\])\s*;?/); var arr=JSON.parse(m?m[1]:txt); if(!Array.isArray(arr)) throw 0; work=arr; paint(); U.toast('Đã nhập cấu hình từ '+t.files[0].name+'. Bấm Lưu nháp để áp dụng.'); }catch(err){ U.toast('File không đúng định dạng cấu hình menu','bad'); } }; r.readAsText(t.files[0],'UTF-8'); } });
   box.addEventListener('click', function(e){
     var t=e.target.closest('button'); if(!t) return;
     if(t.hasAttribute('data-close')) return close();
@@ -302,12 +373,14 @@ function openCfg(){
   });
   paint();
 }
+/* DEMO-ONLY:END */
 
 /* ---------- khởi động ---------- */
 loadMenu();
 if(get(THEME)) applyTheme(get(THEME));
 if(get(COLL)) document.getElementById('app').classList.add('collapsed');
 paintUser();
+paintDemo(); /* DEMO-ONLY */
 var start = (location.hash||'').replace('#','');
 open(findItem(start) ? start : (allItems()[0]||{it:{}}).it.id, false);
 if(get(SESSION)==='0') showLogin();

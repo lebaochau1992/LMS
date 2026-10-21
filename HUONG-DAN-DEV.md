@@ -3,6 +3,8 @@
 Thư mục: `/home/claude/lms/demo/`. Mỗi màn hình là **một file .html** cùng thư mục, được `index.html` nạp vào iframe theo `cau-hinh-menu.js`.
 Mọi màn hình dùng chung `edot.css` (design token EDOT) và `lms-core.js` (kho dữ liệu + thư viện UI). ĐỌC KỸ hai file này trước khi viết.
 
+> **Khi dùng bản demo làm đặc tả để code hệ thống thật:** bỏ toàn bộ phần đánh dấu `DEMO-ONLY` (Cấu hình menu, Công cụ bản demo ở chân menu gồm Cổng học viên demo / Khôi phục dữ liệu mẫu / Giả định tài khoản, gợi ý mật khẩu bất kỳ ở màn đăng nhập, các mục "(demo)" ở Cổng học viên). Riêng **ràng buộc phạm vi dữ liệu theo phòng ban – khoa** là nghiệp vụ bắt buộc, phải triển khai và kiểm tra ở máy chủ (xem `lms-core.js`, mục `[BẮT BUỘC TRIỂN KHAI] PHẠM VI DỮ LIỆU`, và README mục Phạm vi dữ liệu).
+
 ## Khung file bắt buộc
 ```html
 <!doctype html>
@@ -129,7 +131,7 @@ Mọi màn hình dùng chung `edot.css` (design token EDOT) và `lms-core.js` (k
 
 - `taiKhoan[]` bổ sung: `loai:'qt'|'nv'|'hv'` (Quản trị hệ thống, Nhân sự, Học viên; tài khoản giảng viên là `nv`), `admin:boolean` (Admin hệ thống, không áp dụng cho `hv`). `nhanSu[]` {id, ma, hoTen, email, donVi, taiKhoan} là hồ sơ nhân sự phòng ban; hồ sơ nhân sự để liên kết tài khoản = `nhanSu[]` + `giangVien[]`.
 
-- Phạm vi dữ liệu: `LMS.phamVi` {all, ids:{donViId:1}, ten, lyDo, donVi}; `LMS.phamViCua(taiKhoan)`; `LMS.dangNhap(ten)`. Khi tài khoản không thấy toàn bộ, `LMS.db` là bản đã lọc theo phạm vi (các bảng trong `SCOPED`), phần ngoài phạm vi được giữ riêng và ghép lại khi `save()`; màn hình không cần tự lọc theo đơn vị.
+- Phạm vi dữ liệu: `LMS.phamVi` {all, ids:{donViId:1}, ten, lyDo, donVi}; `LMS.phamViCua(taiKhoan)`; `LMS.dangNhap(ten)`. Khi tài khoản không thấy toàn bộ, `LMS.db` là bản đã lọc theo phạm vi (các bảng trong `SCOPED`), phần ngoài phạm vi được giữ riêng và ghép lại khi `save()`; màn hình không cần tự lọc theo đơn vị. Chương trình đào tạo: chỉ chương trình gốc có `khoa` (khoa chủ quản) trong phạm vi, kèm cả cây bên trong; chương trình của đơn vị khác ẩn hoàn toàn. Biểu mẫu chọn đơn vị/khoa dùng `LMS.trongPhamVi(donViId)` để chỉ liệt kê đơn vị trong phạm vi. Công cụ Giả định tài khoản (`index.html`, DEMO-ONLY) gọi `LMS.dangNhap(ten)` để đổi tài khoản trình diễn; công tắc hiện/ẩn lưu ở localStorage `egoLmsDemo.demoTools`.
 
 - `thuMuc[]` {id, duongDan, donVi (null = dùng chung toàn Học viện), chuongTrinh (id chương trình gốc), moTa}: thư mục thư viện. Tệp vẫn lưu đường dẫn ở `thuVien[].thuMuc`; `LMS.thuMucCua(duongDan)` trả về thư mục quản lý (trùng đường dẫn hoặc thư mục cha gần nhất). `cauHinhMedia` {Video, PDF, Ảnh, Audio}: base-URL theo loại tệp.
 

@@ -560,9 +560,30 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
 
   /* ---------------- lưu trữ ---------------- */
   var db, full, hidden = {}, phamVi = { all: true, ids: {}, ten: 'Toàn Học viện', donVi: null };
-  /* ----- phạm vi dữ liệu theo đơn vị – phòng ban – khoa -----
-     Quản trị hệ thống, Admin hệ thống hoặc nhóm quyền có phạm vi "Toàn Học viện": thấy toàn bộ.
-     Các tài khoản nhân sự khác: thấy dữ liệu của đơn vị mình và mọi đơn vị trực thuộc. */
+  /* =====================================================================================
+     [BẮT BUỘC TRIỂN KHAI] PHẠM VI DỮ LIỆU THEO ĐƠN VỊ – PHÒNG BAN – KHOA
+     Đây là nghiệp vụ của hệ thống thật, không phải phần giả lập của bản demo.
+     Hệ thống thật phải kiểm tra phạm vi ở MÁY CHỦ (API/truy vấn CSDL) cho mọi thao tác đọc,
+     ghi, xuất file; không được chỉ lọc ở giao diện như bản demo này.
+
+     1. Xác định phạm vi của tài khoản đăng nhập (hàm phamViCua):
+        - Quản trị hệ thống (loai 'qt'), tài khoản bật Admin hệ thống, hoặc có nhóm quyền
+          phạm vi 'toan-bo' / 'ky-thi-phan-cong'  -> Toàn Học viện, thấy mọi dữ liệu.
+        - Nhân sự còn lại -> chỉ đơn vị (phòng ban / khoa) được phân công trong hồ sơ tài khoản
+          (taiKhoan.donVi) và mọi đơn vị trực thuộc đơn vị đó (donVi.cha).
+          Ví dụ: Phòng Đào tạo thấy dữ liệu của Phòng và các khoa trực thuộc;
+          Khoa Dược chỉ thấy dữ liệu của Khoa Dược.
+        - Tài khoản chưa gắn đơn vị -> không thấy dữ liệu nghiệp vụ nào.
+     2. Chương trình đào tạo (dungView, phần v.chuongTrinh):
+        - Chỉ hiển thị chương trình gốc có KHOA CHỦ QUẢN (chuongTrinh.khoa) thuộc phạm vi,
+          kèm toàn bộ nhóm học phần và học phần bên trong.
+        - Chương trình do phòng ban / khoa khác đưa lên KHÔNG hiển thị, kể cả khi chương trình
+          đó có nhóm học phần do khoa mình phụ trách giảng dạy hoặc có lớp của khoa mình.
+        - Tạo mới / sửa chương trình: chỉ được chọn khoa chủ quản trong phạm vi của mình.
+     3. Các dữ liệu khác: học phần, lớp học theo khoa phụ trách; ghi danh, hỏi đáp, bài tập,
+        kỳ thi, khảo sát, thông báo, học phí theo lớp; ngân hàng câu hỏi, đề thi theo học phần;
+        thư viện theo đơn vị quản lý của thư mục (xem dungView).
+     ===================================================================================== */
   function phamViCua(t, d) {
     d = d || full;
     if (!t || t.loai === 'qt' || t.admin) return { all: true, ids: {}, ten: 'Toàn Học viện', donVi: null, lyDo: t ? (t.admin ? 'Admin hệ thống' : 'Quản trị hệ thống') : '' };
@@ -591,9 +612,9 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     v.donVi = full.donVi.filter(function (x) { return ok(x.id); });
     v.lop = full.lop.filter(function (l) { return ok(l.khoa); }); var L = set(v.lop);
     v.hocPhan = full.hocPhan.filter(function (h) { return ok(h.khoa) || v.lop.some(function (l) { return l.hocPhan === h.id; }); }); var H = set(v.hocPhan);
-    var C = {}, ct = full.chuongTrinh, con = function (id) { return ct.filter(function (c) { return c.cha === id; }); };
-    (function mark(list) { list.forEach(function (c) { var kids = con(c.id); mark(kids); var la = c.loai === 'hoc-phan' || (!kids.length && c.cha); if (la && (c.hocPhan || []).length) { if (c.hocPhan.some(function (h) { return H[h]; })) C[c.id] = 1; } else if (ok(c.khoa) || kids.some(function (k) { return C[k.id]; })) C[c.id] = 1; }); })(ct.filter(function (c) { return !c.cha; }));
-    v.lop.forEach(function (l) { var x = l.chuongTrinh; while (x && !C[x]) { C[x] = 1; var o = ct.filter(function (c) { return c.id === x; })[0]; x = o && o.cha; } });
+    /* chương trình: chỉ chương trình gốc có khoa chủ quản trong phạm vi, kèm toàn bộ cây bên trong */
+    var C = {}, ct = full.chuongTrinh;
+    (function mark(ids) { ct.forEach(function (c) { if (ids[c.cha] && !C[c.id]) { C[c.id] = 1; var m = {}; m[c.id] = 1; mark(m); } }); })((function () { var r = {}; ct.forEach(function (c) { if (!c.cha && ok(c.khoa)) { C[c.id] = 1; r[c.id] = 1; } }); return r; })());
     v.chuongTrinh = ct.filter(function (c) { return C[c.id]; });
     var theoLop = function (k, f) { v[k] = (full[k] || []).filter(function (x) { var l = x[f || 'lop']; return !l || (Array.isArray(l) ? l.some(function (i) { return L[i]; }) : L[l]); }); };
     ['ghiDanh', 'dangKy', 'thanhToan', 'buoiHoc', 'kyThi', 'hoiDap', 'khaoSat', 'thongBao'].forEach(function (k) { theoLop(k); });
@@ -612,7 +633,16 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
   }
   function load() { try { var s = localStorage.getItem(KEY); if (s) { var o = JSON.parse(s); if (o && o.meta && o.meta.version === 23) return o; } } catch (e) { } return null; }
   function save() {
-    if (db !== full) Object.keys(db).forEach(function (k) { full[k] = hidden[k] ? hidden[k].concat(db[k]) : db[k]; });
+    /* ghép phần ngoài phạm vi với phần đã sửa, giữ nguyên thứ tự gốc (thứ tự chương trình, nhóm… là dữ liệu có nghĩa) */
+    if (db !== full) Object.keys(db).forEach(function (k) {
+      if (!hidden[k]) { full[k] = db[k]; return; }
+      var pos = {}, cu = full[k] || []; cu.forEach(function (x, i) { pos[x.id] = i; });
+      var dsMoi = db[k].filter(function (x) { return pos[x.id] == null; }), conLai = {};
+      hidden[k].concat(db[k]).forEach(function (x) { conLai[x.id] = x; });
+      /* phần trong phạm vi giữ thứ tự mới (người dùng có thể vừa sắp xếp lại) tại đúng các vị trí cũ của nó */
+      var trong = db[k].filter(function (x) { return pos[x.id] != null; }), j = 0, inView = {}; trong.forEach(function (x) { inView[x.id] = 1; });
+      full[k] = cu.filter(function (x) { return conLai[x.id]; }).map(function (x) { return inView[x.id] ? trong[j++] : conLai[x.id]; }).concat(dsMoi);
+    });
     var js = JSON.stringify(full);
     try { localStorage.setItem(KEY, js); luuLoi = false; }
     catch (e) { donKhoCu(); try { localStorage.setItem(KEY, js); luuLoi = false; } catch (e2) { luuLoi = true; setTimeout(function () { try { toast('Trình duyệt hết dung lượng lưu trữ nên thay đổi chưa được lưu. Xóa dữ liệu trang của trình duyệt rồi tải lại.', 'bad'); } catch (x) { } }, 0); } }
@@ -1217,6 +1247,8 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', thanhPhamVi); else setTimeout(thanhPhamVi, 0);
 
   var LMS = window.LMS = {
+    /* trongPhamVi(donViId): đơn vị có thuộc phạm vi của tài khoản đang đăng nhập không (dùng khi giới hạn lựa chọn đơn vị/khoa trên biểu mẫu) */
+    trongPhamVi: function (id) { return phamVi.all || !!phamVi.ids[id]; },
     db: db, thuMucCua: function (path) { return thuMucCua(path, full.thuMuc); }, phamVi: phamVi, phamViCua: function (t) { return phamViCua(t, full); }, dangNhap: function (ten) { var t = (full.taiKhoan || []).filter(function (x) { return x.ten === ten && x.loai !== 'hv' && x.trangThai !== 'ngung'; })[0]; if (!t) return false; full.meta.user = { ten: t.ten, hoTen: t.hoTen, email: t.email }; if (db !== full) db.meta = full.meta; save(); return !luuLoi; }, taiKhoanDangNhap: function () { return (full.taiKhoan || []).filter(function (x) { return x.loai !== 'hv'; }); },
     save: save, reset: reset, commit: commit, log: log, onChange: onChange, go: go, param: param,
     TODAY: TODAY, iso: iso, parse: parse, addDays: addDays, fmtDate: fmtDate, fmtDT: fmtDT, daysBetween: daysBetween, THU: THU,
