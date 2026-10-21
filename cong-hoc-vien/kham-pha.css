@@ -1,7 +1,7 @@
 /* Trang Khám phá khóa học – dùng chung cho khách và học viên đã đăng nhập */
 body.kp{background:var(--ems-bg)}
 .kp a{color:inherit}
-.kp-wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.kp-wrap{max-width:1440px;margin:0 auto;padding:0 24px}
 .kp-top{position:sticky;top:0;z-index:40;background:var(--ems-surface);border-bottom:1px solid var(--ems-border)}
 .kp-top .kp-wrap{display:flex;align-items:center;gap:20px;height:64px}
 .kp-brand{display:flex;align-items:center;gap:10px;text-decoration:none!important;min-width:0;flex:none}

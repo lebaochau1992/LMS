@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="kham-pha.css">
 </head><body>
 <script src="../lms-core.js"></script>
+<script src="../lms-sach.js"></script>
 <script src="hv-core.js"></script>
 <script>
 (function () {
@@ -236,6 +237,7 @@
   function footer() {
     return '<footer class="kp-foot"><div class="kp-wrap"><div><b>Học viện Y Dược học cổ truyền Việt Nam</b><div>Số 2 Trần Phú, Đại Mỗ, Hà Nội</div><div>(84-24) 3382 4929 · hocvienyduoc@ms.vutm.edu.vn</div><div style="margin-top:6px">Phòng Đào tạo tiếp nhận hỗ trợ 7:30–17:00, thứ Hai đến thứ Sáu</div></div><div><b>Đào tạo</b><a href="#khoa-hoc">Khóa học</a><a href="#lo-trinh">Lộ trình đào tạo</a>' + (laHV() ? '' : '<a href="#cach-dang-ky">Hướng dẫn đăng ký</a>') + '<a href="#tra-cuu">Tra cứu chứng nhận</a></div><div><b>Quy định</b><a href="#hoi-dap">Câu hỏi thường gặp</a><a href="#" data-qd>Quy chế đào tạo trực tuyến</a><a href="#" data-qd>Quy định học phí và hoàn phí</a><a href="#" data-qd>Chính sách bảo vệ dữ liệu cá nhân</a></div></div><div class="cp">© ' + TODAY.getFullYear() + ' Học viện Y Dược học cổ truyền Việt Nam · Cổng đào tạo trực tuyến</div></footer>';
   }
+  /* DEMO-ONLY: thanh chọn vai trò (khách / học viên) chỉ phục vụ trình diễn, không triển khai ở hệ thống thật. */
   function demoBar() { return '<div class="kp-demo" role="group" aria-label="Chọn vai trò xem trang"><span>Bản demo · xem với vai trò</span><button data-vai="khach" class="' + (laHV() ? '' : 'on') + '">Khách chưa có tài khoản</button><button data-vai="hv" class="' + (laHV() ? 'on' : '') + '">Học viên ' + esc(HV.me().ma) + '</button></div>'; }
 
   /* ---------- vẽ trang ---------- */
@@ -339,7 +341,9 @@
   }
   function hocThu(hp, b) {
     var nd = (b.khoi || []).filter(function (k) { return k.loai === 'doan-van'; }).map(function (k) { return k.html; }).join('');
-    U.modal({ title: 'Học thử · ' + b.ten, size: 'lg', body: '<div class="note info">Học thử bài đầu tiên của ' + esc(hp.ten) + '. Đăng ký học để mở toàn bộ bài giảng và được ghi nhận tiến độ.</div><div class="video" style="margin-top:10px"><button class="play" aria-label="Phát">' + HV.svg('play') + '</button><div class="bar"><span>0:00 / ' + b.phut + ':00</span><div class="trk"><span style="width:0"></span></div></div></div><div class="nd" style="margin-top:10px">' + nd + '</div>' });
+    U.modal({ title: 'Học thử · ' + b.ten, size: 'lg', body: '<div class="note info">Học thử bài đầu tiên của ' + esc(hp.ten) + '. Đăng ký học để mở toàn bộ bài giảng và được ghi nhận tiến độ.</div><div class="video" style="margin-top:10px"><button class="play" aria-label="Phát">' + HV.svg('play') + '</button><div class="bar"><span>0:00 / ' + b.phut + ':00</span><div class="trk"><span style="width:0"></span></div></div></div><div class="nd" style="margin-top:10px">' + nd + '</div>' + (b.khoi || []).filter(function (k) { return k.loai === 'giao-trinh' && k.file; }).map(function (k) { return '<div data-gt="' + k.id + '" style="margin-top:12px"></div>'; }).join(''), noFocus: true, onOpen: function (a) {
+      (b.khoi || []).forEach(function (k) { var el = k.loai === 'giao-trinh' && a.body.querySelector('[data-gt="' + k.id + '"]'); if (el) LMS.sach.mount(el, { file: LMS.byId('thuVien', k.file), tieuDe: k.tieuDe, cheDo: k.cheDo }); });
+    } });
   }
 
   /* ---------- đăng ký ---------- */

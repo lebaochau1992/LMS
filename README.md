@@ -2,6 +2,36 @@
 
 Bản demo dựng lại Cổng quản trị theo EDOT Portal Design System (Inter, navy #00327d, bảng màu slate) và theo các điều chỉnh trong Báo cáo đánh giá hệ thống LMS ngày 26/09/2026. Dữ liệu mẫu theo chương trình Y học cổ truyền của Học viện Y Dược học cổ truyền Việt Nam.
 
+## Cập nhật 21/10/2026 (lần 2) — Cổng học viên: co giãn theo màn hình, màn Học bài
+
+- **Co giãn theo màn hình**: nội dung Cổng học viên trước đây bị giới hạn 1280px, lệch trái trên màn hình rộng. Nay giãn theo bề rộng (tối đa 1840px, căn giữa — giống Cổng quản trị); trang Khám phá và trang công khai giãn tới 1440px; màn làm bài thi dùng toàn bề rộng. Ô tìm kiếm thanh trên giãn theo màn hình.
+- **Thanh bài học** (giống hệ thống thật): nút về trang lớp, lớp · bài x/y, tên bài, tiến độ lớp, nút **Ẩn / Hiện lộ trình**, nút báo lỗi nội dung, nhãn điều kiện mở bài tiếp ("Cần xem đủ 80% video · đọc 80% giáo trình · câu hỏi củng cố từ 5 điểm").
+- **Lộ trình bên phải**: nút ✕ để ẩn; **thanh kéo** giữa nội dung và lộ trình để đổi độ rộng hai bên (kéo chuột/chạm, phím ← → khi thanh kéo đang chọn, bấm đúp về mặc định 360px; lộ trình tối thiểu 260px, nội dung tối thiểu 420px). Trạng thái ẩn/hiện và độ rộng nhớ theo trình duyệt của học viên. Dưới 1100px lộ trình xuống dưới nội dung, không có thanh kéo.
+- **Tab Ghi chú** (ghi chú gắn mốc thời gian video) chỉ hiện với bài có video; bài không có video chỉ có 2 tab Lộ trình và Hỏi đáp.
+- **Nội dung bài chia thành các phần thu gọn / mở rộng**: Giới thiệu bài học (đoạn văn), Video, Giáo trình, Tài liệu, Câu hỏi củng cố… Mỗi phần có tiêu đề, loại và trạng thái (đã xem %, đã đọc x/y trang, điểm cao nhất); bấm tiêu đề hoặc nút mũi tên để thu gọn/mở rộng; có "Thu gọn tất cả / Mở rộng tất cả". Thu gọn video thì video tạm dừng. Tiêu đề đứng ngay trước video/giáo trình/quiz được dùng làm tên phần.
+- **Câu hỏi củng cố mặc định thu gọn**: bấm **Làm bài** (hoặc **Làm lại**) mới bung ra; **Nộp bài** chấm điểm ngay, hiện đúng/sai từng câu, lưu lượt làm (thời điểm, điểm, số câu đúng, đáp án đã chọn) vào tiến độ học viên, lấy điểm cao nhất cho điều kiện hoàn thành; **Xem kết quả** mở lại lượt làm gần nhất.
+- Đổi tên lớp phản hồi đúng/sai của câu hỏi (`.qfb`) để không trùng trình đọc giáo trình (`.fb`).
+
+## Cập nhật 21/10/2026 — Xem trước, Chương trình đang dùng, Giáo trình lật trang, thời lượng tự tính
+
+Đối chiếu với hệ thống thật (quantrilms.vutm.edu.vn › Học phần): hệ thống đang có 3 kiểu xem trước khác nhau (nút "Xem" của bài mở hộp "Xem bài giảng" chỉ có nút Đóng; "Xem trước" ở danh sách mở mục lục học phần; nút "Xem trước" ở trang chi tiết lại mở thẳng bài 1). Bản demo thống nhất về một khung:
+
+| Nút | Mở | Chân hộp thoại |
+|---|---|---|
+| Danh sách học phần › ⋯ › Xem trước; Chi tiết học phần › Xem trước | Tổng quan học phần: mục tiêu, danh sách bài (số phút, tóm tắt học liệu, nhãn Học thử / Nháp / Đang ẩn), "Xem nội dung" từng bài | "x/y bài học viên thấy" · Đóng · Biên soạn học phần |
+| Tab Bài giảng › Xem (từng bài); "Xem nội dung" trong tổng quan | Nội dung bài, có ‹ Bài trước / Bài sau › | Ghi chú hiển thị với học viên · Quay lại (về tổng quan) · Đóng · Soạn bài giảng |
+| Trình soạn › Xem trước | Bài đang soạn, gồm thay đổi chưa lưu | Đóng · Tiếp tục soạn |
+
+Khung chung: tiêu đề + dòng mô tả (mã · học phần · số bài/thời lượng · chương trình › nhóm) + trạng thái; dải ghi chú góc nhìn học viên; thân; chân. Mã nguồn: `xemTruoc()` trong `hoc-phan.html`.
+
+- **Tóm tắt học liệu** dùng một hàm `tomTat()` cho cả dòng bài giảng và bản xem trước (cùng cách đếm: "1 đoạn văn, 1 video, 1 giáo trình"; không đếm tiêu đề, đường kẻ, khối chứa). Thẻ học liệu ở dòng bài giảng dựng lại (hết vỡ chữ/biểu tượng); dòng bài giảng dùng lưới cột cố định nên thời lượng, trạng thái, nút thẳng cột giữa các bài và tự xuống dòng khi hẹp.
+- **Tab Chương trình đang dùng**: cột Chương trình đào tạo và cột Nhóm học phần (không hiện tên học phần ở cuối đường dẫn); bấm nhóm mở màn Chương trình đào tạo và làm nổi nhóm đó. Bỏ nút "Gắn vào chương trình" — gắn học phần thực hiện ở màn Chương trình đào tạo.
+- **Khối Giáo trình lật trang** (`giao-trinh`): gắn tệp PDF hoặc Word; xem trước và Cổng học viên hiển thị dạng sách (2 trang khi đủ rộng, 1 trang khi hẹp), lật trang có hiệu ứng, phím ← →, vuốt, thanh chuyển trang, mục lục, phóng to/thu nhỏ, toàn màn hình. Học viên đọc ≥ 3 giây/trang thì trang được tính đã đọc; điều kiện hoàn thành bài gồm "đọc tối thiểu x% giáo trình" (x theo tiêu chí xem nội dung). Bài mẫu: Châm cứu 1 › Bài 1 (PDF, 10 trang) và Châm cứu 2 › Bài 1 (Word). Tệp vừa tải lên trong phiên được dựng thật (PDF bằng pdf.js, Word bằng mammoth — nạp từ cdnjs khi cần). Mã nguồn: `lms-sach.js`; CSS `.fb-*` trong `edot.css`.
+- **Thời lượng bài tự tính** khi thêm/bớt video, âm thanh, PDF, giáo trình, đoạn văn, quiz… Công tắc "Tự tính" ở trình soạn (tắt để nhập tay). Quy tắc và hằng số nằm trong `lms-core.js` (`thoiLuongBai`, `TL`), không hiển thị trên giao diện.
+- **Bố cục co giãn**: sửa các chỗ bị bóp cứng — thẻ số liệu màn Học phần không giãn (trùng tên lớp `.mini` của trình soạn), thẻ số liệu màn Tài khoản, ô tìm kiếm bị giới hạn 240–260px (Giám sát thi, Thông báo lớp, Theo dõi học tập), cột Chương trình ở danh sách học phần (cho xuống 2 dòng thay vì cắt), hàng công tắc Xuất bản / Học thử trong trình soạn, thanh điều khiển video ở xem trước và Cổng học viên (trùng lớp `.bar`).
+- Thư viện tài nguyên nhận thêm loại tệp Word.
+- Khóa dữ liệu trình duyệt đổi sang `egoLmsDemo.db.v25` để nạp dữ liệu mẫu mới.
+
 ## Cấu trúc thư mục
 
 | File | Vai trò |
@@ -9,7 +39,8 @@ Bản demo dựng lại Cổng quản trị theo EDOT Portal Design System (Inte
 | `index.html` | Khung chính: menu, thanh tiêu đề, tài khoản người dùng, cấu hình menu; nạp từng màn hình vào khung nội dung |
 | `cau-hinh-menu.js` | Cấu hình menu chức năng (`MENU_CONFIG`) và danh sách màn hình (`MENU_PAGES`) — nguồn duy nhất của menu |
 | `edot.css` | Token màu, chữ, thành phần giao diện dùng chung (sáng/tối) |
-| `lms-core.js` | Kho dữ liệu dùng chung, quy tắc tính toán, thư viện bảng/biểu mẫu/biểu đồ |
+| `lms-core.js` | Kho dữ liệu dùng chung, quy tắc tính toán (gồm thời lượng bài tự tính), thư viện bảng/biểu mẫu/biểu đồ |
+| `lms-sach.js` | Trình đọc giáo trình lật trang (PDF/Word) dùng chung hai cổng |
 | `*.html` (26 file) | Mỗi file một màn hình chức năng |
 | `cong-hoc-vien/` | Cổng học viên: 14 màn hình, `hv-core.js` (khung trang, quyền truy cập, tiến độ, việc cần làm), `hv.css`; dùng chung `lms-core.js` và dữ liệu với Cổng quản trị |
 | `HUONG-DAN-DEV.md` | Quy ước dựng thêm màn hình mới |
@@ -25,7 +56,7 @@ Bản demo dựng lại Cổng quản trị theo EDOT Portal Design System (Inte
 
 Mở `cong-hoc-vien/kham-pha.html` (trang mặc định của cổng) hoặc `cong-hoc-vien/index.html` (Tổng quan sau đăng nhập), hoặc bấm **Cổng học viên demo ↗** trong nhóm Công cụ bản demo ở chân menu Cổng quản trị. Thanh chọn vai trò ở góc dưới trang Khám phá chuyển giữa góc nhìn khách chưa có tài khoản và học viên đã đăng nhập. Hai cổng dùng chung dữ liệu: học viên nộp bài, làm bài thi, gửi khảo sát, đặt câu hỏi, xin vắng, đăng ký lớp thì các màn quản trị tương ứng (Bài tập, Chấm bài, Giám sát thi, Khảo sát, Hỏi đáp, Buổi học và điểm danh, Thu học phí) thấy ngay.
 
-- Học viên mặc định: Trịnh Gia Khánh (HV0099) — đang học L0020 Châm cứu 1, L0028 Giải phẫu 1, đã hoàn thành L0034 Dược học cổ truyền.
+- Học viên mặc định: Trịnh Gia Khánh (HV0099) — đang học L0020 Châm cứu 1, L0028 Giải phẫu 1, đã hoàn thành L0034 Thuốc YHCT.
 - Đổi học viên: menu tài khoản › **Xem với học viên khác (demo)**. Ví dụ chọn học viên lớp L0026 để vào ca thi KT008 đang mở.
 - Menu tài khoản › **Khôi phục dữ liệu mẫu (demo)** xóa thao tác đã làm trên trình duyệt (cả hai cổng).
 
@@ -124,6 +155,21 @@ Lề trang và khoảng cách co theo bề rộng (`clamp`). Đã kiểm tra tr�
 ## Thẻ số liệu
 
 Thẻ số liệu đầu mỗi màn hình dùng chung một kiểu gọn trong `edot.css` (`.kpis` / `.kpi`): số và nhãn trên một dòng, chú thích một dòng nhỏ bên dưới, vạch màu bên trái theo mức cảnh báo (xanh: ổn, cam: cần chú ý, đỏ: cần xử lý).
+
+## Dữ liệu mẫu chương trình đào tạo
+
+Khung chương trình dựng theo mục 2.3 "Kế hoạch đào tạo theo từng năm" của hai chương trình đã ban hành; mỗi năm học là một nhóm học phần. Chỉ đưa vào học phần có lý thuyết, phù hợp học trực tuyến — không gồm Giáo dục thể chất, Giáo dục quốc phòng, tiền lâm sàng / thực hành kỹ năng, thực tập cộng đồng, thực tế nghề nghiệp, chuyên môn tổng hợp / khóa luận.
+
+| Mục | Chương trình | Nguồn | Học phần trực tuyến |
+|---|---|---|---|
+| Đào tạo đại học | Y học cổ truyền – Đại học (YHCT, 7720115) | QĐ 2407/QĐ-HVYDCT ngày 31/8/2023 | 74, năm thứ nhất → năm thứ sáu |
+| Đào tạo đại học | Y khoa – Đại học (YK, 7720101) | QĐ 1062/QĐ-HVYDCT ngày 27/4/2023 | 65, theo module tích hợp hệ cơ quan |
+| Đào tạo đại học | Dược học – Đại học | Minh họa phạm vi Khoa Dược | 5 |
+| Đào tạo sau đại học › Đào tạo thạc sĩ | Thạc sĩ Y học cổ truyền | Bản nháp | Chưa gắn học phần |
+| Đào tạo sau đại học › Đào tạo tiến sĩ | Tiến sĩ Y học cổ truyền | Bản nháp | Chưa gắn học phần |
+| Đào tạo cho người đi làm | Bồi dưỡng Châm cứu cơ bản | Dùng lại Châm cứu 1, 2 | 2 |
+
+Học phần trùng mã giữa các chương trình là một học phần dùng chung (Lý sinh, Hóa học, Sinh học và di truyền, Tin học đại cương, Tiếng Anh 1–3, Dược lý đại cương, Thực vật dược, Thuốc YHCT, Châm cứu 1–2). Mã của Y khoa trùng với học phần khác tên của YHCT được thêm hậu tố `.YK` (VD: `MEDI4107.YK` Nội bệnh lý 1). Học phần đã có học liệu: Giải phẫu 1, 2, Thực vật dược, Thuốc YHCT, Châm cứu 1, 2 (đang mở lớp) và Phương pháp điều trị không dùng thuốc (đang biên soạn); các học phần còn lại ở trạng thái Nháp, chưa có bài giảng. Một học phần được đưa vào nhiều chương trình ở màn Chương trình đào tạo (Thêm học phần vào nhóm) hoặc tab Chương trình của học phần; biểu mẫu tạo / sửa học phần không chọn chương trình.
 
 ## Phạm vi dữ liệu theo đơn vị – phòng ban – khoa
 

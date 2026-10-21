@@ -52,13 +52,13 @@
 </style>
 </head><body>
 <div class="page" id="app"></div>
-<input type="file" id="upFile" multiple hidden accept="video/*,audio/*,image/*,application/pdf,.pdf,.mp4,.mp3,.png,.jpg,.jpeg">
+<input type="file" id="upFile" multiple hidden accept="video/*,audio/*,image/*,application/pdf,.pdf,.doc,.docx,.mp4,.mp3,.png,.jpg,.jpeg">
 <script src="lms-core.js"></script>
 <script>
 (function(){ 'use strict';
 var U = LMS.ui, esc = U.esc;
 var UNF = 'Chưa phân thư mục';
-var LOAI_CLS = { 'Video': '', 'PDF': 'pdf', 'Ảnh': 'anh', 'Audio': 'audio' };
+var LOAI_CLS = { 'Video': '', 'PDF': 'pdf', 'Word': 'pdf', 'Ảnh': 'anh', 'Audio': 'audio' };
 var ICON = { 'Video': '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="M15 10l6-3v10l-6-3z"/></svg>', 'PDF': '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>', 'Ảnh': '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>', 'Audio': '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>' };
 var FOLDER_IC = '<svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
 var st = { folder: '', ct: '', q: '', loai: '', sort: 'moi', unused: false, dup: false, open: {}, sel: [], limit: 24 };
@@ -92,6 +92,7 @@ function loaiFromFile(file){
   if (/^audio\//.test(t) || /\.(mp3|wav|m4a|ogg)$/.test(n)) return 'Audio';
   if (/^image\//.test(t) || /\.(png|jpe?g|gif|webp|svg)$/.test(n)) return 'Ảnh';
   if (t === 'application/pdf' || /\.pdf$/.test(n)) return 'PDF';
+  if (/\.docx?$/.test(n)) return 'Word';
   return null;
 }
 function copyText(txt, ok){
@@ -109,7 +110,7 @@ function shell(){
     '<div class="lib"><div class="panel"><div style="padding:12px 12px 0"><div class="field"><label for="fCT">Chương trình đào tạo</label><select class="sel" id="fCT"></select></div></div>' +
       '<div class="side-h"><span>Thư mục</span><button id="bNewFolder">+ Thư mục</button></div><div class="folders" id="tree"></div></div>' +
     '<div class="panel"><div class="cur" id="cur"></div><div class="panel-head filters">' +
-      '<select class="sel" id="fLoai" style="flex:0 1 150px"><option value="">Tất cả loại tệp</option><option>Video</option><option>PDF</option><option>Ảnh</option><option>Audio</option></select>' +
+      '<select class="sel" id="fLoai" style="flex:0 1 150px"><option value="">Tất cả loại tệp</option><option>Video</option><option>PDF</option><option>Word</option><option>Ảnh</option><option>Audio</option></select>' +
       '<input class="inp" id="fQ" placeholder="Tìm theo tên tệp hoặc khoá">' +
       '<select class="sel" id="fSort" style="flex:0 1 150px" aria-label="Sắp xếp"><option value="moi">Mới tải lên</option><option value="ten">Tên A–Z</option><option value="kb">Dung lượng lớn</option></select>' +
       '<button class="btn" id="bAll">Chọn tất cả</button>' +
@@ -402,7 +403,7 @@ function onUpload(e){
     var same = files().find(function(f){ return f.ten.toLowerCase() === file.name.toLowerCase() && f.kb === kb; });
     items.push({ file: file, loai: loai, kb: kb, dup: same || null });
   });
-  if (bad.length) U.toast('Bỏ qua ' + bad.length + ' tệp không đúng định dạng (chỉ nhận video, PDF, ảnh, âm thanh)', 'bad');
+  if (bad.length) U.toast('Bỏ qua ' + bad.length + ' tệp không đúng định dạng (chỉ nhận video, PDF, Word, ảnh, âm thanh)', 'bad');
   if (!items.length) return;
   var dest = st.folder || UNF;
   if (!canPath(dest)) { U.toast('Thư mục này do đơn vị khác quản lý, không tải tệp lên được', 'bad'); return; }

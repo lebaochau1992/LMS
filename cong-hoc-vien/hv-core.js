@@ -65,10 +65,20 @@
   }
   function quizKhoi(b) { var out = []; LMS.walkKhoi(b.khoi, function (k) { if (k.loai === 'quiz') out.push(k); }); return out; }
   function videoKhoi(b) { var v = null; LMS.walkKhoi(b.khoi, function (k) { if (k.loai === 'video' && !v) v = k; }); return v; }
+  /* khối giáo trình lật trang tính vào điều kiện hoàn thành (batBuoc) */
+  function sachKhoi(b) { var v = null; LMS.walkKhoi(b.khoi, function (k) { if (k.loai === 'giao-trinh' && k.file && k.batBuoc !== false && !v) v = k; }); return v; }
+  /* tiến độ đọc giáo trình: t.trang[baiId] = danh sách trang đã đọc (0-based), t.trangTong[baiId] = tổng trang thực tế khi mở */
+  function docSach(lopId, b) {
+    var k = sachKhoi(b); if (!k) return null;
+    var t = td(lopId), da = ((t.trang || {})[b.id] || []).length, f = LMS.byId('thuVien', k.file);
+    var tong = (t.trangTong || {})[b.id] || +k.soTrang || (f && +f.soTrang) || 1;
+    return { da: Math.min(da, tong), tong: tong, pct: Math.min(100, Math.round(da / tong * 100)) };
+  }
   function dieuKienBai(lop, b) {
-    var tc = tieuChi(lop, b), t = td(lop.id), xem = (t.xem || {})[b.id] || 0, qs = quizKhoi(b).length, dq = (t.quiz || {})[b.id];
+    var tc = tieuChi(lop, b), t = td(lop.id), xem = (t.xem || {})[b.id] || 0, qs = quizKhoi(b).length, dq = (t.quiz || {})[b.id], ds = docSach(lop.id, b);
     var vOk = !videoKhoi(b) || !tc.xemOn || xem >= tc.xem, qOk = !qs || !tc.quizOn || (dq != null && dq >= (tc.quizDiem || 5));
-    return { xem: xem, canXem: tc.xem, vOk: vOk, coQuiz: qs > 0, diemQuiz: dq, canDiem: tc.quizDiem || 5, qOk: qOk, ok: vOk && qOk, coVideo: !!videoKhoi(b) };
+    var sOk = !ds || !tc.xemOn || ds.pct >= tc.xem;
+    return { xem: xem, canXem: tc.xem, vOk: vOk, coQuiz: qs > 0, diemQuiz: dq, canDiem: tc.quizDiem || 5, qOk: qOk, ok: vOk && qOk && sOk, coVideo: !!videoKhoi(b), coSach: !!ds, sach: ds, sOk: sOk };
   }
   function tienDoLop(lop) { var n = baiCua(lop).length, g = gdLop(lop.id), d = g && g.trangThai === 'hoan-thanh' ? n : Math.min(n, td(lop.id).done); return { done: d, tong: n, pct: n ? Math.round(d / n * 100) : 0 }; }
   /* phương án trả lời hiển thị cho câu hỏi trong bài: lấy theo câu gốc trong ngân hàng */
@@ -219,6 +229,8 @@
       document.getElementById('hvDocHet').onclick = function () { tbCuaToi().forEach(function (t) { t.xem = t.xem || {}; if (!t.xem[h]) t.xem[h] = new Date().toISOString(); }); LMS.commit(null); location.reload(); };
     };
   }
+  /* DEMO-ONLY: hai mục "Xem với học viên khác (demo)" và "Khôi phục dữ liệu mẫu (demo)" trong menu tài khoản
+     (cùng hàm doiHV bên dưới) chỉ phục vụ trình diễn. Hệ thống thật không triển khai; học viên chỉ xem dữ liệu của chính mình. */
   function taiKhoan() {
     var b = document.getElementById('hvUser'), p = document.getElementById('hvUserPop');
     b.onclick = function () {
@@ -262,7 +274,7 @@
   }
 
   window.HV = { svg: svg, id: hvId, me: me, tk: tkMe, qp: qp, url: url, TT_GD: TT_GD, HT: HT, gds: gds, gdLop: gdLop, lopCuaToi: lopCuaToi, dangHoc: dangHoc, duocVao: duocVao, gvTen: gvTen, coverCls: coverCls,
-    td: td, tdGhi: tdGhi, baiCua: baiCua, baiState: baiState, tieuChi: tieuChi, quizKhoi: quizKhoi, videoKhoi: videoKhoi, dieuKienBai: dieuKienBai, tienDoLop: tienDoLop, paQuiz: paQuiz,
+    td: td, tdGhi: tdGhi, baiCua: baiCua, baiState: baiState, tieuChi: tieuChi, quizKhoi: quizKhoi, videoKhoi: videoKhoi, sachKhoi: sachKhoi, docSach: docSach, dieuKienBai: dieuKienBai, tienDoLop: tienDoLop, paQuiz: paQuiz,
     buoiCuaToi: buoiCuaToi, ddCuaToi: ddCuaToi, vaoPhong: vaoPhong, btCuaToi: btCuaToi, btTT: btTT, kyCuaToi: kyCuaToi, kyTT: kyTT, ksCuaToi: ksCuaToi, ksDaLam: ksDaLam, ksMo: ksMo,
     tbCuaToi: tbCuaToi, tbChuaDoc: tbChuaDoc, docTB: docTB, hdCuaToi: hdCuaToi, hdMoi: hdMoi, viecCanLam: viecCanLam, shell: shell, tabs: tabs };
 })();

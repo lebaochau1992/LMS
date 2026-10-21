@@ -3,7 +3,9 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
    Mọi màn hình đọc/ghi cùng một kho dữ liệu (localStorage) nên thao tác ở màn này phản ánh ngay ở màn khác. */
 (function () {
   'use strict';
-  var KEY = 'egoLmsDemo.db.v23';
+  var KEY = 'egoLmsDemo.db.v25';
+  /* hằng số tính thời lượng bài (giây) — mô tả quy tắc ở hàm thoiLuongBai */
+  var TL = { tuMoiPhut: 180, trangGiaoTrinh: 120, trangPdf: 60, kbMoiTrang: 120, anh: 10, congThuc: 20, cauTracNghiem: 45, cauTuLuan: 300, nhung: 120, trangTT: 180, lamTron: 60 };
   var DD_MAC_DINH = { nguong: 70, muon: 15, hanXN: 48, tuDongChot: true };
   var KS_MAU = {
     'giua-ky': { ten: 'Khảo sát giữa kỳ', moTa: 'Lấy ý kiến giữa học phần để điều chỉnh cách dạy.', cau: [['Mục tiêu học phần được giới thiệu rõ ràng', 'thang'], ['Tốc độ giảng dạy phù hợp với khả năng tiếp thu', 'thang'], ['Tài liệu, video bài giảng đầy đủ và dễ truy cập', 'thang'], ['Mức độ khó của nội dung đến thời điểm này', 'lua-chon', ['Quá dễ', 'Phù hợp', 'Khó', 'Quá khó']], ['Nội dung anh/chị muốn giảng viên giảng kỹ hơn', 'nhieu', ['Lý thuyết kinh lạc', 'Vị trí huyệt', 'Kỹ thuật châm', 'Ca lâm sàng']], ['Góp ý cho nửa sau học phần', 'tu-luan']] },
@@ -33,7 +35,7 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     function pick(a) { return a[Math.floor(R() * a.length)]; }
     function int(a, b) { return a + Math.floor(R() * (b - a + 1)); }
     var T = TODAY;
-    var db = { meta: { version: 23, seededAt: iso(T), user: { ten: 'admin02', hoTen: 'Lê Bảo Châu', email: 'chaulb@vutm.edu.vn' } } };
+    var db = { meta: { version: 24, seededAt: iso(T), user: { ten: 'admin02', hoTen: 'Lê Bảo Châu', email: 'chaulb@vutm.edu.vn' } } };
 
     db.donVi = [
       { id: 'dv1', ma: 'BGD', ten: 'Ban Giám đốc', cha: null, laKhoa: false },
@@ -48,12 +50,12 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     ];
 
     var HP = [
-      { id: 'hp1', ma: 'TRAD4113', ten: 'Châm cứu 1', khoa: 'dv6', soTC: 3, bai: ['Lịch sử và đại cương châm cứu', 'Cơ chế tác dụng của châm cứu', 'Khái quát học thuyết kinh lạc', 'Kinh Thủ thái âm Phế', 'Kinh Thủ dương minh Đại trường', 'Kinh Túc dương minh Vị', 'Kinh Túc thái âm Tỳ', 'Kinh Thủ thiếu âm Tâm', 'Kinh Thủ thái dương Tiểu trường', 'Kinh Túc thái dương Bàng quang', 'Kinh Túc thiếu âm Thận', 'Kinh Thủ quyết âm Tâm bào', 'Kinh Thủ thiếu dương Tam tiêu', 'Kinh Túc thiếu dương Đởm', 'Kinh Túc quyết âm Can', 'Mạch Nhâm', 'Mạch Đốc', 'Kỹ thuật châm và cứu', 'Ôn tập Châm cứu 1'] },
-      { id: 'hp2', ma: 'TRAD5116', ten: 'Châm cứu 2', khoa: 'dv6', soTC: 3, bai: ['Nguyên tắc chọn huyệt', 'Châm cứu điều trị đau đầu', 'Châm cứu điều trị mất ngủ', 'Châm cứu điều trị liệt dây VII ngoại biên', 'Châm cứu điều trị đau vai gáy', 'Châm cứu điều trị đau thắt lưng', 'Châm cứu điều trị tăng huyết áp', 'Điện châm', 'Thủy châm', 'Nhĩ châm', 'Cấy chỉ', 'Tai biến khi châm và xử trí', 'Ôn tập Châm cứu 2'] },
-      { id: 'hp3', ma: 'BIOM2101', ten: 'Giải phẫu 1', khoa: 'dv7', soTC: 2, bai: ['Mở đầu', 'Hệ xương', 'Bài tập ôn luyện bài 1 + 2', 'Hệ khớp', 'Hệ cơ', 'Hệ thần kinh 1 – Thần kinh trung ương', 'Hệ thần kinh 2 – Thần kinh ngoại biên', 'Các giác quan', 'Hệ nội tiết'] },
-      { id: 'hp4', ma: 'BIOM2102', ten: 'Giải phẫu 2', khoa: 'dv7', soTC: 2, bai: ['Hệ tuần hoàn 1: Tim và trung thất', 'Hệ tuần hoàn 2: Hệ thống mạch máu', 'Hệ hô hấp', 'Hệ tiêu hóa 1: Ống tiêu hóa', 'Hệ tiêu hóa 2: Tuyến tiêu hóa', 'Hệ tiết niệu, hệ sinh dục', 'Ôn tập Giải phẫu 2'] },
-      { id: 'hp5', ma: 'PHAR3104', ten: 'Thực vật – Dược liệu', khoa: 'dv8', soTC: 3, bai: ['Đại cương thực vật dược', 'Tế bào và mô thực vật', 'Cơ quan dinh dưỡng: rễ, thân, lá', 'Cơ quan sinh sản: hoa, quả, hạt', 'Phân loại thực vật', 'Họ Hoa môi (Lamiaceae)', 'Họ Cúc (Asteraceae)', 'Họ Đậu (Fabaceae)', 'Dược liệu chứa flavonoid', 'Thực hành nhận biết dược liệu'] },
-      { id: 'hp6', ma: 'PHAR3201', ten: 'Dược học cổ truyền', khoa: 'dv8', soTC: 2, bai: ['Đại cương dược học cổ truyền', 'Tính vị, quy kinh', 'Bào chế thuốc cổ truyền', 'Thuốc giải biểu', 'Thuốc thanh nhiệt', 'Thuốc bổ', 'Thuốc hoạt huyết, chỉ huyết', 'Ôn tập Dược học cổ truyền'] }
+      { id: 'hp1', ma: 'TRAD4108', ten: 'Châm cứu 1', khoa: 'dv6', soTC: 3, bai: ['Lịch sử và đại cương châm cứu', 'Cơ chế tác dụng của châm cứu', 'Khái quát học thuyết kinh lạc', 'Kinh Thủ thái âm Phế', 'Kinh Thủ dương minh Đại trường', 'Kinh Túc dương minh Vị', 'Kinh Túc thái âm Tỳ', 'Kinh Thủ thiếu âm Tâm', 'Kinh Thủ thái dương Tiểu trường', 'Kinh Túc thái dương Bàng quang', 'Kinh Túc thiếu âm Thận', 'Kinh Thủ quyết âm Tâm bào', 'Kinh Thủ thiếu dương Tam tiêu', 'Kinh Túc thiếu dương Đởm', 'Kinh Túc quyết âm Can', 'Mạch Nhâm', 'Mạch Đốc', 'Kỹ thuật châm và cứu', 'Ôn tập Châm cứu 1'] },
+      { id: 'hp2', ma: 'TRAD4110', ten: 'Châm cứu 2', khoa: 'dv6', soTC: 3, bai: ['Nguyên tắc chọn huyệt', 'Châm cứu điều trị đau đầu', 'Châm cứu điều trị mất ngủ', 'Châm cứu điều trị liệt dây VII ngoại biên', 'Châm cứu điều trị đau vai gáy', 'Châm cứu điều trị đau thắt lưng', 'Châm cứu điều trị tăng huyết áp', 'Điện châm', 'Thủy châm', 'Nhĩ châm', 'Cấy chỉ', 'Tai biến khi châm và xử trí', 'Ôn tập Châm cứu 2'] },
+      { id: 'hp3', ma: 'MEDI1001', ten: 'Giải phẫu 1', khoa: 'dv7', soTC: 3, bai: ['Mở đầu', 'Hệ xương', 'Bài tập ôn luyện bài 1 + 2', 'Hệ khớp', 'Hệ cơ', 'Hệ thần kinh 1 – Thần kinh trung ương', 'Hệ thần kinh 2 – Thần kinh ngoại biên', 'Các giác quan', 'Hệ nội tiết'] },
+      { id: 'hp4', ma: 'MEDI1002', ten: 'Giải phẫu 2', khoa: 'dv7', soTC: 2, bai: ['Hệ tuần hoàn 1: Tim và trung thất', 'Hệ tuần hoàn 2: Hệ thống mạch máu', 'Hệ hô hấp', 'Hệ tiêu hóa 1: Ống tiêu hóa', 'Hệ tiêu hóa 2: Tuyến tiêu hóa', 'Hệ tiết niệu, hệ sinh dục', 'Ôn tập Giải phẫu 2'] },
+      { id: 'hp5', ma: 'TRAD2102', ten: 'Thực vật dược', khoa: 'dv8', soTC: 2, bai: ['Đại cương thực vật dược', 'Tế bào và mô thực vật', 'Cơ quan dinh dưỡng: rễ, thân, lá', 'Cơ quan sinh sản: hoa, quả, hạt', 'Phân loại thực vật', 'Họ Hoa môi (Lamiaceae)', 'Họ Cúc (Asteraceae)', 'Họ Đậu (Fabaceae)', 'Dược liệu chứa flavonoid', 'Thực hành nhận biết dược liệu'] },
+      { id: 'hp6', ma: 'TRAD3103', ten: 'Thuốc YHCT', khoa: 'dv8', soTC: 4, bai: ['Đại cương dược học cổ truyền', 'Tính vị, quy kinh', 'Bào chế thuốc cổ truyền', 'Thuốc giải biểu', 'Thuốc thanh nhiệt', 'Thuốc bổ', 'Thuốc hoạt huyết, chỉ huyết', 'Ôn tập Dược học cổ truyền'] }
     ];
 
     /* thư viện tài nguyên */
@@ -66,11 +68,15 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
         var slug = t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
         var vid = addFile(h.ma + '-b' + (i + 1) + '-' + slug + '.mp4', 'Video', h.ten, int(80000, 420000));
         var pdf = R() < .6 ? addFile(h.ma + '-b' + (i + 1) + '-tai-lieu.pdf', 'PDF', h.ten, int(600, 5200)) : null;
+        if (pdf) db.thuVien[db.thuVien.length - 1].soTrang = int(4, 14);
         var quiz = /Ôn tập|Bài tập/.test(t) ? int(10, 20) : (R() < .45 ? int(5, 12) : 0);
         return { id: h.id + '-b' + (i + 1), ten: 'Bài ' + (i + 1) + ' – ' + t, phut: int(15, 95), video: vid, taiLieu: pdf, quiz: quiz, tienQuyet: i ? [h.id + '-b' + i] : [] };
       });
-      return { id: h.id, ma: h.ma, ten: h.ten, khoa: h.khoa, soTC: h.soTC, trangThai: 'hoat-dong', moTa: 'Học phần ' + h.ten + ' thuộc chương trình đào tạo Y học cổ truyền trình độ đại học.', chuanDauRa: ['Trình bày được kiến thức nền tảng của học phần', 'Vận dụng vào tình huống lâm sàng cơ bản'], quyTac: 'tien-quyet', tieuChi: { xem: 80, quizDiem: 5 }, bai: bai };
+      return { id: h.id, ma: h.ma, ten: h.ten, khoa: h.khoa, soTC: h.soTC, trangThai: 'hoat-dong', moTa: 'Học phần ' + h.ten + ' (' + h.soTC + ' tín chỉ) – phần lý thuyết tổ chức học trực tuyến.', chuanDauRa: ['Trình bày được kiến thức nền tảng của học phần', 'Vận dụng vào tình huống lâm sàng cơ bản'], quyTac: 'tien-quyet', tieuChi: { xem: 80, quizDiem: 5 }, bai: bai };
     });
+    /* giáo trình đọc lật trang (khối 'giao-trinh'): nội dung mẫu trong lms-sach.js theo khóa mau */
+    var GT1 = addFile('Giao-trinh-Cham-cuu-1_Chuong-I.pdf', 'PDF', 'Châm cứu 1', 3400); db.thuVien[db.thuVien.length - 1].mau = 'cc1-ch1'; db.thuVien[db.thuVien.length - 1].soTrang = 10;
+    var GT2 = addFile('Giao-trinh-Cham-cuu-2_Bai-1.docx', 'Word', 'Châm cứu 2', 860); db.thuVien[db.thuVien.length - 1].mau = 'cc2-b1'; db.thuVien[db.thuVien.length - 1].soTrang = 5;
     /* tệp chưa gắn bài nào + tệp trùng */
     addFile('Banner cổng đào tạo trực tuyến.png', 'Ảnh', 'Chưa phân thư mục', 820);
     addFile('Logo Học viện.png', 'Ảnh', 'Chưa phân thư mục', 140);
@@ -82,37 +88,73 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     [['Phát âm tên huyệt – kinh Thủ thái âm Phế.mp3', 'Audio', 'Châm cứu 1', 2100, 185], ['Hướng dẫn tư thế khi châm – thuyết minh.mp3', 'Audio', 'Châm cứu 1', 3400, 312], ['Sơ đồ đường kinh Phế.png', 'Ảnh', 'Châm cứu 1', 460, 0], ['Vị trí huyệt Hợp cốc.jpg', 'Ảnh', 'Châm cứu 1', 380, 0], ['Tiêu bản xương sọ.jpg', 'Ảnh', 'Giải phẫu 1', 910, 0], ['Video thực hành kỹ thuật châm.mp4', 'Video', 'Châm cứu 1', 256000, 1260]].forEach(function (x, k) { db.thuVien.push({ id: 'fm' + (k + 1), ten: x[0], loai: x[1], thuMuc: x[2], kb: x[3], giay: x[4] || null, hash: 'hm' + (k + 1), ngay: iso(addDays(T, -30 - k * 4)), nguoiTai: 'thuyanh' }); });
     addFile('Âm thanh thiền dưỡng sinh.mp3', 'Audio', 'Chưa phân thư mục', 5400);
 
-    /* Khung chương trình trực tuyến: chương trình → nhóm học phần → học phần mở lớp trên cổng.
-       Chỉ gồm học phần lý thuyết học trực tuyến; khung đầy đủ (tín chỉ, học kỳ, thực hành) nằm ở hệ thống quản lý đào tạo. */
+    /* Khung chương trình trực tuyến: chương trình → nhóm học phần (theo năm học) → học phần mở lớp trên cổng.
+       Dựng theo mục 2.3 "Kế hoạch đào tạo theo từng năm" của chương trình đã ban hành; chỉ đưa vào học phần có lý thuyết,
+       phù hợp tổ chức học trực tuyến. Không đưa vào: Giáo dục thể chất, Giáo dục quốc phòng, học phần tiền lâm sàng /
+       thực hành kỹ năng, thực tập cộng đồng, thực tế nghề nghiệp, chuyên môn tổng hợp / khóa luận tốt nghiệp.
+       Khung đầy đủ (tín chỉ, học kỳ, thực hành) quản lý ở hệ thống Quản lý đào tạo.
+       Học phần dùng chung giữa các chương trình khi trùng mã học phần (VD: Lý sinh BIOP1001, Hóa học CHEM1001, Tiếng Anh). */
     db.chuongTrinh = [];
-    var ctSeq = 10;
-    function taoCT(goc, nhoms) {
-      goc.cha = null; goc.loai = 'chuong-trinh'; goc.hocPhan = []; goc.trangThai = 'hoat-dong'; db.chuongTrinh.push(goc);
-      nhoms.forEach(function (g) {
-        var gn = { id: g.id || ('ct' + (++ctSeq)), ma: g.ma, ten: g.ten, cha: goc.id, khoa: g.khoa || goc.khoa, hocPhan: [], trangThai: 'hoat-dong', loai: 'nhom' };
-        db.chuongTrinh.push(gn);
-        g.mon.forEach(function (m) { db.chuongTrinh.push({ id: m.id || ('ct' + (++ctSeq)), ma: m.ma, ten: m.ten, cha: gn.id, khoa: m.khoa || gn.khoa, hocPhan: m.hp ? [m.hp] : [], trangThai: 'hoat-dong', loai: 'hoc-phan', hocSau: m.sau || [] }); });
-      });
+    var ctSeq = 10, hpSeq = 100, HP_MOI = [], HP_MA = {};
+    /* học phần đã có nội dung, khớp theo mã; vị trí giữ id cũ vì lớp học, kỳ thi tham chiếu */
+    HP.forEach(function (h) { HP_MA[h.ma] = h.id; }); HP_MA.TRAD4109 = 'hp7';
+    var VT_CU = { MEDI1001: 'ct6', MEDI1002: 'ct7', TRAD2102: 'ct9', TRAD3103: 'ct10', TRAD4108: 'ct3', TRAD4110: 'ct4' };
+    var KH = { cb: 'dv9', ys: 'dv7', ls: 'dv6', duoc: 'dv8' };
+    function hpCua(ma, ten, tc, kh) {
+      if (!HP_MA[ma]) { HP_MA[ma] = 'hp' + (++hpSeq); HP_MOI.push({ id: HP_MA[ma], ma: ma, ten: ten, khoa: KH[kh], soTC: tc }); }
+      return HP_MA[ma];
     }
-    taoCT({ id: 'ct1', ma: 'YHCT', ten: 'Y học cổ truyền – Đại học', khoa: 'dv6', maQLDT: '7720115', congKhai: true, doiTuong: 'Sinh viên, học viên liên thông ngành Y học cổ truyền', moTa: 'Các học phần lý thuyết của ngành Y học cổ truyền được tổ chức học trực tuyến. Thực hành, lâm sàng học tại Học viện và bệnh viện theo kế hoạch của Phòng Đào tạo.' }, [
-      { id: 'ct5', ma: 'GP', ten: 'Giải phẫu', khoa: 'dv7', mon: [{ id: 'ct6', ma: 'GP1', ten: 'Giải phẫu 1', hp: 'hp3' }, { id: 'ct7', ma: 'GP2', ten: 'Giải phẫu 2', hp: 'hp4', sau: ['ct6'] }] },
-      { ma: 'YL', ten: 'Lý luận Y học cổ truyền', mon: [{ ma: 'YL1', ten: 'Y lý Y học cổ truyền' }, { ma: 'CDH', ten: 'Chẩn đoán học Y học cổ truyền' }] },
-      { id: 'ct8', ma: 'DL', ten: 'Dược liệu – Dược cổ truyền', khoa: 'dv8', mon: [{ id: 'ct9', ma: 'TVDL', ten: 'Thực vật – Dược liệu', hp: 'hp5' }, { id: 'ct10', ma: 'DHCT', ten: 'Dược học cổ truyền', hp: 'hp6', sau: ['ct9'] }] },
-      { id: 'ct2', ma: 'CC', ten: 'Châm cứu', mon: [{ id: 'ct3', ma: 'CC1', ten: 'Châm cứu 1', hp: 'hp1', sau: ['ct6'] }, { id: 'ct4', ma: 'CC2', ten: 'Châm cứu 2', hp: 'hp2', sau: ['ct3'] }, { ma: 'XBBH', ten: 'Xoa bóp bấm huyệt (lý thuyết)' }] }
-    ]);
+    function taoCT(goc, nams, opt) {
+      opt = opt || {};
+      goc.cha = null; goc.loai = 'chuong-trinh'; goc.hocPhan = []; goc.trangThai = goc.trangThai || 'hoat-dong'; db.chuongTrinh.push(goc);
+      var vt = {};
+      nams.forEach(function (g, gi) {
+        var gn = { id: goc.id + '-n' + (gi + 1), ma: 'N' + (gi + 1), ten: g.ten, cha: goc.id, khoa: goc.khoa, khoaDs: [], hocPhan: [], trangThai: 'hoat-dong', loai: 'nhom' };
+        db.chuongTrinh.push(gn);
+        g.mon.forEach(function (m) {
+          var hp = hpCua(m[0], m[1], m[2], m[3]), id = (opt.giuId && VT_CU[m[0]]) || ('ct' + (++ctSeq)), kh = KH[m[3]];
+          if (gn.khoaDs.indexOf(kh) < 0) gn.khoaDs.push(kh);
+          vt[m[0]] = id;
+          db.chuongTrinh.push({ id: id, ma: m[0], ten: m[1], cha: gn.id, khoa: kh, hocPhan: [hp], trangThai: 'hoat-dong', loai: 'hoc-phan', hocSau: [] });
+        });
+        if (gn.khoaDs.indexOf(goc.khoa) >= 0) { gn.khoaDs.splice(gn.khoaDs.indexOf(goc.khoa), 1); gn.khoaDs.unshift(goc.khoa); }
+        gn.khoa = gn.khoaDs[0] || goc.khoa;
+      });
+      (opt.sau || []).forEach(function (x) { var a = db.chuongTrinh.filter(function (c) { return c.id === vt[x[0]]; })[0]; if (a && vt[x[1]]) a.hocSau.push(vt[x[1]]); });
+    }
+    /* [mã học phần, tên học phần, số tín chỉ, khoa phụ trách] */
+    taoCT({ id: 'ct1', ma: 'YHCT', ten: 'Y học cổ truyền – Đại học', khoa: 'dv6', maQLDT: '7720115', congKhai: true, doiTuong: 'Sinh viên, học viên liên thông ngành Y học cổ truyền',
+      moTa: 'Chương trình đào tạo ngành Y học cổ truyền trình độ đại học (Quyết định 2407/QĐ-HVYDCT ngày 31/8/2023, áp dụng từ khóa tuyển sinh 2024; 195 tín chỉ, 6 năm). Các học phần lý thuyết được tổ chức học trực tuyến; thực hành, lâm sàng học tại Học viện và bệnh viện theo kế hoạch của Phòng Đào tạo.' }, [
+      { ten: 'Năm thứ nhất', mon: [['POLI1001', 'Triết học Mác - Lênin', 3, 'cb'], ['INTE1001', 'Tin học đại cương', 2, 'cb'], ['ENGL1001', 'Tiếng Anh 1', 3, 'cb'], ['CHN1001', 'Tiếng Trung 1', 3, 'cb'], ['MEDI1001', 'Giải phẫu 1', 3, 'ys'], ['POLI1002', 'Kinh tế chính trị Mác - Lênin', 2, 'cb'], ['CHEM1001', 'Hóa học', 3, 'cb'], ['BIOL1001', 'Sinh học và di truyền', 3, 'cb'], ['MEDI1002', 'Giải phẫu 2', 2, 'ys'], ['BIOP1001', 'Lý sinh', 3, 'cb'], ['MEDI1003', 'Mô phôi', 3, 'ys']] },
+      { ten: 'Năm thứ hai', mon: [['ENGL2002', 'Tiếng Anh 2', 3, 'cb'], ['CHN2002', 'Tiếng Trung 2', 3, 'cb'], ['TRAD2101', 'Lý luận cơ bản YHCT (Y lý 1)', 3, 'ls'], ['MEDI2004', 'Giải phẫu bệnh', 2, 'ys'], ['MEDI2005', 'Sinh lý bệnh - Miễn dịch', 3, 'ys'], ['MEDI2006', 'Vi sinh', 3, 'ys'], ['MEDI2007', 'Hóa sinh', 3, 'ys'], ['MEDI2008', 'Sinh lý', 3, 'ys'], ['NUR1001', 'Điều dưỡng cơ bản', 2, 'ls'], ['MEDI2009', 'Ký sinh trùng', 3, 'ys'], ['MEDI2102', 'Chẩn đoán hình ảnh', 2, 'ls'], ['ENGL2003', 'Tiếng Anh 3', 2, 'cb'], ['CHN2003', 'Tiếng Trung 3', 2, 'cb'], ['TRAD2102', 'Thực vật dược', 2, 'duoc']] },
+      { ten: 'Năm thứ ba', mon: [['MEDI3010', 'Dược lý', 4, 'duoc'], ['MEDI3103', 'Nội cơ sở YHHĐ', 5, 'ls'], ['MEDI3104', 'Ngoại cơ sở YHHĐ', 4, 'ls'], ['TRAD3103', 'Thuốc YHCT', 4, 'duoc'], ['TRAD3104', 'Bào chế thuốc YHCT', 2, 'duoc'], ['MEDI3011', 'Dịch tễ học', 2, 'ls'], ['POLI3003', 'Chủ nghĩa xã hội khoa học', 2, 'cb'], ['TRAD3105', 'Chẩn đoán học YHCT (Y lý 2)', 4, 'ls'], ['INMA3001', 'Tin học ứng dụng - Xác suất thống kê y học', 3, 'cb'], ['SOC3001', 'Tâm lý y học - Đạo đức y học - Truyền thông và giáo dục sức khỏe', 2, 'ls'], ['POLI3004', 'Tư tưởng Hồ Chí Minh', 2, 'cb']] },
+      { ten: 'Năm thứ tư', mon: [['POLI4005', 'Lịch sử Đảng cộng sản Việt Nam', 2, 'cb'], ['MEDI4105', 'Nội bệnh lý YHHĐ', 5, 'ls'], ['MEDI4106', 'Ngoại bệnh lý YHHĐ', 4, 'ls'], ['MEDI4107', 'Phụ sản YHHĐ', 3, 'ls'], ['MEDI4108', 'Nhi khoa YHHĐ', 3, 'ls'], ['TRAD4106', 'Phương tễ 1', 3, 'ls'], ['TRAD4107', 'Phương tễ 2', 3, 'ls'], ['TRAD4108', 'Châm cứu 1', 3, 'ls'], ['TRAD4109', 'Phương pháp điều trị không dùng thuốc', 3, 'ls'], ['MEDI4109', 'Nghiên cứu khoa học', 2, 'ls'], ['MEDI4012', 'Sức khỏe môi trường và sức khỏe nghề nghiệp', 1, 'ls'], ['SOC4002', 'Nhà nước và pháp luật', 1, 'cb'], ['TRAD4110', 'Châm cứu 2', 3, 'ls']] },
+      { ten: 'Năm thứ năm', mon: [['MEDI5110', 'Hồi sức cấp cứu', 3, 'ls'], ['MEDI5111', 'Thần kinh', 3, 'ls'], ['MEDI5112', 'Truyền nhiễm YHHĐ + YHCT', 4, 'ls'], ['MEDI5113', 'Phục hồi chức năng', 3, 'ls'], ['SOC5003', 'Dân số học', 1, 'ls'], ['TRAD5112', 'Nội khoa YHCT 1', 5, 'ls'], ['MEDI5013', 'Dinh dưỡng và Vệ sinh an toàn thực phẩm', 1, 'ls'], ['MEDI5114', 'Răng hàm mặt', 2, 'ls'], ['MEDI5115', 'Tai mũi họng', 2, 'ls'], ['MEDI5116', 'Mắt', 2, 'ls'], ['MEDI5117', 'Ung thư', 2, 'ls'], ['MEDI5118', 'Tâm thần', 2, 'ls'], ['MEDI5119', 'Lao', 2, 'ls'], ['MEDI5120', 'Da liễu', 2, 'ls'], ['MEDI5121', 'Dị ứng và miễn dịch lâm sàng', 2, 'ls']] },
+      { ten: 'Năm thứ sáu', mon: [['MEDI6122', 'Y học gia đình', 2, 'ls'], ['TRAD6113', 'Nội khoa YHCT 2', 5, 'ls'], ['TRAD6114', 'Ngoại khoa YHCT', 3, 'ls'], ['TRAD6115', 'Phụ sản YHCT', 3, 'ls'], ['TRAD6116', 'Nhi khoa YHCT', 2, 'ls'], ['TRAD6117', 'Lão khoa YHCT', 3, 'ls'], ['MEDI6123', 'Chương trình y tế quốc gia – Tổ chức và quản lý y tế', 2, 'ls'], ['SOC6004', 'Phổ biến pháp luật về hành nghề', 1, 'ls'], ['TRAD6118', 'Tác phẩm kinh điển YHCT Việt Nam', 2, 'ls'], ['TRAD6119', 'Tác phẩm kinh điển YHCT Trung Quốc', 2, 'ls']] }
+    ], { giuId: true, sau: [['MEDI1002', 'MEDI1001'], ['ENGL2002', 'ENGL1001'], ['ENGL2003', 'ENGL2002'], ['CHN2002', 'CHN1001'], ['CHN2003', 'CHN2002'], ['TRAD3105', 'TRAD2101'], ['TRAD3103', 'TRAD2102'], ['TRAD3104', 'TRAD3103'], ['TRAD4107', 'TRAD4106'], ['TRAD4108', 'MEDI1001'], ['TRAD4110', 'TRAD4108'], ['TRAD6113', 'TRAD5112']] });
+    /* Y khoa: một số mã học phần trùng mã với học phần khác tên của ngành YHCT nên thêm hậu tố .YK để mã không trùng trong hệ thống */
+    taoCT({ id: 'ctyk', ma: 'YK', ten: 'Y khoa – Đại học', khoa: 'dv6', maQLDT: '7720101', congKhai: true, doiTuong: 'Sinh viên ngành Y khoa',
+      moTa: 'Chương trình đào tạo ngành Y khoa trình độ đại học (Quyết định 1062/QĐ-HVYDCT ngày 27/4/2023; 195 tín chỉ, 6 năm), tổ chức theo module tích hợp hệ cơ quan. Các học phần, module lý thuyết được tổ chức học trực tuyến; tiền lâm sàng, thực hành và thực tế nghề nghiệp học tập trung.' }, [
+      { ten: 'Năm thứ nhất', mon: [['BIOP1001', 'Lý sinh', 3, 'cb'], ['CHEM1001', 'Hóa học', 2, 'cb'], ['BIOL1001', 'Sinh học và di truyền', 3, 'cb'], ['MATH1001', 'Xác suất thống kê y học', 2, 'cb'], ['INTE1001', 'Tin học đại cương', 2, 'cb'], ['ENGL1001', 'Tiếng Anh 1', 3, 'cb'], ['MODU1001', 'Module 1: Y cơ sở 1', 5, 'ys'], ['MODU1002', 'Module 2: Y cơ sở 2', 6, 'ys']] },
+      { ten: 'Năm thứ hai', mon: [['MODU2003', 'Module 3: Y cơ sở 3', 5, 'ys'], ['MODU2104', 'Module 4: Hệ huyết học - Bạch huyết', 2, 'ys'], ['MODU2105', 'Module 5: Hệ tim mạch', 2, 'ys'], ['MODU2106', 'Module 6: Hệ hô hấp', 2, 'ys'], ['POLI2001', 'Triết học Mác - Lênin', 3, 'cb'], ['ENGL2002', 'Tiếng Anh 2', 3, 'cb'], ['MEDI2101.YK', 'Dinh dưỡng - An toàn thực phẩm', 2, 'ls'], ['PUBL2101', 'Truyền thông giáo dục sức khỏe', 2, 'ls'], ['POLI2002', 'Pháp luật đại cương', 1, 'cb'], ['ENGL2003', 'Tiếng Anh 3', 2, 'cb'], ['MEDI2102.YK', 'Điều dưỡng', 2, 'ls'], ['PHAR2101', 'Dược lý đại cương', 4, 'duoc']] },
+      { ten: 'Năm thứ ba', mon: [['MODU3108', 'Module 8: Hệ tiêu hóa', 2.5, 'ys'], ['MODU3109', 'Module 9: Hệ tiết niệu', 2, 'ys'], ['MODU3110', 'Module 10: Hệ Da - Cơ - Xương', 2, 'ys'], ['MODU3112', 'Module 12: Hệ Nội tiết, chuyển hóa', 1.5, 'ys'], ['MODU3113', 'Module 13: Hệ Sinh sản', 2, 'ys'], ['MODU3114', 'Module 14: Hệ thần kinh', 2, 'ys'], ['MEDI3103.YK', 'Chẩn đoán hình ảnh', 2, 'ls'], ['POLI3003.YK', 'Kinh tế chính trị Mác - Lênin', 2, 'cb'], ['MEDI3105', 'Nội cơ sở', 6, 'ls'], ['MEDI3106', 'Ngoại cơ sở', 6, 'ls']] },
+      { ten: 'Năm thứ tư', mon: [['MEDI4107.YK', 'Nội bệnh lý 1', 5, 'ls'], ['MEDI4108.YK', 'Ngoại bệnh lý 1', 5, 'ls'], ['PUBL4102', 'Phương pháp nghiên cứu khoa học y học', 2, 'ls'], ['POLI4004', 'Chủ nghĩa xã hội khoa học', 2, 'cb'], ['PUBL4103', 'Tổ chức quản lý y tế - Chương trình y tế quốc gia - Dân số', 2, 'ls'], ['PUBL4104', 'Dịch tễ', 2, 'ls'], ['MEDI4109.YK', 'Sản phụ khoa 1', 5, 'ls'], ['MEDI4110', 'Nhi khoa 1', 5, 'ls'], ['POLI4005.YK', 'Tư tưởng Hồ Chí Minh', 2, 'cb'], ['PUBL4105', 'Sức khỏe môi trường - Sức khỏe nghề nghiệp', 2, 'ls']] },
+      { ten: 'Năm thứ năm', mon: [['MEDI5111.YK', 'Hồi sức cấp cứu', 2, 'ls'], ['MEDI5112.YK', 'Thần kinh', 2, 'ls'], ['MEDI5113.YK', 'Sức khỏe tâm thần', 2, 'ls'], ['MEDI5114.YK', 'Da liễu', 2, 'ls'], ['MODU5116', 'Module 16: Y học cổ truyền', 4, 'ls'], ['MEDI5115.YK', 'Lao và bệnh phổi', 2, 'ls'], ['MEDI5116.YK', 'Truyền nhiễm', 2, 'ls'], ['MEDI5117.YK', 'Mắt', 2, 'ls'], ['MEDI5118.YK', 'Răng hàm mặt', 2, 'ls'], ['MEDI5119.YK', 'Tai mũi họng', 2, 'ls'], ['MEDI5120.YK', 'Ung thư', 2, 'ls'], ['MEDI5121.YK', 'Lão', 2, 'ls'], ['MEDI5122', 'Phục hồi chức năng', 2, 'ls'], ['PUBL5106', 'Kinh tế y tế - Bảo hiểm y tế', 2, 'ls'], ['MEDI5123', 'Gây mê hồi sức', 2, 'ls'], ['MEDI5124', 'Pháp y', 1, 'ys'], ['PUBL5108', 'Một sức khỏe', 1, 'ls'], ['PUBL5109', 'Y học gia đình', 2, 'ls']] },
+      { ten: 'Năm thứ sáu', mon: [['MEDI6125', 'Nội bệnh lý 2', 5, 'ls'], ['MEDI6126', 'Ngoại bệnh lý 2', 5, 'ls'], ['MEDI6127', 'Sản phụ khoa 2', 5, 'ls'], ['MEDI6128', 'Nhi khoa 2', 5, 'ls'], ['PHAR6102', 'Dược lâm sàng', 3, 'duoc'], ['PUBL6110', 'Tính chuyên nghiệp y khoa', 2, 'ls'], ['POLI6006', 'Lịch sử Đảng cộng sản Việt Nam', 2, 'cb']] }
+    ], { sau: [['ENGL2002', 'ENGL1001'], ['ENGL2003', 'ENGL2002'], ['PHAR6102', 'PHAR2101'], ['MEDI6125', 'MEDI4107.YK'], ['MEDI6126', 'MEDI4108.YK'], ['MEDI6127', 'MEDI4109.YK'], ['MEDI6128', 'MEDI4110']] });
     taoCT({ id: 'ctd', ma: 'DUOC', ten: 'Dược học – Đại học', khoa: 'dv8', maQLDT: '7720201', congKhai: false, doiTuong: 'Sinh viên ngành Dược học', moTa: 'Chương trình đang chuẩn bị học liệu trực tuyến cho các học phần lý thuyết; chưa mở lớp trên cổng.' }, [
-      { ma: 'DLY', ten: 'Dược lý – Hóa dược', mon: [{ ma: 'DLY1', ten: 'Dược lý 1' }, { ma: 'HD1', ten: 'Hóa dược 1' }] },
-      { ma: 'QLD', ten: 'Pháp chế – Quản lý dược', mon: [{ ma: 'PCD', ten: 'Pháp chế dược' }, { ma: 'KTD', ten: 'Quản lý và kinh tế dược' }] }
+      { ten: 'Năm thứ nhất', mon: [['CHEM1001', 'Hóa học', 3, 'cb'], ['BIOL1001', 'Sinh học và di truyền', 3, 'cb'], ['TRAD2102', 'Thực vật dược', 2, 'duoc']] },
+      { ten: 'Năm thứ ba', mon: [['PHAR2101', 'Dược lý đại cương', 4, 'duoc'], ['TRAD3103', 'Thuốc YHCT', 4, 'duoc']] }
     ]);
-    taoCT({ id: 'ctck1', ma: 'CKI-YHCT', ten: 'Chuyên khoa cấp I Y học cổ truyền', khoa: 'dv6', maQLDT: 'CK62726001', doiTuong: 'Bác sĩ đã tốt nghiệp đại học ngành Y học cổ truyền', moTa: 'Các học phần lý thuyết chuyên ngành học trực tuyến; thực hành lâm sàng tại bệnh viện thực hành.' }, [
-      { ma: 'CN', ten: 'Học phần chuyên ngành', mon: [{ ma: 'NKYHCT', ten: 'Nội khoa Y học cổ truyền nâng cao' }, { ma: 'CCNC', ten: 'Châm cứu nâng cao' }] }
-    ]);
+    /* sau đại học: chương trình đã có, chưa gắn học phần */
+    taoCT({ id: 'ctths', ma: 'ThS-YHCT', ten: 'Thạc sĩ Y học cổ truyền', khoa: 'dv6', maQLDT: '8720115', trangThai: 'nhap', doiTuong: 'Bác sĩ đã tốt nghiệp đại học ngành Y học cổ truyền, Y khoa', moTa: 'Chương trình thạc sĩ ngành Y học cổ truyền; đang xây dựng danh mục học phần lý thuyết học trực tuyến.' }, []);
+    taoCT({ id: 'ctts', ma: 'TS-YHCT', ten: 'Tiến sĩ Y học cổ truyền', khoa: 'dv6', maQLDT: '9720115', trangThai: 'nhap', doiTuong: 'Người có bằng thạc sĩ hoặc bác sĩ chuyên khoa cấp II ngành Y học cổ truyền', moTa: 'Chương trình tiến sĩ ngành Y học cổ truyền; đang xây dựng danh mục học phần lý thuyết học trực tuyến.' }, []);
     taoCT({ id: 'ctbd', ma: 'BD-CCCB', ten: 'Bồi dưỡng Châm cứu cơ bản', khoa: 'dv6', maQLDT: '', doiTuong: 'Bác sĩ, y sĩ đang hành nghề cần cập nhật kiến thức châm cứu (đào tạo liên tục)', moTa: 'Khóa bồi dưỡng ngắn hạn, dùng lại học liệu Châm cứu 1 và Châm cứu 2 của chương trình đại học.' }, [
-      { ma: 'CC', ten: 'Châm cứu', mon: [{ ma: 'BD-CC1', ten: 'Châm cứu 1', hp: 'hp1' }, { ma: 'BD-CC2', ten: 'Châm cứu 2', hp: 'hp2' }] }
+      { ten: 'Châm cứu', mon: [['TRAD4108', 'Châm cứu 1', 3, 'ls'], ['TRAD4110', 'Châm cứu 2', 3, 'ls']] }
     ]);
     /* danh mục xếp chương trình theo hệ đào tạo (cây thư mục, sửa tên tùy ý) */
-    db.heDaoTao = [{ id: 'he1', ten: 'Đào tạo đại học', cha: null }, { id: 'he2', ten: 'Đào tạo sau đại học', cha: null }, { id: 'he3', ten: 'Đào tạo cho người đi làm', cha: null }];
-    db.chuongTrinh.forEach(function (c) { if (!c.cha) c.he = { ct1: 'he1', ctd: 'he1', ctck1: 'he2', ctbd: 'he3' }[c.id] || null; });
+    db.heDaoTao = [{ id: 'he1', ten: 'Đào tạo đại học', cha: null }, { id: 'he2', ten: 'Đào tạo sau đại học', cha: null }, { id: 'he4', ten: 'Đào tạo thạc sĩ', cha: 'he2' }, { id: 'he5', ten: 'Đào tạo tiến sĩ', cha: 'he2' }, { id: 'he3', ten: 'Đào tạo cho người đi làm', cha: null }];
+    db.chuongTrinh.forEach(function (c) { if (!c.cha) c.he = { ct1: 'he1', ctyk: 'he1', ctd: 'he1', ctths: 'he4', ctts: 'he5', ctbd: 'he3' }[c.id] || null; });
 
     /* tài khoản, nhóm quyền */
     db.nhomQuyen = [
@@ -181,8 +223,8 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
       ['L0029', 'Lớp Giải phẫu 2 - K26', 'ct7', 'hp4', 'dv7', -16, 96, ['gv6'], 30, null],
       ['L0030', 'Lớp Giải phẫu 1 - K27 (mở rộng)', 'ct6', 'hp3', 'dv7', 19, 127, ['gv5'], 0, 'kt1', 'tu-hoc'],
       ['L0031', 'Lớp Giải phẫu 2 - K27', 'ct7', 'hp4', 'dv7', 19, 127, ['gv6'], 0, null],
-      ['L0032', 'Lớp Thực vật – Dược liệu - K26', 'ct9', 'hp5', 'dv8', -16, 65, ['gv7'], 28, null, 'tu-hoc'],
-      ['L0034', 'Lớp Dược học cổ truyền - K25', 'ct10', 'hp6', 'dv8', -170, -35, ['gv8'], 26, null]
+      ['L0032', 'Lớp Thực vật dược - K26', 'ct9', 'hp5', 'dv8', -16, 65, ['gv7'], 28, null, 'tu-hoc'],
+      ['L0034', 'Lớp Thuốc YHCT - K25', 'ct10', 'hp6', 'dv8', -170, -35, ['gv8'], 26, null]
     ];
     db.lop = LOP.map(function (l, i) {
       var bd = addDays(T, l[5]), kt = addDays(T, l[6]);
@@ -335,15 +377,22 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
           K('tieu-de', { text: 'Nội dung bài giảng:', cap: 2 }),
           K('video', { file: b.video, chuThich: '', xemToiThieu: 80, batBuoc: true, tuaNhanh: false, dauChim: true, giay: giay })
         ];
+        /* bài có giáo trình lật trang: Châm cứu 1 bài 1 (PDF), Châm cứu 2 bài 1 (Word) */
+        var gt = i === 0 && { hp1: [GT1, 'Giáo trình Châm cứu 1 — Chương I. Đại cương châm cứu', 'tu-dong'], hp2: [GT2, 'Giáo trình Châm cứu 2 — Bài 1. Nguyên tắc chọn huyệt', 'tu-dong'] }[hp.id];
+        if (gt) { khoi.push(K('tieu-de', { text: 'Đọc giáo trình:', cap: 2 })); khoi.push(K('giao-trinh', { file: gt[0], tieuDe: gt[1], cheDo: gt[2], soTrang: db.thuVien.find(function (x) { return x.id === gt[0]; }).soTrang, taiVe: false, batBuoc: true })); }
         if (b.taiLieu) khoi.push(K('pdf', { file: b.taiLieu, chuThich: 'Tài liệu đọc thêm', taiVe: true }));
         if (qs.length) khoi.push(K('quiz', { tieuDe: 'Câu hỏi củng cố', cauHoi: qs }));
-        b.khoi = khoi; b.giay = giay; b.xuatBan = true; b.hocThu = i === 0; b.hien = true; b.tieuChiRieng = null; b.dinhKem = [];
+        b.khoi = khoi; b.xuatBan = true; b.hocThu = i === 0; b.hien = true; b.tieuChiRieng = null; b.dinhKem = [];
         b.quiz = qs.length;
+        /* thời lượng bài tự tính theo nội dung (quy tắc ở thoiLuongBai) */
+        b.giayTuDong = true; b.giay = thoiLuongBai(b, function (id) { return db.thuVien.find(function (x) { return x.id === id; }); }).giay; b.phut = Math.max(1, Math.round(b.giay / 60));
       });
     });
     /* một học phần đang soạn để minh họa trạng thái Nháp */
-    db.hocPhan.push({ id: 'hp7', ma: 'TRAD3105', ten: 'Xoa bóp – Bấm huyệt', khoa: 'dv6', soTC: 2, trangThai: 'nhap', moTa: 'Kỹ thuật xoa bóp, bấm huyệt theo y học cổ truyền và ứng dụng phục hồi chức năng.', chuanDauRa: ['Thực hiện đúng 15 thủ thuật xoa bóp cơ bản', 'Chỉ định và chống chỉ định của xoa bóp – bấm huyệt'], quyTac: 'tien-quyet', tieuChi: { xemOn: true, xem: 80, quizOn: true, quizKieu: 'diem', quizDiem: 5, quizPct: 70, tuDong: true }, phanLoai: null,
+    db.hocPhan.push({ id: 'hp7', ma: 'TRAD4109', ten: 'Phương pháp điều trị không dùng thuốc', khoa: 'dv6', soTC: 3, trangThai: 'nhap', moTa: 'Xoa bóp bấm huyệt, khí công dưỡng sinh và các phương pháp điều trị không dùng thuốc của y học cổ truyền.', chuanDauRa: ['Thực hiện đúng 15 thủ thuật xoa bóp cơ bản', 'Chỉ định và chống chỉ định của xoa bóp – bấm huyệt'], quyTac: 'tien-quyet', tieuChi: { xemOn: true, xem: 80, quizOn: true, quizKieu: 'diem', quizDiem: 5, quizPct: 70, tuDong: true }, phanLoai: null,
       bai: [{ id: 'hp7-b1', ten: 'Bài 1 – Đại cương xoa bóp bấm huyệt', phut: 30, giay: 1800, video: null, taiLieu: null, quiz: 0, tienQuyet: [], khoi: [K('doan-van', { html: '<p>Bản thảo – đang biên soạn nội dung.</p>' })], xuatBan: false, hocThu: false, hien: true, tieuChiRieng: null, dinhKem: [] }] });
+    /* học phần theo chương trình 2407 (YHCT) và 1062 (Y khoa) chưa có học liệu: trạng thái Nháp, chờ biên soạn */
+    HP_MOI.forEach(function (h) { db.hocPhan.push({ id: h.id, ma: h.ma, ten: h.ten, khoa: h.khoa, soTC: h.soTC, trangThai: 'nhap', moTa: 'Học phần ' + h.ten + ' (' + String(h.soTC).replace('.', ',') + ' tín chỉ) – phần lý thuyết tổ chức học trực tuyến.', chuanDauRa: [], quyTac: 'tien-quyet', tieuChi: { xemOn: true, xem: 80, quizOn: true, quizKieu: 'diem', quizDiem: 5, quizPct: 70, tuDong: true }, phanLoai: null, bai: [] }); });
 
     /* đề thi, kỳ thi, bài làm */
     db.deThi = []; db.kyThi = []; db.baiLam = [];
@@ -429,7 +478,7 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
 
     /* khảo sát */
     db.khaoSat = [
-      { id: 'ks1', ten: 'Đánh giá học phần Dược học cổ truyền', lop: 'lop10', guiDi: 26, phanHoi: 21, diemTB: 4.3, trangThai: 'da-dong', cauHoi: 12 },
+      { id: 'ks1', ten: 'Đánh giá học phần Thuốc YHCT', lop: 'lop10', guiDi: 26, phanHoi: 21, diemTB: 4.3, trangThai: 'da-dong', cauHoi: 12 },
       { id: 'ks2', ten: 'Đánh giá học phần Châm cứu 1 - K26', lop: 'lop1', guiDi: 32, phanHoi: 25, diemTB: 4.1, trangThai: 'da-dong', cauHoi: 12 },
       { id: 'ks3', ten: 'Khảo sát giữa kỳ Châm cứu 1 - K27', lop: 'lop2', guiDi: 30, phanHoi: 17, diemTB: 3.9, trangThai: 'dang-mo', cauHoi: 8 },
       { id: 'ks4', ten: 'Mức độ hài lòng với cổng học trực tuyến', lop: null, guiDi: 184, phanHoi: 96, diemTB: 3.7, trangThai: 'dang-mo', cauHoi: 10 }
@@ -509,7 +558,7 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
       ksDongBo(k, db); return k;
     }
     db.khaoSat = [
-      mkKS({ id: 'ks1', ten: 'Đánh giá học phần Dược học cổ truyền', lop: 'lop10', mau: 'cuoi-ky', bd: -40, kt: -30, trangThai: 'da-dong', n: 21, lech: .8 }),
+      mkKS({ id: 'ks1', ten: 'Đánh giá học phần Thuốc YHCT', lop: 'lop10', mau: 'cuoi-ky', bd: -40, kt: -30, trangThai: 'da-dong', n: 21, lech: .8 }),
       mkKS({ id: 'ks2', ten: 'Đánh giá học phần Châm cứu 1 - K26', lop: 'lop1', mau: 'cuoi-ky', bd: -45, kt: -35, trangThai: 'da-dong', n: 25, lech: .6 }),
       mkKS({ id: 'ks3', ten: 'Khảo sát giữa kỳ Châm cứu 1 - K27', lop: 'lop2', mau: 'giua-ky', bd: -5, kt: 4, trangThai: 'dang-mo', n: 17, lech: .4, moTa: 'Ý kiến của anh/chị giúp giảng viên điều chỉnh cách dạy ở nửa sau học phần. Phiếu ẩn danh, mất khoảng 3 phút.' }),
       { id: 'ks4', ten: 'Mức độ hài lòng với cổng học trực tuyến', lop: null, guiDi: 184, phanHoi: 96, diemTB: 3.7, trangThai: 'dang-mo', cauHoi: 10 },
@@ -631,7 +680,7 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     db = {}; Object.keys(full).forEach(function (k) { db[k] = full[k]; });
     SCOPED.forEach(function (k) { if (!full[k]) return; var keep = set(v[k]); hidden[k] = full[k].filter(function (x) { return !keep[x.id]; }); db[k] = v[k]; });
   }
-  function load() { try { var s = localStorage.getItem(KEY); if (s) { var o = JSON.parse(s); if (o && o.meta && o.meta.version === 23) return o; } } catch (e) { } return null; }
+  function load() { try { var s = localStorage.getItem(KEY); if (s) { var o = JSON.parse(s); if (o && o.meta && o.meta.version === 24) return o; } } catch (e) { } return null; }
   function save() {
     /* ghép phần ngoài phạm vi với phần đã sửa, giữ nguyên thứ tự gốc (thứ tự chương trình, nhóm… là dữ liệu có nghĩa) */
     if (db !== full) Object.keys(db).forEach(function (k) {
@@ -945,9 +994,59 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
   }
   function walkKhoi(list, fn) { (list || []).forEach(function (k) { fn(k); if (k.con) walkKhoi(k.con, fn); if (k.cot) k.cot.forEach(function (c) { walkKhoi(c, fn); }); if (k.o) k.o.forEach(function (c) { walkKhoi(c, fn); }); }); }
   function baiFiles(b) { var out = []; if (b.video) out.push(b.video); if (b.taiLieu) out.push(b.taiLieu); (b.dinhKem || []).forEach(function (f) { out.push(f); }); walkKhoi(b.khoi, function (k) { if (k.file) out.push(k.file); }); return out.filter(function (x, i, a) { return x && a.indexOf(x) === i; }); }
+  /* =====================================================================
+     [QUY TẮC] TỰ TÍNH THỜI LƯỢNG BÀI HỌC — thoiLuongBai(b, timTep?)
+     ---------------------------------------------------------------------
+     Thời lượng bài = tổng thời gian ước tính để học viên học hết từng khối nội dung
+     (duyệt cả khối lồng trong Nhóm / Bố cục cột / Lưới). Không hiện cách tính trên giao diện;
+     giao diện chỉ hiện kết quả và công tắc "Tự tính".
+       Video, âm thanh   : thời lượng tệp (khoi.giay, nếu trống lấy thuVien.giay)
+       Giáo trình (lật)  : số trang × TL.trangGiaoTrinh (đọc kỹ, bắt buộc)
+       PDF               : số trang × TL.trangPdf (tài liệu xem/đọc thêm)
+                           số trang lấy thuVien.soTrang; chưa có thì ước tính kb / TL.kbMoiTrang
+       Đoạn văn, tiêu đề : số từ / TL.tuMoiPhut phút
+       Ảnh               : TL.anh giây / ảnh;   Công thức: TL.congThuc giây
+       Quiz              : TL.cauTracNghiem giây / câu; câu tự luận TL.cauTuLuan giây
+       Nhúng (YouTube…)  : TL.nhung giây;  Trang tương tác: TL.trangTT giây;  HTML: theo số từ
+       Đường kẻ, nút, khối chứa: 0
+     Làm tròn lên bội số TL.lamTron giây (1 phút). Tối thiểu 1 phút khi bài có nội dung.
+     Áp dụng khi b.giayTuDong !== false (mặc định). Người soạn tắt "Tự tính" để nhập tay;
+     khi đó giữ nguyên b.giay. Gọi lại mỗi khi thêm/xóa/đổi tệp của khối (syncBai gọi tự động).
+     Máy chủ thật: lấy thời lượng video/âm thanh bằng ffprobe, số trang PDF khi tải lên,
+     tệp Word đếm trang sau khi chuyển sang PDF.
+     ===================================================================== */
+  /* TL: hằng số quy tắc thời lượng — khai báo ở đầu tệp (xem [QUY TẮC] TỰ TÍNH THỜI LƯỢNG BÀI HỌC) */
+  function soTu(html) { var t = String(html || '').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').trim(); return t ? t.split(/\s+/).length : 0; }
+  function soTrangTep(f) { if (!f) return 0; return +f.soTrang || Math.max(1, Math.round((+f.kb || 0) / TL.kbMoiTrang)); }
+  function thoiLuongBai(b, timTep) {
+    timTep = timTep || function (id) { return byId('thuVien', id); };
+    var ct = { video: 0, amThanh: 0, giaoTrinh: 0, pdf: 0, doc: 0, anh: 0, quiz: 0, khac: 0 }, tu = 0, co = false;
+    walkKhoi(b.khoi, function (k) {
+      var f = k.file ? timTep(k.file) : null;
+      switch (k.loai) {
+        case 'video': if (k.file) { ct.video += +k.giay || +(f && f.giay) || 0; co = true; } break;
+        case 'am-thanh': if (k.file) { ct.amThanh += +k.giay || +(f && f.giay) || 0; co = true; } break;
+        case 'giao-trinh': if (k.file) { ct.giaoTrinh += (+k.soTrang || soTrangTep(f)) * TL.trangGiaoTrinh; co = true; } break;
+        case 'pdf': if (k.file) { ct.pdf += soTrangTep(f) * TL.trangPdf; co = true; } break;
+        case 'doan-van': tu += soTu(k.html); co = true; break;
+        case 'tieu-de': tu += soTu(k.text); break;
+        case 'html': tu += soTu(k.code); co = true; break;
+        case 'anh': if (k.file) { ct.anh += TL.anh; co = true; } break;
+        case 'cong-thuc': ct.khac += TL.congThuc; co = true; break;
+        case 'quiz': (k.cauHoi || []).forEach(function (q) { ct.quiz += q.loai === 'tu-luan' ? TL.cauTuLuan : TL.cauTracNghiem; }); co = true; break;
+        case 'nhung': if (k.url) { ct.khac += TL.nhung; co = true; } break;
+        case 'trang-tt': if (k.html) { ct.khac += TL.trangTT; co = true; } break;
+      }
+    });
+    ct.doc = Math.round(tu / TL.tuMoiPhut * 60);
+    var s = 0; for (var x in ct) s += ct[x];
+    if (co) s = Math.max(TL.lamTron, Math.ceil(s / TL.lamTron) * TL.lamTron);
+    return { giay: s, chiTiet: ct };
+  }
   function syncBai(b) {
     /* trường tóm tắt suy ra từ khối nội dung — các màn khác đọc các trường này */
     var vid = null, pdf = null, nq = 0; walkKhoi(b.khoi, function (k) { if (k.loai === 'video' && k.file && !vid) vid = k.file; if (k.loai === 'pdf' && k.file && !pdf) pdf = k.file; if (k.loai === 'quiz') nq += (k.cauHoi || []).length; });
+    if (b.giayTuDong !== false) b.giay = thoiLuongBai(b).giay;
     b.video = vid; b.taiLieu = pdf || ((b.dinhKem || []).find(function (f) { var x = byId('thuVien', f); return x && x.loai === 'PDF'; }) || null); b.quiz = nq; b.phut = Math.max(1, Math.round((+b.giay || 0) / 60)); return b;
   }
   /* ---------- giám sát thi ---------- */
@@ -1113,6 +1212,46 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
   }
   var openMenu;
   /* ô chọn nhiều dạng thẻ: mục đầu tiên là mục chính (vd giảng viên chính) */
+  /* ô chọn dạng cây (dùng chung): kích thước như ô nhập; bấm mở cây, mũi tên thu gọn / mở theo cấp cha, bấm tên để chọn.
+     treeSelect(o) trả về HTML; gọi treeBind(vùng chứa) sau khi chèn vào trang (vd. trong onOpen của modal).
+     o.name: tên trường (input ẩn, đọc bằng formVals) · o.value: id đang chọn · o.none: nhãn lựa chọn rỗng (bỏ qua nếu bắt buộc chọn)
+     o.placeholder: chữ khi chưa chọn · o.nodes: [{ id, label, cha, pick (chọn được, mặc định true), dis (khóa), note, icon: 'folder' | 'dot' }]
+     Ô chỉ hiện tên của mục được chọn, không hiện đường dẫn mục cha. */
+  var TS_TW = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  var TS_FO = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+  function treeSelect(o) {
+    var val = o.value || '', nodes = o.nodes || [], by = {}, kids = {};
+    nodes.forEach(function (n) { by[n.id] = n; });
+    nodes.forEach(function (n) { var k = n.cha && by[n.cha] ? n.cha : ''; (kids[k] = kids[k] || []).push(n); }); /* mục có cha không nằm trong danh sách: đưa lên cấp gốc */
+    var cur = val && by[val] ? by[val].label : (o.none != null && !val ? o.none : '');
+    var h = '<div class="tp" data-tp data-none="' + esc(o.none != null ? o.none : '') + '" data-ph="' + esc(o.placeholder || 'Chọn') + '"><input type="hidden" name="' + esc(o.name) + '" value="' + esc(val) + '"><button type="button" class="inp tp-ctl" aria-haspopup="tree" aria-expanded="false"' + (o.id ? ' id="' + esc(o.id) + '"' : '') + '><span class="tp-v' + (cur ? '' : ' ph') + '">' + esc(cur || o.placeholder || 'Chọn') + '</span></button><div class="tp-pop" role="tree" hidden>';
+    function dong(n, d, coCon) { var pick = n.pick !== false, dis = !!n.dis;
+      return '<div class="tp-r' + (val === n.id && pick ? ' on' : '') + (dis ? ' dis' : '') + (pick ? '' : ' grp') + '" style="padding-left:' + (6 + d * 20) + 'px">' + (coCon ? '<button type="button" class="tp-tw mo" data-tw aria-label="Thu gọn / mở ' + esc(n.label) + '">' + TS_TW + '</button>' : '<span class="tp-tw"></span>') + (n.icon === 'dot' ? '<span class="tp-dot"></span>' : n.icon === false ? '' : '<span class="fo">' + TS_FO + '</span>') + (pick ? '<button type="button" class="tp-nm" data-v="' + esc(n.id) + '" data-l="' + esc(n.label) + '"' + (dis ? ' disabled' : '') + ' role="treeitem">' + esc(n.label) + '</button>' : '<span class="tp-nm" data-gtw>' + esc(n.label) + '</span>') + (n.note ? '<span class="ln">' + esc(n.note) + '</span>' : '') + '</div>'; }
+    if (o.none != null) h += dong({ id: '', label: o.none, icon: false }, 0, false);
+    (function walk(pid, d) { (kids[pid] || []).forEach(function (n) { var con = (kids[n.id] || []).length; h += dong(n, d, con); if (con) { h += '<div class="tp-kids">'; walk(n.id, d + 1); h += '</div>'; } }); })('', 0);
+    if (!nodes.length) h += '<div class="tp-empty">' + esc(o.empty || 'Không có lựa chọn') + '</div>';
+    return h + '</div></div>';
+  }
+  function treeBind(root) {
+    (root || document).querySelectorAll('[data-tp]').forEach(function (t) {
+      if (t._tb) return; t._tb = 1;
+      var hid = t.querySelector('input[type=hidden]'), ctl = t.querySelector('.tp-ctl'), pop = t.querySelector('.tp-pop'), v = t.querySelector('.tp-v');
+      function mo(b) { pop.hidden = !b; t.classList.toggle('open', b); ctl.setAttribute('aria-expanded', b ? 'true' : 'false'); if (b) { var on = pop.querySelector('.tp-r.on'); if (on) on.scrollIntoView({ block: 'nearest' }); } }
+      function gap(row) { var k = row.nextElementSibling, tw = row.querySelector('[data-tw]'); if (!k || !k.classList.contains('tp-kids') || !tw) return; var dong = !k.hidden; k.hidden = dong; tw.classList.toggle('mo', !dong); }
+      ctl.onclick = function () { mo(pop.hidden); };
+      pop.onclick = function (e) {
+        if (e.target.closest('[data-tw]') || e.target.closest('[data-gtw]')) { gap(e.target.closest('.tp-r')); return; }
+        var nm = e.target.closest('[data-v]'); if (!nm || nm.disabled) return;
+        hid.value = nm.dataset.v; v.textContent = nm.dataset.l; v.classList.toggle('ph', !nm.dataset.l);
+        if (!nm.dataset.l) v.textContent = t.dataset.ph;
+        pop.querySelectorAll('.tp-r').forEach(function (r) { r.classList.toggle('on', r === nm.parentNode); });
+        mo(false); ctl.focus(); hid.dispatchEvent(new Event('change', { bubbles: true }));
+        var f = t.closest('.field'); if (f) { f.classList.remove('invalid'); var er = f.querySelector('.err'); if (er) er.textContent = ''; }
+      };
+      t.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) { e.stopPropagation(); mo(false); ctl.focus(); } });
+      document.addEventListener('mousedown', function h(e) { if (!document.body.contains(t)) { document.removeEventListener('mousedown', h); return; } if (!pop.hidden && !t.contains(e.target)) mo(false); });
+    });
+  }
   function multiSelect(host, o) {
     var val = (o.value || []).slice(), dis = !!o.disabled, mo = false, them = false;
     host.classList.add('ms'); host.innerHTML = '<div class="ms-ctl" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false"></div><div class="ms-pop" role="listbox" hidden></div>';
@@ -1254,8 +1393,8 @@ try{ if(window.top!==window.self) document.documentElement.classList.add('in-fra
     TODAY: TODAY, iso: iso, parse: parse, addDays: addDays, fmtDate: fmtDate, fmtDT: fmtDT, daysBetween: daysBetween, THU: THU,
     byId: byId, ctGoc: ctGoc, nextId: nextId, name: name, donViTen: donViTen, hocPhanOfLop: hocPhanOfLop, ghiDanhLop: ghiDanhLop, soHV: soHV, buoiCuaLop: buoiCuaLop, buoiStatus: buoiStatus, phuongAnCH: phuongAnCH, cfgDD: cfgDD, ddTuDong: ddTuDong, ddAuto: ddAuto, hvBuoi: hvBuoi, buoiMoc: buoiMoc, thoiLuongBuoi: thoiLuongBuoi, hanXacNhan: hanXacNhan, danhSoBuoi: danhSoBuoi, dongBoBuoi: dongBoBuoi, ketThucBuoi: ketThucBuoi, hm2m: hm2m, m2hm: m2hm,
     chuyenCanHV: chuyenCanHV, nhipHoc: nhipHoc, cfgNhip: cfgNhip, NHIP: NHIP, tienDoHV: tienDoHV, keHoachPct: keHoachPct, diemCot: diemCot, diemTongKet: diemTongKet, trangThaiThoiGian: trangThaiThoiGian, TT_LOP: TT_LOP,
-    lopStats: lopStats, riskOf: riskOf, kyThiStatus: kyThiStatus, fileUsage: fileUsage, walkKhoi: walkKhoi, baiFiles: baiFiles, syncBai: syncBai, tieuChiBai: tieuChiBai, coDiemDanh: coDiemDanh, KS_MAU: KS_MAU, KS_NX: KS_NX, ksDongBo: ksDongBo, ksTrangThai: ksTrangThai, CC_CANH_BAO: CC_CANH_BAO, CC_NGUY_CO: CC_NGUY_CO, hdDaTraLoi: hdDaTraLoi, hdChoTL: hdChoTL, SK: SK, phienKy: phienKy, thoiLuongKy: thoiLuongKy, conLai: conLai, diemRuiRo: diemRuiRo, suKien: suKien, taoPhien: function (ky) { taoPhien(ky, Date.now()); }, refsOf: refsOf,
+    lopStats: lopStats, riskOf: riskOf, kyThiStatus: kyThiStatus, fileUsage: fileUsage, walkKhoi: walkKhoi, baiFiles: baiFiles, syncBai: syncBai, thoiLuongBai: thoiLuongBai, TL: TL, tieuChiBai: tieuChiBai, coDiemDanh: coDiemDanh, KS_MAU: KS_MAU, KS_NX: KS_NX, ksDongBo: ksDongBo, ksTrangThai: ksTrangThai, CC_CANH_BAO: CC_CANH_BAO, CC_NGUY_CO: CC_NGUY_CO, hdDaTraLoi: hdDaTraLoi, hdChoTL: hdChoTL, SK: SK, phienKy: phienKy, thoiLuongKy: thoiLuongKy, conLai: conLai, diemRuiRo: diemRuiRo, suKien: suKien, taoPhien: function (ky) { taoPhien(ky, Date.now()); }, refsOf: refsOf,
     btDoiTuong: btDoiTuong, nopCuaHV: nopCuaHV, btHanCuoi: btHanCuoi, btHetHan: btHetHan, diemBaiTap: diemBaiTap, btStatus: btStatus, btStats: btStats,
-    ui: { esc: esc, norm: norm, hl: hl, money: money, badge: badge, prog: prog, person: person, initials: initials, opts: opts, toast: toast, modal: modal, confirm: confirmBox, blocked: blocked, menu: menu, multiSelect: multiSelect, table: table, barChart: barChart, lineChart: lineChart, hbars: hbars, formVals: formVals, fieldErr: fieldErr }
+    ui: { esc: esc, norm: norm, hl: hl, money: money, badge: badge, prog: prog, person: person, initials: initials, opts: opts, toast: toast, modal: modal, confirm: confirmBox, blocked: blocked, menu: menu, multiSelect: multiSelect, treeSelect: treeSelect, treeBind: treeBind, table: table, barChart: barChart, lineChart: lineChart, hbars: hbars, formVals: formVals, fieldErr: fieldErr }
   };
 })();

@@ -80,16 +80,7 @@
 .page-head > div:first-child{flex:1;min-width:0}
 .page-head .sub.ct-sub{flex:1 0 100%;box-sizing:border-box;font-weight:600;color:var(--ems-navy);font-size:13.5px;background:var(--ems-navy-soft);border:1px solid var(--ems-navy-line);border-left:3px solid var(--ems-navy);border-radius:6px;padding:7px 12px;margin-top:2px;line-height:1.5}
 .so-lop{display:block;font-size:12.5px;font-weight:600;color:var(--ems-navy)}
-.he-pick{border:1px solid var(--ems-border-strong);border-radius:var(--r-ctl);background:var(--ems-surface);max-height:280px;overflow-y:auto;padding:4px 0}
-.hp-o{display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--ems-text);margin:0;font-weight:400}
-.hp-o:hover{background:var(--ems-surface-2)}
-.hp-o.on{background:var(--ems-navy-soft);color:var(--ems-navy);font-weight:600}
-.hp-o.dis{color:var(--ems-faint);cursor:not-allowed;background:none}
-.hp-o input{margin:0;flex:none}
-.hp-o .fo{color:var(--ems-warning);display:flex;flex:none}
-.hp-o.dis .fo{color:var(--ems-faint)}
-.hp-o .nm{flex:1;min-width:0}
-.hp-o .ln{font-size:12px;font-style:italic;font-weight:400}
+.pg.nhap .dt{background:var(--ems-warning)}
 .lnk{background:none;border:0;padding:0;font:inherit;color:var(--ems-navy);cursor:pointer;font-weight:600;text-align:left}
 .lnk:hover{text-decoration:underline}
 .pick-list{max-height:320px;overflow-y:auto;border:1px solid var(--ems-border);border-radius:var(--r-ctl)}
@@ -127,9 +118,17 @@ function roots(){ return kids(null); }
 function mons(id){ return subtree(id).map(function(i){ return LMS.byId('chuongTrinh', i); }).filter(function(c){ return c && c.loai === 'hoc-phan'; }); }
 function hpCua(m){ return m.hocPhan.length ? LMS.byId('hocPhan', m.hocPhan[0]) : null; }
 function tt(m){ var hp = hpCua(m); return !hp ? 'chua' : hp.trangThai === 'hoat-dong' ? 'ok' : hp.trangThai === 'nhap' ? 'nhap' : 'ngung'; }
+/* trạng thái chương trình: Bản nháp (đang biên soạn, chưa mở lớp) → Đang dùng ⇄ Ngưng dùng */
+var TT_CT = { nhap: ['Bản nháp', 'warn'], 'hoat-dong': ['Đang dùng', 'ok'], ngung: ['Ngưng dùng', ''] };
 var TT = { ok: ['Sẵn sàng mở lớp', 'ok'], nhap: ['Đang biên soạn', 'warn'], chua: ['Chưa có nội dung', ''], ngung: ['Nội dung ngưng dùng', 'bad'] };
 function khoaNhom(g){ return (g.khoaDs && g.khoaDs.length ? g.khoaDs : g.khoa ? [g.khoa] : []).filter(function(id){ return LMS.byId('donVi', id); }); }
 function khoaNhomTen(g){ return khoaNhom(g).map(function(id){ return LMS.donViTen(id); }).join(', '); }
+/* ô chọn Khoa chủ quản: cây phòng ban → khoa (U.treeSelect), chỉ chọn được khoa trong phạm vi */
+function khoaTree(val){
+  var ds = D().donVi, by = {}; ds.forEach(function(d){ by[d.id] = d; });
+  var giu = {}; khoaList().forEach(function(d){ var x = d; while (x && !giu[x.id]) { giu[x.id] = 1; x = x.cha ? by[x.cha] : null; } });
+  return U.treeSelect({ name: 'khoa', value: val || '', placeholder: 'Chọn khoa', empty: 'Chưa có khoa trong phạm vi', nodes: ds.filter(function(d){ return giu[d.id]; }).map(function(d){ return { id: d.id, label: d.ten, cha: d.cha || null, pick: !!d.laKhoa && LMS.trongPhamVi(d.id), icon: d.laKhoa ? 'dot' : 'folder' }; }) });
+}
 function khoaList(){ return D().donVi.filter(function(d){ return d.laKhoa && LMS.trongPhamVi(d.id); }); }
 function lopCua(id){ var ids = subtree(id); return D().lop.filter(function(l){ return ids.indexOf(l.chuongTrinh) >= 0; }); }
 function dangMo(ls){ return ls.filter(function(l){ return l.trangThai === 'dang-hoc' || l.trangThai === 'tuyen-sinh'; }); }
@@ -145,15 +144,13 @@ function heKids(id){ return hes().filter(function(h){ return (h.cha || null) ===
 function heSub(id){ var o = [id]; heKids(id).forEach(function(k){ o = o.concat(heSub(k.id)); }); return o; }
 function heOf(c){ return c.he && heById(c.he) ? c.he : null; }
 function hePath(id){ var p = [], h = heById(id), g = 0; while (h && g++ < 20) { p.unshift(h.ten); h = h.cha ? heById(h.cha) : null; } return p.join(' › '); }
-/* chọn mục dạng cây mở sẵn: name = tên trường, val = mục đang chọn, cam = các mục không được chọn, goc = nhãn lựa chọn gốc */
+/* ô chọn mục (U.treeSelect dùng chung): cam = các mục không được chọn (mục đang sửa và mục con), goc = nhãn lựa chọn gốc */
 function heTree(name, val, cam, goc, ghiChu){
-  var k = 'tp_' + name, h = '<input type="hidden" name="' + name + '" value="' + esc(val || '') + '"><div class="he-pick" role="radiogroup">';
-  function dong(id, ten, d, khoa, ln){ var on = (val || '') === id; return '<label class="hp-o' + (on ? ' on' : '') + (khoa ? ' dis' : '') + '" style="padding-left:' + (12 + d * 22) + 'px"><input type="radio" name="' + k + '" value="' + esc(id) + '"' + (on ? ' checked' : '') + (khoa ? ' disabled' : '') + '>' + (id ? '<span class="fo">' + FO + '</span>' : '') + '<span class="nm">' + esc(ten) + '</span>' + (ln ? '<span class="ln">' + esc(ln) + '</span>' : '') + '</label>'; }
-  h += dong('', goc, 0, false, '');
-  (function walk(pid, d, khoaCha){ heKids(pid).forEach(function(x){ var khoa = khoaCha || cam.indexOf(x.id) >= 0; h += dong(x.id, x.ten, d, khoa, khoa && ghiChu ? (cam[0] === x.id ? ghiChu[0] : ghiChu[1]) : ''); walk(x.id, d + 1, khoa); }); })(null, 1, false);
-  return h + '</div>';
+  cam = cam || []; var khoa = {};
+  (function walk(pid, kh){ heKids(pid).forEach(function(x){ var k = kh || cam.indexOf(x.id) >= 0; if (k) khoa[x.id] = cam[0] === x.id ? 'dang' : 'con'; walk(x.id, k); }); })(null, false);
+  return U.treeSelect({ name: name, value: val || '', none: goc, nodes: hes().map(function(x){ return { id: x.id, label: x.ten, cha: x.cha || null, dis: !!khoa[x.id], note: khoa[x.id] && ghiChu ? (khoa[x.id] === 'dang' ? ghiChu[0] : ghiChu[1]) : '' }; }) });
 }
-function ganTree(body){ body.querySelectorAll('.he-pick').forEach(function(t){ var hid = t.previousElementSibling; t.onchange = function(e){ if (!e.target.matches('input[type=radio]')) return; hid.value = e.target.value; t.querySelectorAll('.hp-o').forEach(function(l){ l.classList.toggle('on', l.querySelector('input').checked); }); }; }); }
+function ganTree(body){ U.treeBind(body); }
 function quanTri(){ return LMS.phamVi.all; }
 function suaDuoc(c){ return LMS.phamVi.all || !!LMS.phamVi.ids[c.khoa]; }
 function cur(){ var c = LMS.byId('chuongTrinh', st.sel); if (!c || c.cha) { c = roots()[0] || null; st.sel = c ? c.id : null; } return c; }
@@ -182,7 +179,7 @@ function veRail(){
   function dem(heId){ return heSub(heId).reduce(function(n, id){ return n + progs(id).length; }, 0); }
   var h = '<div class="rail-h"><b>Danh mục chương trình</b>' + (quanTri() ? '<button class="btn sm" id="heAdd" title="Thêm mục cấp gốc">+ Mục</button>' : '') + '</div><div class="rail-q"><input class="inp" id="lq" placeholder="Tìm chương trình" value="' + esc(st.lq) + '"></div><div class="ct-tree" id="tree">';
   function pgRow(c, d){
-    return '<div class="pg' + (c.id === st.sel ? ' on' : '') + (c.trangThai === 'ngung' ? ' ngung' : '') + '" data-ct="' + c.id + '"' + (suaDuoc(c) && !loc ? ' draggable="true"' : '') + ' style="padding-left:' + (10 + d * 16) + 'px" title="' + esc(c.ten + (c.trangThai === 'ngung' ? ' · Ngưng dùng' : '')) + '"><span class="dt"></span><span class="tx"><b>' + U.hl(c.ten, st.lq) + '</b></span></div>'; }
+    return '<div class="pg' + (c.id === st.sel ? ' on' : '') + (c.trangThai === 'ngung' ? ' ngung' : c.trangThai === 'nhap' ? ' nhap' : '') + '" data-ct="' + c.id + '"' + (suaDuoc(c) && !loc ? ' draggable="true"' : '') + ' style="padding-left:' + (10 + d * 16) + 'px" title="' + esc(c.ten + (c.trangThai !== 'hoat-dong' && TT_CT[c.trangThai] ? ' · ' + TT_CT[c.trangThai][0] : '')) + '"><span class="dt"></span><span class="tx"><b>' + U.hl(c.ten, st.lq) + '</b></span></div>'; }
   function heRow(he, d){
     var n = dem(he.id); if ((loc || !quanTri()) && !n) return '';
     var mo = loc || !DONG[he.id], r = '<div class="he" data-he="' + he.id + '" style="padding-left:' + (8 + d * 16) + 'px" title="' + (loc ? '' : mo ? 'Bấm để thu gọn' : 'Bấm để mở') + '"><span class="tw' + (mo ? '' : ' dong') + '">▾</span><span class="fo">' + FO + '</span><span class="nm" title="' + esc(he.ten) + '">' + esc(he.ten) + '</span><span class="cnt">' + n + '</span>' + (quanTri() ? '<button class="mo" data-mhe="' + he.id + '" aria-label="Thao tác mục ' + esc(he.ten) + '">⋯</button>' : '') + '</div>';
@@ -245,7 +242,7 @@ function doiHe(a, b){ var l = hes(), x = l.indexOf(a), y = l.indexOf(b); l[x] = 
 function formHe(he, cha){
   var moi = !he, cam = he ? heSub(he.id) : [];
   U.modal({ title: moi ? 'Thêm mục chương trình' : 'Sửa mục · ' + he.ten, size: 'sm',
-    body: '<div class="field"><label>Tên mục <span class="req">*</span></label><input class="inp" name="ten" maxlength="120" value="' + esc(he ? he.ten : '') + '" placeholder="VD: Đào tạo sau đại học"></div><div class="field" style="margin-top:10px"><label>Thuộc mục</label>' + heTree('cha', he ? he.cha || '' : cha || '', cam, 'Cấp gốc', ['mục đang sửa', 'mục con']) + '<div class="hint">Dùng để gom chương trình theo hệ, loại hình đào tạo.</div></div>', onOpen: function(api){ ganTree(api.body); },
+    body: '<div class="field"><label>Tên mục <span class="req">*</span></label><input class="inp" name="ten" maxlength="120" value="' + esc(he ? he.ten : '') + '" placeholder="VD: Đào tạo sau đại học"></div><div class="field" style="margin-top:10px"><label>Thuộc mục</label>' + heTree('cha', he ? he.cha || '' : cha || '', cam, 'Cấp gốc', ['mục đang sửa', 'mục con']) + '</div>', onOpen: function(api){ ganTree(api.body); },
     foot: [{ label: 'Hủy', close: true }, { label: moi ? 'Thêm mục' : 'Lưu', cls: 'primary', onClick: function(a){
       var v = U.formVals(a.body); v.ten = String(v.ten || '').trim().replace(/\s+/g, ' '); v.cha = v.cha || null;
       if (!v.ten) { U.fieldErr(a.body, 'ten', 'Nhập tên mục'); return false; }
@@ -270,17 +267,15 @@ function veChiTiet(){
   var host = document.getElementById('detail'), c = cur();
   if (!c) { host.innerHTML = '<div class="panel"><div class="empty">Chưa có chương trình. Bấm "Thêm chương trình" để bắt đầu.</div></div>'; return; }
   var ms = mons(c.id), ok = ms.filter(function(m){ return tt(m) === 'ok'; }).length, ls = lopCua(c.id), mo = dangMo(ls), hl = hocLieu(ms);
-  var h = '<div class="panel"><div class="panel-body"><div class="ct-hd"><div style="min-width:0"><div class="eyebrow">' + esc((heOf(c) ? hePath(heOf(c)) : 'Chưa phân loại') + ' · ' + LMS.donViTen(c.khoa)) + '</div><h2>' + esc(c.ten) + '</h2><div class="meta">' + (c.trangThai === 'ngung' ? U.badge('Ngưng dùng', '') : U.badge('Đang dùng', 'ok')) + '<span class="badge mono">' + esc(c.ma) + '</span>' + (c.maQLDT ? '<span class="badge" title="Mã chương trình tương ứng bên hệ thống Quản lý đào tạo">QLĐT ' + esc(c.maQLDT) + '</span>' : '') + '</div></div><div class="acts">' + (LMS.phamVi.all || LMS.phamVi.ids[c.khoa] ? '<button class="btn" id="btnEdit">Sửa thông tin</button><button class="btn" id="btnMore" aria-label="Thao tác khác">⋯</button>' : '') + '</div></div>' + (c.moTa ? '<p style="margin:12px 0 0;color:var(--ems-text-2);max-width:880px">' + esc(c.moTa) + '</p>' : '') + (c.doiTuong ? '<div class="small muted" style="margin-top:6px">Đối tượng: ' + esc(c.doiTuong) + '</div>' : '') + '</div></div>';
+  var h = '<div class="panel"><div class="panel-body"><div class="ct-hd"><div style="min-width:0"><div class="eyebrow">' + esc((heOf(c) ? hePath(heOf(c)) : 'Chưa phân loại') + ' · ' + LMS.donViTen(c.khoa)) + '</div><h2>' + esc(c.ten) + '</h2><div class="meta">' + U.badge(TT_CT[c.trangThai] ? TT_CT[c.trangThai][0] : 'Đang dùng', TT_CT[c.trangThai] ? TT_CT[c.trangThai][1] : 'ok') + '<span class="badge mono">' + esc(c.ma) + '</span>' + (c.maQLDT ? '<span class="badge" title="Mã chương trình tương ứng bên hệ thống Quản lý đào tạo">QLĐT ' + esc(c.maQLDT) + '</span>' : '') + '</div></div><div class="acts">' + (LMS.phamVi.all || LMS.phamVi.ids[c.khoa] ? '<button class="btn" id="btnMore" aria-label="Thao tác chương trình">⋯</button>' : '') + '</div></div>' + (c.moTa ? '<p style="margin:12px 0 0;color:var(--ems-text-2);max-width:880px">' + esc(c.moTa) + '</p>' : '') + (c.doiTuong ? '<div class="small muted" style="margin-top:6px">Đối tượng: ' + esc(c.doiTuong) + '</div>' : '') + '</div></div>';
   h += '<div class="kpis mini"><div class="kpi" title="' + (ms.length - ok) + ' học phần chưa đủ nội dung"><span class="k-val">' + ok + '<small> / ' + ms.length + '</small></span><span class="k-label">học phần sẵn sàng mở lớp</span></div><div class="kpi"><span class="k-val">' + hl.bai + '</span><span class="k-label">bài giảng · ' + hl.gio + ' giờ</span></div><div class="kpi" title="' + ls.length + ' lớp đã tạo"><span class="k-val">' + mo.length + '<small> / ' + ls.length + '</small></span><span class="k-label">lớp đang mở</span></div><div class="kpi" title="Không tính trùng giữa các lớp"><span class="k-val">' + hvCua(mo) + '</span><span class="k-label">học viên đang học</span></div></div>';
   h += '<div class="panel"><div class="tabs" role="tablist"><button class="tab' + (st.tab === 'lo-trinh' ? ' on' : '') + '" data-tab="lo-trinh">Học phần trực tuyến · ' + ms.length + '</button><button class="tab' + (st.tab === 'lop' ? ' on' : '') + '" data-tab="lop">Lớp học · ' + ls.length + '</button></div><div class="panel-body" id="pane"></div></div>';
   host.innerHTML = h;
-  var bE = document.getElementById('btnEdit'), bM = document.getElementById('btnMore') || document.createElement('button');
-  if (bE) bE.onclick = function(){ formCT(c); };
+  var bM = document.getElementById('btnMore') || document.createElement('button');
   bM.onclick = function(e){ U.menu(e.currentTarget, [
-    { label: 'Xem lớp học của chương trình', onClick: function(){ LMS.go('lop-hoc.html', { chuongTrinh: c.id }); } },
-    { label: 'Chuyển sang mục khác', onClick: function(){ chonMuc(c); } },
+    { label: 'Chỉnh sửa thông tin', onClick: function(){ formCT(c); } },
+    { label: c.trangThai === 'hoat-dong' ? 'Ngưng dùng' : 'Kích hoạt', onClick: function(){ toggleTT(c); } },
     '-',
-    { label: c.trangThai === 'ngung' ? 'Kích hoạt' : 'Ngưng dùng', onClick: function(){ toggleTT(c); } },
     { label: 'Xóa chương trình', danger: true, onClick: function(){ xoa(c); } }
   ]); };
   host.querySelectorAll('[data-tab]').forEach(function(b){ b.onclick = function(){ st.tab = b.dataset.tab; veChiTiet(); }; });
@@ -288,6 +283,7 @@ function veChiTiet(){
 }
 
 function tabLoTrinh(pane, c){
+  if (st.flashG && NHOM[st.flashG]) { delete NHOM[st.flashG]; luuNhom(); }
   if (st.flash) { var fm = LMS.byId('chuongTrinh', st.flash); if (fm && fm.cha && NHOM[fm.cha]) { delete NHOM[fm.cha]; luuNhom(); } }
   var gs = kids(c.id), stt = 0, sua = suaDuoc(c), soDong = gs.filter(function(g){ return NHOM[g.id]; }).length;
   var h = '<div class="lt-bar"><span class="muted small" style="flex:1;min-width:240px">' + (sua && gs.length > 1 ? 'Kéo biểu tượng ⋮⋮ để sắp xếp thứ tự nhóm học phần' : '') + '</span>' + (gs.length > 1 ? '<span class="gp"><button class="btn sm" id="bMoHet"' + (soDong ? '' : ' disabled') + '>Mở tất cả</button><button class="btn sm" id="bDongHet"' + (soDong === gs.length ? ' disabled' : '') + '>Thu gọn tất cả</button></span>' : '') + '<button class="btn sm primary" id="bNhom">+ Thêm nhóm học phần</button></div>';
@@ -340,20 +336,16 @@ function tabLop(pane, c){
   var ls = lopCua(c.id).sort(function(a, b){ return a.batDau < b.batDau ? 1 : -1; });
   var h = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Mã lớp</th><th>Tên lớp</th><th>Học phần</th><th>Hình thức</th><th>Thời gian</th><th class="num">Sĩ số</th><th>Trạng thái</th></tr></thead><tbody>';
   var HT = { 'truc-tuyen-gv': 'Tự học có giảng viên hỗ trợ', 'tu-hoc': 'Tự học hoàn toàn' };
-  h += ls.length ? ls.map(function(l){ var hp = LMS.hocPhanOfLop(l), t = LMS.TT_LOP[l.trangThai] || [l.trangThai, '']; return '<tr><td class="mono">' + esc(l.ma) + '</td><td><button class="lnk" data-lop="' + l.id + '">' + esc(l.ten) + '</button></td><td>' + esc(hp ? hp.ten : '') + '</td><td>' + esc(HT[l.hinhThuc] || '') + '</td><td>' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + '</td><td class="num">' + LMS.soHV(l.id) + '/' + l.sucChua + '</td><td>' + U.badge(t[0], t[1]) + '</td></tr>'; }).join('') : '<tr><td colspan="7"><div class="empty">Chương trình chưa mở lớp. Bấm "Mở lớp" ở học phần đã sẵn sàng.</div></td></tr>';
+  h += ls.length ? ls.map(function(l){ var hp = LMS.hocPhanOfLop(l), t = LMS.TT_LOP[l.trangThai] || [l.trangThai, '']; return '<tr><td class="mono">' + esc(l.ma) + '</td><td><button class="lnk" data-lop="' + l.id + '">' + esc(l.ten) + '</button></td><td>' + esc(hp ? hp.ten : '') + '</td><td>' + esc(HT[l.hinhThuc] || '') + '</td><td>' + LMS.fmtDate(l.batDau) + ' – ' + LMS.fmtDate(l.ketThuc) + '</td><td class="num">' + LMS.soHV(l.id) + '/' + l.sucChua + '</td><td>' + U.badge(t[0], t[1]) + '</td></tr>'; }).join('') : '<tr><td colspan="7"><div class="empty">Chương trình chưa có lớp học.</div></td></tr>';
   pane.innerHTML = h + '</tbody></table></div>';
   pane.querySelectorAll('[data-lop]').forEach(function(b){ b.onclick = function(){ LMS.go('lop-hoc.html', { lop: b.dataset.lop }); }; });
 }
 
 /* ---------- biểu mẫu ---------- */
 function maTrung(ma, boQua, pham){ return pham.some(function(x){ return x.id !== boQua && String(x.ma).toLowerCase() === ma.toLowerCase(); }); }
-function chonMuc(c){
-  U.modal({ title: 'Chuyển mục · ' + c.ma, size: 'sm', body: '<div class="field"><label>Mục chương trình</label>' + heTree('he', heOf(c) || '', [], 'Chưa phân loại') + '</div>', onOpen: function(api){ ganTree(api.body); },
-    foot: [{ label: 'Hủy', close: true }, { label: 'Chuyển', cls: 'primary', onClick: function(a){ chuyenMuc(c, U.formVals(a.body).he || null, null); } }] });
-}
 function formCT(c, heMacDinh){
   var moi = !c;
-  U.modal({ title: moi ? 'Thêm chương trình' : 'Sửa chương trình · ' + c.ma, body: '<div class="form-grid"><div class="field"><label>Mã chương trình <span class="req">*</span></label><input class="inp" name="ma" maxlength="20" value="' + esc(c ? c.ma : '') + '"></div><div class="field"><label>Khoa chủ quản <span class="req">*</span></label><select class="sel" name="khoa">' + U.opts(khoaList(), 'id', 'ten', c ? c.khoa : '', '— Chọn khoa —') + '</select></div><div class="field full"><label>Tên chương trình <span class="req">*</span></label><input class="inp" name="ten" maxlength="200" value="' + esc(c ? c.ten : '') + '"></div><div class="field full"><label>Thuộc mục</label>' + heTree('he', c ? heOf(c) || '' : (heMacDinh !== undefined ? heMacDinh || '' : (cur() ? heOf(cur()) || '' : '')), [], 'Chưa phân loại') + '<div class="hint">Mục trong danh mục chương trình bên trái, ví dụ Đào tạo đại học, Đào tạo sau đại học.</div></div><div class="field full"><label>Giới thiệu ngắn</label><textarea name="moTa" rows="3">' + esc(c ? c.moTa || '' : '') + '</textarea><div class="hint">Hiển thị ở mục Lộ trình đào tạo trên Cổng học viên</div></div><div class="field full"><label>Đối tượng học</label><input class="inp" name="doiTuong" value="' + esc(c ? c.doiTuong || '' : '') + '"></div><div class="field"><label>Mã chương trình bên Quản lý đào tạo</label><input class="inp mono" name="maQLDT" maxlength="20" value="' + esc(c ? c.maQLDT || '' : '') + '"><div class="hint">Dùng để đối chiếu, đồng bộ kết quả học tập</div></div><div class="field"><label>Trạng thái</label><select class="sel" name="trangThai">' + U.opts([{ v: 'hoat-dong', l: 'Đang dùng' }, { v: 'ngung', l: 'Ngưng dùng' }], 'v', 'l', c ? c.trangThai : 'hoat-dong') + '</select></div></div>', onOpen: function(api){ ganTree(api.body); }, foot: [{ label: 'Hủy', close: true }, { label: moi ? 'Thêm' : 'Lưu', cls: 'primary', onClick: function(a){
+  U.modal({ title: moi ? 'Thêm chương trình' : 'Sửa chương trình · ' + c.ma, body: '<div class="form-grid"><div class="field"><label>Mã chương trình <span class="req">*</span></label><input class="inp" name="ma" maxlength="20" value="' + esc(c ? c.ma : '') + '"></div><div class="field"><label>Khoa chủ quản <span class="req">*</span></label>' + khoaTree(c ? c.khoa : '') + '</div><div class="field full"><label>Tên chương trình <span class="req">*</span></label><input class="inp" name="ten" maxlength="200" value="' + esc(c ? c.ten : '') + '"></div><div class="field full"><label>Thuộc mục</label>' + heTree('he', c ? heOf(c) || '' : (heMacDinh !== undefined ? heMacDinh || '' : (cur() ? heOf(cur()) || '' : '')), [], 'Chưa phân loại') + '</div><div class="field full"><label>Giới thiệu ngắn</label><textarea name="moTa" rows="3">' + esc(c ? c.moTa || '' : '') + '</textarea></div><div class="field full"><label>Đối tượng học</label><input class="inp" name="doiTuong" value="' + esc(c ? c.doiTuong || '' : '') + '"></div><div class="field"><label>Mã chương trình bên Quản lý đào tạo</label><input class="inp mono" name="maQLDT" maxlength="20" value="' + esc(c ? c.maQLDT || '' : '') + '"></div><div class="field"><label>Trạng thái</label><select class="sel" name="trangThai">' + U.opts([{ v: 'nhap', l: 'Bản nháp (đang biên soạn)' }, { v: 'hoat-dong', l: 'Đang dùng' }, { v: 'ngung', l: 'Ngưng dùng' }], 'v', 'l', c ? c.trangThai : 'nhap') + '</select></div></div>', onOpen: function(api){ ganTree(api.body); }, foot: [{ label: 'Hủy', close: true }, { label: moi ? 'Thêm' : 'Lưu', cls: 'primary', onClick: function(a){
     var v = U.formVals(a.body), ok = true;
     function loi(n, m){ U.fieldErr(a.body, n, m); if (m) ok = false; }
     loi('ma', !v.ma ? 'Nhập mã chương trình' : !/^[A-Za-z0-9_.\-]+$/.test(v.ma) ? 'Mã chỉ gồm chữ không dấu, số, _ . -' : maTrung(v.ma, c && c.id, roots()) ? 'Mã đã tồn tại' : '');
@@ -425,16 +417,21 @@ function hocTruoc(m){
   U.modal({ title: 'Học phần tiên quyết · ' + m.ten, body: '<div class="small muted" style="margin-bottom:8px">Học viên cần hoàn thành các học phần tiên quyết đã chọn trước khi đăng ký ' + esc(m.ten) + '.</div><div class="pick-list">' + ds.map(function(x){ var vong = phuThuoc(x, m.id); return '<label class="pick-item"><input type="checkbox" data-id="' + x.id + '"' + (sel[x.id] ? ' checked' : '') + (vong ? ' disabled' : '') + '><div><b>' + esc(x.ten) + '</b><div class="small muted">' + esc(LMS.byId('chuongTrinh', x.cha).ten) + (vong ? ' · đang nhận ' + esc(m.ten) + ' làm tiên quyết' : '') + '</div></div></label>'; }).join('') + '</div>', foot: [{ label: 'Hủy', close: true }, { label: 'Lưu', cls: 'primary', onClick: function(a){ m.hocSau = [].slice.call(a.body.querySelectorAll('[data-id]:checked')).map(function(x){ return x.dataset.id; }); LMS.commit('Sửa', 'Chương trình đào tạo', c.ma + ' · ' + m.ten + ' · học phần tiên quyết'); U.toast('Đã lưu học phần tiên quyết', 'ok'); st.flash = m.id; veChiTiet(); } }] });
 }
 function toggleTT(c){
-  var ngung = c.trangThai !== 'ngung', n = dangMo(lopCua(c.id)).length;
-  U.confirm({ title: ngung ? 'Ngưng dùng chương trình' : 'Kích hoạt chương trình', html: ngung ? 'Ngưng dùng <b>' + esc(c.ten) + '</b>? Chương trình không còn được chọn khi mở lớp mới.' + (n ? '<div class="note warn" style="margin-top:10px">' + n + ' lớp đang học/tuyển sinh vẫn tiếp tục bình thường.</div>' : '') : 'Kích hoạt lại <b>' + esc(c.ten) + '</b>?', ok: ngung ? 'Ngưng dùng' : 'Kích hoạt', danger: ngung }).then(function(y){
+  var ngung = c.trangThai === 'hoat-dong', tu = TT_CT[c.trangThai] ? TT_CT[c.trangThai][0] : '', n = dangMo(lopCua(c.id)).length;
+  U.confirm({ title: ngung ? 'Ngưng dùng chương trình' : 'Kích hoạt chương trình', html: ngung ? 'Ngưng dùng <b>' + esc(c.ten) + '</b>? Chương trình không còn được chọn khi mở lớp mới.' + (n ? '<div class="note warn" style="margin-top:10px">' + n + ' lớp đang học/tuyển sinh vẫn tiếp tục bình thường.</div>' : '') : 'Kích hoạt <b>' + esc(c.ten) + '</b> (hiện ' + esc(tu.toLowerCase()) + ')? Chương trình chuyển sang Đang dùng và được chọn khi mở lớp.', ok: ngung ? 'Ngưng dùng' : 'Kích hoạt', danger: ngung }).then(function(y){
     if (!y) return; var t = c.trangThai; c.trangThai = ngung ? 'ngung' : 'hoat-dong';
     LMS.commit(ngung ? 'Ngưng dùng' : 'Kích hoạt', 'Chương trình đào tạo', c.ma + ' · ' + c.ten, { trangThai: t }, { trangThai: c.trangThai }); U.toast(ngung ? 'Đã ngưng dùng ' + c.ma : 'Đã kích hoạt ' + c.ma, 'ok'); render();
   });
 }
 function xoa(n){
   var ids = subtree(n.id), refs = [], l = n.loai;
+  /* Xóa chương trình: chỉ khi Bản nháp hoặc Ngưng dùng; Ngưng dùng mà còn lớp mở theo chương trình thì chỉ được giữ ở trạng thái Ngưng dùng */
+  if (l === 'chuong-trinh' && n.trangThai === 'hoat-dong') {
+    U.modal({ title: 'Không thể xóa ' + n.ten, size: 'sm', body: '<div class="note bad">Chương trình đang dùng nên không xóa được.</div><div>Chỉ xóa được chương trình ở trạng thái <b>Bản nháp</b> hoặc <b>Ngưng dùng</b>. Nếu chương trình không còn sử dụng, chọn <b>Ngưng dùng</b> trước.</div>', foot: [{ label: 'Đóng', close: true }, { label: 'Ngưng dùng', cls: 'primary', onClick: function(){ setTimeout(function(){ toggleTT(n); }, 0); } }] });
+    return;
+  }
   D().lop.forEach(function(x){ if (ids.indexOf(x.chuongTrinh) >= 0) refs.push('Lớp ' + x.ma + ' · ' + x.ten); });
-  if (refs.length) { U.blocked('Không thể ' + (l === 'hoc-phan' ? 'gỡ ' : 'xóa ') + n.ten, refs.slice(0, 12), l === 'chuong-trinh' ? 'Dùng thao tác Ngưng dùng để giữ lịch sử đào tạo.' : 'Học phần đã mở lớp theo chương trình này nên phải giữ lại.'); return; }
+  if (refs.length) { U.blocked('Không thể ' + (l === 'hoc-phan' ? 'gỡ ' : 'xóa ') + n.ten, refs.slice(0, 12), l === 'chuong-trinh' ? (n.trangThai === 'ngung' ? 'Chương trình đã có lớp mở theo chương trình nên chỉ được giữ ở trạng thái Ngưng dùng để bảo toàn lịch sử đào tạo.' : 'Chương trình đã có lớp mở theo chương trình nên không xóa được. Dùng thao tác Ngưng dùng.') : 'Học phần đã mở lớp theo chương trình này nên phải giữ lại.'); return; }
   var ten = { 'chuong-trinh': 'chương trình', nhom: 'nhóm', 'hoc-phan': 'học phần' }[l] || 'mục';
   U.confirm({ title: (l === 'hoc-phan' ? 'Gỡ ' : 'Xóa ') + ten, html: (l === 'hoc-phan' ? 'Gỡ <b>' + esc(n.ten) + '</b> khỏi chương trình? Bài giảng của học phần không bị xóa.' : 'Xóa ' + ten + ' <b>' + esc(n.ten) + '</b>' + (ids.length > 1 ? ' cùng ' + (ids.length - 1) + ' mục bên trong' : '') + '?'), ok: l === 'hoc-phan' ? 'Gỡ' : 'Xóa', danger: true }).then(function(y){
     if (!y) return; D().chuongTrinh = all().filter(function(x){ return ids.indexOf(x.id) < 0; });
@@ -445,7 +442,7 @@ function xoa(n){
 }
 
 var p = LMS.param('chuong-trinh.html');
-if (p && p.chuongTrinh) { var g = LMS.ctGoc(p.chuongTrinh); if (g) { st.sel = g.id; if (g.id !== p.chuongTrinh) st.flash = p.chuongTrinh; } }
+if (p && p.chuongTrinh) { var g = LMS.ctGoc(p.chuongTrinh); if (g) { st.sel = g.id; if (p.nhom) st.flashG = p.nhom; else if (g.id !== p.chuongTrinh) st.flash = p.chuongTrinh; } }
 LMS.onChange(render);
 render();
 })();
